@@ -33,9 +33,9 @@ public class GoogleCalendarTaskWarrior {
 
 			System.out.println(aCalendar.getSummary() + " :: "
 					+ aCalendar.getId() + " :: "
-			// + aCalendar.getClass() + "::"
-			// + new JSONObject(aCalendar)
-					);
+					// + aCalendar.getClass() + "::"
+					+ aCalendar.toPrettyString() + " :: "
+					+ new JSONObject(aCalendar) + "\n");
 		}
 	}
 
