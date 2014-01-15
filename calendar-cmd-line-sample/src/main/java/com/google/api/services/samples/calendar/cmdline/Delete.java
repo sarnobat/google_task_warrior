@@ -13,7 +13,9 @@ public class Delete {
 		final File file = new File(string + "/tasks.json");
 		String errands = FileUtils.readFileToString(file);
 		JSONObject obj = new JSONObject(errands);
-		System.out.println("Will delete "
-				+ ((JSONObject) obj.get(itemToDelete)).getString("title"));
+		System.out.println("Will delete ["
+				+ ((JSONObject) obj.get(itemToDelete)).getString("Message-ID")
+				+ "] "
+				+((JSONObject) obj.get(itemToDelete)).getString("title"));
 	}
 }
