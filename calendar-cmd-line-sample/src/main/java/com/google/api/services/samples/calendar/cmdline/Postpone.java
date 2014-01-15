@@ -116,8 +116,8 @@ public class Postpone {
 		return msg;
 	}
 
-	private static void commit(String itemToDelete, Update update,
-			String messageIdToDelete) throws NoSuchProviderException,
+	private static void commit(String itemToDelete, final Update update,
+			final String messageIdToDelete) throws NoSuchProviderException,
 			MessagingException, IOException {
 		_3: {
 			// JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
@@ -134,13 +134,37 @@ public class Postpone {
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
-		deleteEmail(messageIdToDelete);
-		Event updatedEvent = update.execute();
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					deleteEmail(messageIdToDelete);
+				} catch (NoSuchProviderException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (MessagingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}.start();
 
-		// Print the updated date.
-		System.out.println(updatedEvent.getUpdated());
-		System.out.println(updatedEvent.getHtmlLink());
-		System.out.println("Calendar updated");
+		new Thread() {
+			@Override
+			public void run() {
+				Event updatedEvent;
+				try {
+					updatedEvent = update.execute();
+					// Print the updated date.
+					System.out.println(updatedEvent.getUpdated());
+					System.out.println(updatedEvent.getHtmlLink());
+					System.out.println("Calendar updated");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}.start();
 	}
 
 	// Still useful
