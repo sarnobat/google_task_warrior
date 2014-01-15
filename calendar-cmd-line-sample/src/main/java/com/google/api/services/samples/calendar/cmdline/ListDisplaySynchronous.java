@@ -70,7 +70,7 @@ public class ListDisplaySynchronous {
 					"");
 
 			errandJsonObject.put("title", title);
-			getBodyMetadataSlow(aMessage);
+			//getBodyMetadataSlow(aMessage);
 			return errandJsonObject;
 		} catch (MessagingException e) {
 			e.printStackTrace();
