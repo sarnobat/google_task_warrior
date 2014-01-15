@@ -3,10 +3,6 @@ import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.json.JSONObject;
 
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -26,7 +22,7 @@ public class GoogleCalendarTaskWarrior {
 	public static void main(String[] args) throws IOException,
 			GeneralSecurityException {
 		Calendar client = getCalendarService();
-		
+
 		System.out.println("Getting calendars...");
 		@SuppressWarnings("unchecked")
 		List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
@@ -34,19 +30,22 @@ public class GoogleCalendarTaskWarrior {
 
 		for (CalendarListEntry aCalendar : allCalendars) {
 
-			System.out.println(
-					aCalendar.getSummary() 
-					+ "::" +URLDecoder.decode(aCalendar.getId(),"UTF-8") 
-					//+ " :: " + aCalendar.toPrettyString()
-				 	//+ " :: " + new JSONObject(aCalendar) + "\n"
-				 	);
+			System.out.println(aCalendar.getSummary() + "::"
+					+ URLDecoder.decode(aCalendar.getId(), "UTF-8")
+			// + " :: " + aCalendar.toPrettyString()
+			// + " :: " + new JSONObject(aCalendar) + "\n"
+					);
 		}
 	}
 
+	/************************************************************************
+	 * Boilerplate
+	 ************************************************************************/
+	
 	private static Calendar getCalendarService()
 			throws GeneralSecurityException, IOException {
 		System.out.println("Authenticating...");
-			
+
 		HttpTransport httpTransport = GoogleNetHttpTransport
 				.newTrustedTransport();
 		Calendar client = new Calendar.Builder(
@@ -71,10 +70,7 @@ public class GoogleCalendarTaskWarrior {
 								.build(), new LocalServerReceiver())
 						.authorize("user")).setApplicationName(
 				"gcal-task-warrior").build();
-
 		return client;
 
 	}
-
 }
-
