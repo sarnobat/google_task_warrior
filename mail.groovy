@@ -17,7 +17,7 @@ public class Mail {
 		Properties props = System.getProperties();
 		String password = System.getenv("GMAIL_PASSWORD");
 		if (password == null){
-			throw new RuntimeException("Please specify your password by setting GMAIL_PASSWORD");
+			throw new RuntimeException("Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
 		}
 		props.setProperty("mail.store.protocol", "imap");
 		try {
@@ -38,13 +38,19 @@ public class Mail {
 			folder.fetch(msgs, fp);
 
 			for (Message aMessage : msgs) {
-				System.out.println(aMessage.getMessageNumber()
-						+ "\t"
+				System.out.println(
+						//aMessage.getMessageNumber()
+						//+ "\t"
+						"=== "
 						+ aMessage.getSubject().split("@")[0].replace(
-								"Reminder: ", ""));
+								"Reminder: ", "")
+						+ " === "
+								);
 
-				// MimeMultipart s = (MimeMultipart) aMessage.getContent();
-				// System.out.println(s.getBodyPart(0).getContent());
+				 MimeMultipart s = (MimeMultipart) aMessage.getContent();
+				 System.out.println(s.getBodyPart(0).getContent());
+				 
+				 System.out.println();
 
 			}
 		} catch (NoSuchProviderException e) {

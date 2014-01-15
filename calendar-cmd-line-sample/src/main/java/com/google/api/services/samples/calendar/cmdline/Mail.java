@@ -43,8 +43,10 @@ public class Mail {
 						+ aMessage.getSubject().split("@")[0].replace(
 								"Reminder: ", ""));
 
-				// MimeMultipart s = (MimeMultipart) aMessage.getContent();
-				// System.out.println(s.getBodyPart(0).getContent());
+				 MimeMultipart s = (MimeMultipart) aMessage.getContent();
+				 System.out.println(s.getBodyPart(0).getContent());
+				 
+				 System.out.println();
 
 			}
 		} catch (NoSuchProviderException e) {
