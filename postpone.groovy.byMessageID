@@ -39,10 +39,8 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.collect.ImmutableSet;
 
 public class Postpone {
-	@Deprecated private static final String MESSAGE_ID = "Message-ID";
 	static final String dirPath = "/Users/sarnobat/.gcal_task_warrior";
-	static final File tasksFileLastDisplayed = new File(dirPath
-			+ "/tasks_last_displayed.json");
+	static final File tasksFileLastDisplayed = new File(dirPath + "/tasks_last_displayed.json");
 	static final File tasksFileLatest = new File(dirPath + "/tasks.json");
 
 	@SuppressWarnings("unused")
@@ -71,7 +69,7 @@ public class Postpone {
 			System.out.println("Will update event " + eventID + " in calendar "
 					+ calendarId);
 
-			createUpdateTask: {
+			_2: {
 				int daysToPostpone = Integer.parseInt(args[1]);
 				// Get event's current time
 				_3: {
@@ -82,6 +80,7 @@ public class Postpone {
 					System.out.println(lc.getItems().size());
 					for (CalendarListEntry c : lc.getItems()) {
 						if (calendarName.equals(c.getSummary())) {
+							// System.out.println(c.getSummary());
 							calendar = c;
 						}
 					}
@@ -90,8 +89,11 @@ public class Postpone {
 					}
 					com.google.api.services.calendar.model.Events s = events
 							.list(calendar.getId()).execute();
+					// System.out.println(s.values());
+					// java.util.List<Event> l = s.getItems();
+					// Map m = new HashMap();
 					Event target = null;
-					findCalendarEvent: {
+					_6: {
 						com.google.api.services.calendar.model.Events events2;
 
 						String pageToken = null;
@@ -105,6 +107,7 @@ public class Postpone {
 									.execute();
 							java.util.List<Event> items = events2.getItems();
 							for (Event e : items) {
+								// System.out.println(e.getSummary());
 								if (e.getHtmlLink() != null
 										&& e.getHtmlLink().contains(eventID)) {
 									target = e;
@@ -115,20 +118,32 @@ public class Postpone {
 								break;
 							}
 						}
-					}
 
+					}
+					_7: {
+						// for (Event e : l) {
+						// if (e.getHtmlLink().contains(eventID)) {
+						// target = e;
+						// }
+						// //
+						// System.out.println(e.getStart()+"::"+e.getSummary());
+						// }
+					}
 					if (target == null) {
 						throw new RuntimeException("Couldn't find event");
 					}
+					// Event l1 = l.get(0);
+					// System.out.println(l1);
 
 					System.out.println(target);
 					Event clonedEvent = target.clone();
+					// events.get(calendarId, eventID).execute().clone();
 					if (clonedEvent.getRecurrence() != null) {
 						throw new RuntimeException(
 								"Use optional param 'singleEvents' to break recurring events into single ones");
 					}
 
-					createUpdateTask1: {
+					_8: {
 						// First retrieve the event from the API.
 						Event event = getCalendarService().events()
 								.get(calendarId, target.getId()).execute();
@@ -147,15 +162,23 @@ public class Postpone {
 							EventDateTime endTime = event.getEnd();
 							long endTimeMillis = c.getTimeInMillis();
 							endTime.setDateTime(new DateTime(endTimeMillis));
+							// Patch patch = events.patch(calendarId,
+							// target.getId(),
+							// clonedEvent);
+							// patch.execute();
 						}
 						update = getCalendarService().events().update(
 								calendarId, target.getId(), event);
+
 					}
+
 				}
+
+				// Set event's time as x days from now
 			}
 		}
-		updateFiles: {
-			String messageIdToDelete = eventJson.getString(MESSAGE_ID);
+		_5: {
+			String messageIdToDelete = eventJson.getString("Message-ID");
 
 			System.out.println("Will delete [" + messageIdToDelete + "] "
 					+ eventJson.getString("title") + " from calendar "
@@ -176,11 +199,9 @@ public class Postpone {
 					tasksFileLatest);
 		}
 
-		// All persistent changes are done right at the end, so that any
-		// exceptions can get thrown first.
+		// All persistent changes are done right at the end, so that any exceptions can get thrown first.
 		commit: {
-			FileUtils.writeStringToFile(tasksFileLastDisplayed,
-					fileJson1.toString());
+			FileUtils.writeStringToFile(tasksFileLastDisplayed, fileJson1.toString());
 			FileUtils.writeStringToFile(tasksFileLatest, fileJson2.toString());
 			Event updatedEvent = update.execute();
 
@@ -228,7 +249,7 @@ public class Postpone {
 		String latestFileContents = FileUtils.readFileToString(file2);
 		JSONObject fileJson = new JSONObject(latestFileContents);
 		JSONObject removed = (JSONObject) fileJson.remove(itemToDelete);
-		if (!messageIdToDelete.equals(removed.getString(MESSAGE_ID))) {
+		if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
 			throw new RuntimeException(removed.getString("title"));
 		}
 		return fileJson;
@@ -268,12 +289,11 @@ public class Postpone {
 	@SuppressWarnings("unchecked")
 	private static String getMessageID(Message aMessage)
 			throws MessagingException {
-		Enumeration<Header> allHeaders = (Enumeration<Header>) aMessage
-				.getAllHeaders();
+		Enumeration<Header> allHeaders = (Enumeration<Header>) aMessage.getAllHeaders();
 		String messageID = "<not found>";
 		while (allHeaders.hasMoreElements()) {
 			Header e = (Header) allHeaders.nextElement();
-			if (e.getName().equals(MESSAGE_ID)) {
+			if (e.getName().equals("Message-ID")) {
 				messageID = e.getValue();
 			}
 		}
