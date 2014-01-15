@@ -14,6 +14,14 @@
 
 package com.google.api.services.samples.calendar.cmdline;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.json.JSONArray;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -27,11 +35,7 @@ import com.google.api.client.util.store.DataStoreFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.api.services.calendar.model.CalendarListEntry;
 
 /**
  * Main class for the Calendar API command line sample. Demonstrates how to make
@@ -44,7 +48,7 @@ public class CalendarSample {
 	 * is {@code null} or blank, the application will log a warning. Suggested
 	 * format is "MyCompany-ProductName/1.0".
 	 */
-	private static final String APPLICATION_NAME = "";
+	private static final String APPLICATION_NAME = "gcal-task-warrior";
 
 	/** Directory to store user credentials. */
 	private static final java.io.File DATA_STORE_DIR = new java.io.File(
@@ -122,12 +126,47 @@ public class CalendarSample {
 			client = new Calendar.Builder(httpTransport, JSON_FACTORY,
 					credential).setApplicationName(APPLICATION_NAME).build();
 
-			
-			
+			System.out.println(client.getServicePath());
+			System.out.println(client.getBaseUrl());
+			System.out.println(client.getRootUrl());
+			System.out
+					.println(client
+							.calendars()
+							.get("14tgse4ldpicq5o4pq2metp460@group.calendar.google.com")
+							.values());
+			System.out
+					.println("Fields:"
+							+ client.calendars()
+									.get("14tgse4ldpicq5o4pq2metp460@group.calendar.google.com")
+									.getFields());
+
+			List<CalendarListEntry> object = (List<CalendarListEntry>) client
+					.calendarList().list().execute().get("items");
+			for (CalendarListEntry aCalendar : object) {
+				System.out.println(aCalendar.getSummary() + "::" + aCalendar.getId() + "::"
+						+ aCalendar.getClass() + "::" + aCalendar);
+			}
+			System.out.println("Items: \t\t" + object);
+			for (Object o : client.calendarList().list().execute().keySet()) {
+				System.out.println(":::" + o);
+				// com.google.api.client.util.Data l;
+			}
+
+			for (Object o : client
+					.calendars()
+					.get("14tgse4ldpicq5o4pq2metp460@group.calendar.google.com")
+					.entrySet()) {
+				System.out.println(o);
+			}
+			System.out.println(client.settings().list().size());
+			System.out.println(client.calendarList().list().size());
+			// assertEquals(0, client.calendarList().list().size());
+			// assertEquals(0, client.events().list().size());
+
 			for (Object o : client.calendarList().list().keySet()) {
 				System.out.println(o);
 			}
-			
+
 			System.out.println("Success! Now add code here.");
 
 		} catch (IOException e) {
