@@ -66,10 +66,12 @@ public class Postpone {
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
 		System.out.println(title);
-		String eventId = getEventIdFromTitle();
+		String eventId = getEventIdFromTitleViaEmail();
+		String calendarName = getCalendarNameViaEmail();
+		String calendarId = getCalendarIdViaCalendarService();
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
-		commit(itemToDelete, update, messageIdToDelete);
+		commit(itemToDelete, updateTask, messageIdToDelete);
 	}
 
 	private static void commit(String itemToDelete, Update update,

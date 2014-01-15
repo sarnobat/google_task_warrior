@@ -21,6 +21,8 @@ import javax.mail.internet.MimeMultipart;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
+@Deprecated
+// This approach is problematic because of weak consistency
 public class ListUpdate {
 	public static void main(String[] args) {
 		final String string = "/Users/sarnobat/.gcal_task_warrior";
@@ -70,46 +72,79 @@ public class ListUpdate {
 		int i = 0;
 		final JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
-			String messageID = getMessageID(aMessage);
-
 			i++;
-			String title = aMessage.getSubject().split("@")[0].replace(
-					"Reminder: ", "");
-			MimeMultipart s = (MimeMultipart) aMessage.getContent();
-			String body = (String) s.getBodyPart(0).getContent();
-			if (body.trim().length() < 1) {
-				System.out.println("body is empty");
-			}
-
-			JSONObject errandJsonObject = new JSONObject();
-			if (body.contains("eid")) {
-				Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
-				Matcher m = pattern.matcher(body);
-				if (!m.find()) {
-					throw new RuntimeException("eid not in string 2");
-				}
-				String eventID = m.group(1);
-				errandJsonObject.put("eventID", eventID);
-			}
-			if (body.contains("Calendar:")) {
-				Pattern pattern = Pattern.compile("Calendar: (.*)");
-				Matcher m = pattern.matcher(body);
-				if (!m.find()) {
-					throw new RuntimeException("eid not in string 2");
-				}
-				String calendarName = m.group(1);
-				//System.out.println(calendarName);
-				errandJsonObject.put("calendar_name", calendarName);
-			} else {
-				errandJsonObject.put("calendar_name", "<not found>");
-			}
-			
-			errandJsonObject.put("title", title);
-			errandJsonObject.put("Message-ID", messageID);
+			JSONObject errandJsonObject = getMessageMetadata(aMessage);
 			json.put(Integer.toString(i), errandJsonObject);
 
 		}
 		return json;
+	}
+
+	private static JSONObject getMessageMetadata(Message aMessage)
+			throws MessagingException, IOException {
+		JSONObject errandJsonObject;
+		{
+			errandJsonObject = new JSONObject();
+			String title = aMessage.getSubject().split("@")[0].replace(
+					"Reminder: ", "");
+			errandJsonObject.put("title", title);
+
+			String eventID = getEventID(aMessage);
+			errandJsonObject.put("eventID", eventID);
+
+			String calendarName = getCalendarName(aMessage);
+			errandJsonObject.put("calendar_name", calendarName);
+
+			String messageID = getMessageID(aMessage);
+			errandJsonObject.put("Message-ID", messageID);
+		}
+		return errandJsonObject;
+	}
+
+	private static String getCalendarName(Message aMessage) throws IOException,
+			MessagingException {
+		String calendarName;
+		{
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			String body1 = (String) s.getBodyPart(0).getContent();
+			if (body1.contains("Calendar:")) {
+				Pattern pattern = Pattern.compile("Calendar: (.*)");
+				Matcher m = pattern.matcher(body1);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
+				}
+				calendarName = m.group(1);
+			} else {
+				calendarName = "<not found>";
+			}
+		}
+		return calendarName;
+	}
+
+	private static String getEventID(Message aMessage) throws IOException,
+			MessagingException {
+		String eventID = "<none>";
+		{
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			{
+				String body = (String) s.getBodyPart(0).getContent();
+
+				if (body.trim().length() < 1) {
+					System.out.println("body is empty");
+				}
+
+				if (body.contains("eid")) {
+					Pattern pattern = Pattern.compile("eid=([^&" + '$'
+							+ "\\s]*)");
+					Matcher m = pattern.matcher(body);
+					if (!m.find()) {
+						throw new RuntimeException("eid not in string 2");
+					}
+					eventID = m.group(1);
+				}
+			}
+		}
+		return eventID;
 	}
 
 	private static String getMessageID(Message aMessage)
