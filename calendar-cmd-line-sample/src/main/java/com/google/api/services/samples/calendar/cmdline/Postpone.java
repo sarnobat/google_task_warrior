@@ -293,8 +293,6 @@ public class Postpone {
 		}
 	}
 
-	@Deprecated
-	// only do this once
 	private static Calendar getCalendarService() {
 		System.out.println("Authenticating...");
 
