@@ -65,29 +65,13 @@ public class Postpone {
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
 		System.out.println(title);
-		String eventId  = getEventIdFromTitle();
-		Update updateTask = createUpdateTask(calendarName,
-				calendarId, eventId, daysToPostponeString);
-		commit(itemToDelete, update,
-				messageIdToDelete) ;
-	}
-
-	@SuppressWarnings("unused")
-	@Deprecated
-	private static void postpone(String itemToDelete,
-			String daysToPostponeString) throws IOException,
-			GeneralSecurityException, NoSuchProviderException,
-			MessagingException {
-		JSONObject eventJson = getEventJson(itemToDelete,
-				mTasksFileLastDisplayed);
-		Update update = createUpdateCall(daysToPostponeString, eventJson);
-
-		String messageIdToDelete = eventJson.getString(MESSAGE_ID);
-
-		System.out.println("Will delete [" + messageIdToDelete + "] "
-				+ eventJson.getString("title") + " from calendar ");
+		String eventId = getEventIdFromTitle();
+		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
+				daysToPostponeString);
 		commit(itemToDelete, update, messageIdToDelete);
 	}
+
+	
 
 	private static void commit(String itemToDelete, Update update,
 			String messageIdToDelete) throws NoSuchProviderException,
@@ -102,16 +86,6 @@ public class Postpone {
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
 		commitInternal(update, fileJsonLastDisplayed, fileJsonLatest);
-	}
-
-	@Deprecated
-	private static Update createUpdateCall(String daysToPostponeString,
-			JSONObject eventJson) throws IOException, GeneralSecurityException {
-		String calendarName = eventJson.getString("calendar_name");
-		System.out.println(calendarName);
-		Update update = createUpdateTaskDeprecated(eventJson, calendarName,
-				daysToPostponeString);
-		return update;
 	}
 
 	// Still useful
@@ -157,28 +131,6 @@ public class Postpone {
 				}
 			}
 		}
-	}
-
-	@Deprecated
-	private static Update createUpdateTaskDeprecated(JSONObject eventJson,
-			String calendarName, String daysToPostponeString)
-			throws IOException, GeneralSecurityException {
-		Update update;
-		_1: {
-			String calendars = FileUtils.readFileToString(new File(DIR_PATH
-					+ "/calendars.json"));
-			JSONObject calendarJson = getEventJson(calendarName, calendars);
-			System.out.println(calendarJson.toString());
-			String calendarId = calendarJson.getString("calendar_id");
-			String eventID = eventJson.getString("eventID");
-
-			System.out.println("Will update event " + eventID + " in calendar "
-					+ calendarId);
-
-			update = createUpdateTask(calendarName, calendarId, eventID,
-					daysToPostponeString);
-		}
-		return update;
 	}
 
 	// Useful
@@ -404,4 +356,57 @@ public class Postpone {
 		return messageID;
 	}
 
+	@Deprecated
+	// It's too expensive to get the event ID before deleting
+	private static class PostponeByMessageID {
+
+		@Deprecated
+		private static Update createUpdateCall(String daysToPostponeString,
+				JSONObject eventJson) throws IOException,
+				GeneralSecurityException {
+			String calendarName = eventJson.getString("calendar_name");
+			System.out.println(calendarName);
+			Update update = createUpdateTaskDeprecated(eventJson, calendarName,
+					daysToPostponeString);
+			return update;
+		}
+
+		@Deprecated
+		private static Update createUpdateTaskDeprecated(JSONObject eventJson,
+				String calendarName, String daysToPostponeString)
+				throws IOException, GeneralSecurityException {
+			Update update;
+			_1: {
+				String calendars = FileUtils.readFileToString(new File(DIR_PATH
+						+ "/calendars.json"));
+				JSONObject calendarJson = getEventJson(calendarName, calendars);
+				System.out.println(calendarJson.toString());
+				String calendarId = calendarJson.getString("calendar_id");
+				String eventID = eventJson.getString("eventID");
+
+				System.out.println("Will update event " + eventID
+						+ " in calendar " + calendarId);
+
+				update = createUpdateTask(calendarName, calendarId, eventID,
+						daysToPostponeString);
+			}
+			return update;
+		}
+		@SuppressWarnings("unused")
+		@Deprecated
+		private static void postpone(String itemToDelete,
+				String daysToPostponeString) throws IOException,
+				GeneralSecurityException, NoSuchProviderException,
+				MessagingException {
+			JSONObject eventJson = getEventJson(itemToDelete,
+					mTasksFileLastDisplayed);
+			Update update = createUpdateCall(daysToPostponeString, eventJson);
+
+			String messageIdToDelete = eventJson.getString(MESSAGE_ID);
+
+			System.out.println("Will delete [" + messageIdToDelete + "] "
+					+ eventJson.getString("title") + " from calendar ");
+			commit(itemToDelete, update, messageIdToDelete);
+		}
+	}
 }
