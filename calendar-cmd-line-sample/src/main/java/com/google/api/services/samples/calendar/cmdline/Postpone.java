@@ -45,8 +45,11 @@ import com.google.common.collect.ImmutableSet;
 
 public class Postpone {
 	static final String string = "/Users/sarnobat/.gcal_task_warrior";
-	static final String string2 = string + "/tasks_last_displayed.json";
-	static final File file = new File(string2);
+	static final String latestFilePath = string + "/tasks_last_displayed.json";
+	@Deprecated
+	static final File file = new File(latestFilePath);
+	static final File tasksFileLatest = new File(latestFilePath);
+	static final File tasksFile = new File(string + "/tasks.json");
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
@@ -58,6 +61,8 @@ public class Postpone {
 		String calendarName = eventJson.getString("calendar_name");
 		System.out.println(calendarName);
 		Update update;
+		JSONObject fileJson1;
+		JSONObject fileJson2;
 		_1: {
 			String calendars = FileUtils.readFileToString(new File(string
 					+ "/calendars.json"));
@@ -194,10 +199,17 @@ public class Postpone {
 					break;
 				}
 			}
-			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
+			fileJson1 = getReducedJson(itemToDelete, messageIdToDelete,
+					tasksFileLatest);
+
+			fileJson2 = getReducedJson(itemToDelete, messageIdToDelete,
+					tasksFile);
 		}
 
+		// All persistent changes are done right at the end, so that any exceptions can get thrown first.
 		commit: {
+			FileUtils.writeStringToFile(tasksFileLatest, fileJson1.toString());
+			FileUtils.writeStringToFile(tasksFile, fileJson2.toString());
 			Event updatedEvent = update.execute();
 
 			// Print the updated date.
@@ -239,31 +251,15 @@ public class Postpone {
 
 	}
 
-	private static void deleteMessageFromLocalJson(String itemToDelete,
-			String messageIdToDelete) throws IOException {
-		{
-			String displayedFileContents = FileUtils.readFileToString(file);
-			JSONObject displayedFileJson = new JSONObject(displayedFileContents);
-			JSONObject removed = (JSONObject) displayedFileJson
-					.remove(itemToDelete);
-			if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
-				throw new RuntimeException(removed.getString("title"));
-			}
-			FileUtils.writeStringToFile(file, displayedFileJson.toString());
+	private static JSONObject getReducedJson(String itemToDelete,
+			String messageIdToDelete, File file2) throws IOException {
+		String latestFileContents = FileUtils.readFileToString(file2);
+		JSONObject fileJson = new JSONObject(latestFileContents);
+		JSONObject removed = (JSONObject) fileJson.remove(itemToDelete);
+		if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
+			throw new RuntimeException(removed.getString("title"));
 		}
-		String string3 = string + "/tasks.json";
-		File file2 = new File(string3);
-		{
-			String latestFileContents = FileUtils.readFileToString(file2);
-			JSONObject latestFileJson = new JSONObject(latestFileContents);
-			JSONObject removed2 = (JSONObject) latestFileJson
-					.remove(itemToDelete);
-			if (!messageIdToDelete.equals(removed2.getString("Message-ID"))) {
-				throw new RuntimeException(removed2.getString("title"));
-			}
-			FileUtils.writeStringToFile(file2, latestFileJson.toString());
-		}
-
+		return fileJson;
 	}
 
 	private static Message[] getMessages() throws NoSuchProviderException,
