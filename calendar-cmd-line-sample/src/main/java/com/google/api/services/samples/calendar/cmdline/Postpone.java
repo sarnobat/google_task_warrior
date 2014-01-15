@@ -50,7 +50,7 @@ public class Postpone {
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
-		String itemToDelete = "11";// args[0];
+		String itemToDelete = args[0];
 		String errands = FileUtils.readFileToString(file);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
@@ -94,11 +94,15 @@ public class Postpone {
 					// java.util.List<Event> l = s.getItems();
 					// Map m = new HashMap();
 					Event target = null;
-					{
+					_6: {
 						com.google.api.services.calendar.model.Events events2;
 
 						String pageToken = null;
-						do {
+
+						while (true) {
+							events2 = getCalendarService().events()
+									.list("primary").setPageToken(pageToken)
+									.execute();
 							events2 = getCalendarService().events()
 									.list("primary").setPageToken(pageToken)
 									.execute();
@@ -111,10 +115,13 @@ public class Postpone {
 								}
 							}
 							pageToken = events2.getNextPageToken();
-						} while (pageToken != null);
+							if (pageToken == null) {
+								break;
+							}
+						}
 
 					}
-					{
+					_7: {
 						// for (Event e : l) {
 						// if (e.getHtmlLink().contains(eventID)) {
 						// target = e;
@@ -137,7 +144,7 @@ public class Postpone {
 								"Use optional param 'singleEvents' to break recurring events into single ones");
 					}
 
-					{
+					_8: {
 						// First retrieve the event from the API.
 						Event event = getCalendarService().events()
 								.get(calendarId, target.getId()).execute();
@@ -149,7 +156,7 @@ public class Postpone {
 							EventDateTime startTime = event.getStart();
 							System.out.println(startTime);
 							System.out.println(target.getId());
-							
+
 							long dateTime = c.getTimeInMillis();
 							startTime.setDateTime(new DateTime(dateTime));
 
@@ -175,23 +182,23 @@ public class Postpone {
 				// Set event's time as x days from now
 			}
 		}
-		// _5: {
-		// String messageIdToDelete = eventJson.getString("Message-ID");
-		//
-		// System.out.println("Will delete [" + messageIdToDelete + "] "
-		// + eventJson.getString("title") + " from calendar "
-		// + calendarName);
-		// Message[] messages = getMessages();
-		// for (Message aMessage : messages) {
-		// String aMessageID = getMessageID(aMessage);
-		// if (aMessageID.equals(messageIdToDelete)) {
-		// aMessage.setFlag(Flags.Flag.DELETED, true);
-		// System.out.println("Deleted " + aMessage.getSubject());
-		// break;
-		// }
-		// }
-		// deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
-		// }
+		_5: {
+			String messageIdToDelete = eventJson.getString("Message-ID");
+
+			System.out.println("Will delete [" + messageIdToDelete + "] "
+					+ eventJson.getString("title") + " from calendar "
+					+ calendarName);
+			Message[] messages = getMessages();
+			for (Message aMessage : messages) {
+				String aMessageID = getMessageID(aMessage);
+				if (aMessageID.equals(messageIdToDelete)) {
+					aMessage.setFlag(Flags.Flag.DELETED, true);
+					System.out.println("Deleted " + aMessage.getSubject());
+					break;
+				}
+			}
+			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
+		}
 
 		System.out.println("Event updated");
 	}

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.FetchProfile;
@@ -30,10 +32,12 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.Calendar.CalendarList;
 import com.google.api.services.calendar.Calendar.Events;
 import com.google.api.services.calendar.Calendar.Events.List;
 import com.google.api.services.calendar.Calendar.Events.Patch;
 import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.collect.ImmutableSet;
@@ -63,37 +67,114 @@ public class Postpone {
 			String calendarId = calendarJson.getString("calendar_id");
 			String eventID = eventJson.getString("eventID");
 
-			System.out.println("Will update event event " + eventID
-					+ " in calendar " + calendarId);
+			System.out.println("Will update event " + eventID + " in calendar "
+					+ calendarId);
 
 			_2: {
 				int daysToPostpone = 1;
 				// Get event's current time
 				_3: {
 					Events events = getCalendarService().events();
-					com.google.api.services.calendar.model.Events s = events.list(calendarId).execute();
-					System.out.println(s.values());
-					java.util.List<Event> l = s.getItems();
-					Event l1 = l.get(0);
-					System.out.println(l1);
-					
-//					System.out.println(s);
-					Event clonedEvent = events.get(calendarId, eventID)
-							.execute().clone();
+					com.google.api.services.calendar.model.CalendarList lc = getCalendarService()
+							.calendarList().list().execute();
+					CalendarListEntry calendar = null;
+					System.out.println(lc.getItems().size());
+					for (CalendarListEntry c : lc.getItems()) {
+						if (calendarName.equals(c.getSummary())) {
+							// System.out.println(c.getSummary());
+							calendar = c;
+						}
+					}
+					if (calendar == null) {
+						throw new RuntimeException("couldn't find calendar");
+					}
+					com.google.api.services.calendar.model.Events s = events
+							.list(calendar.getId()).execute();
+					// System.out.println(s.values());
+					// java.util.List<Event> l = s.getItems();
+					// Map m = new HashMap();
+					Event target = null;
+					_6: {
+						com.google.api.services.calendar.model.Events events2;
+
+						String pageToken = null;
+
+						while (true) {
+							events2 = getCalendarService().events()
+									.list("primary").setPageToken(pageToken)
+									.execute();
+							events2 = getCalendarService().events()
+									.list("primary").setPageToken(pageToken)
+									.execute();
+							java.util.List<Event> items = events2.getItems();
+							for (Event e : items) {
+								// System.out.println(e.getSummary());
+								if (e.getHtmlLink() != null
+										&& e.getHtmlLink().contains(eventID)) {
+									target = e;
+								}
+							}
+							pageToken = events2.getNextPageToken();
+							if (pageToken == null) {
+								break;
+							}
+						}
+
+					}
+					_7: {
+						// for (Event e : l) {
+						// if (e.getHtmlLink().contains(eventID)) {
+						// target = e;
+						// }
+						// //
+						// System.out.println(e.getStart()+"::"+e.getSummary());
+						// }
+					}
+					if (target == null) {
+						throw new RuntimeException("Couldn't find event");
+					}
+					// Event l1 = l.get(0);
+					// System.out.println(l1);
+
+					System.out.println(target);
+					Event clonedEvent = target.clone();
+					// events.get(calendarId, eventID).execute().clone();
 					if (clonedEvent.getRecurrence() != null) {
 						throw new RuntimeException(
-								"I'm not sure how to move an instance of a recurring event");
+								"Use optional param 'singleEvents' to break recurring events into single ones");
 					}
-					java.util.Calendar c = java.util.Calendar.getInstance();
-					c.add(java.util.Calendar.DATE, daysToPostpone);
-					System.out.println(c.getTime());
-					_4: {
-						EventDateTime startTime = clonedEvent.getStart();
-						long dateTime = c.getTimeInMillis();
-						startTime.setDateTime(new DateTime(dateTime));
-						Patch patch = events.patch(calendarId, eventID,
-								clonedEvent);
-						patch.execute();
+
+					_8: {
+						// First retrieve the event from the API.
+						Event event = getCalendarService().events()
+								.get(calendarId, target.getId()).execute();
+
+						java.util.Calendar c = java.util.Calendar.getInstance();
+						c.add(java.util.Calendar.DATE, daysToPostpone);
+						System.out.println(c.getTime());
+						_4: {
+							EventDateTime startTime = event.getStart();
+							System.out.println(startTime);
+							System.out.println(target.getId());
+
+							long dateTime = c.getTimeInMillis();
+							startTime.setDateTime(new DateTime(dateTime));
+
+							EventDateTime endTime = event.getEnd();
+							long endTimeMillis = c.getTimeInMillis();
+							endTime.setDateTime(new DateTime(endTimeMillis));
+							// Patch patch = events.patch(calendarId,
+							// target.getId(),
+							// clonedEvent);
+							// patch.execute();
+						}
+						Event updatedEvent = getCalendarService().events()
+								.update(calendarId, target.getId(), event)
+								.execute();
+
+						// Print the updated date.
+						System.out.println(updatedEvent.getUpdated());
+						System.out.println(event.getHtmlLink());
 					}
 
 				}
@@ -101,23 +182,23 @@ public class Postpone {
 				// Set event's time as x days from now
 			}
 		}
-		// _5: {
-		// String messageIdToDelete = eventJson.getString("Message-ID");
-		//
-		// System.out.println("Will delete [" + messageIdToDelete + "] "
-		// + eventJson.getString("title") + " from calendar "
-		// + calendarName);
-		// Message[] messages = getMessages();
-		// for (Message aMessage : messages) {
-		// String aMessageID = getMessageID(aMessage);
-		// if (aMessageID.equals(messageIdToDelete)) {
-		// aMessage.setFlag(Flags.Flag.DELETED, true);
-		// System.out.println("Deleted " + aMessage.getSubject());
-		// break;
-		// }
-		// }
-		// deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
-		// }
+		_5: {
+			String messageIdToDelete = eventJson.getString("Message-ID");
+
+			System.out.println("Will delete [" + messageIdToDelete + "] "
+					+ eventJson.getString("title") + " from calendar "
+					+ calendarName);
+			Message[] messages = getMessages();
+			for (Message aMessage : messages) {
+				String aMessageID = getMessageID(aMessage);
+				if (aMessageID.equals(messageIdToDelete)) {
+					aMessage.setFlag(Flags.Flag.DELETED, true);
+					System.out.println("Deleted " + aMessage.getSubject());
+					break;
+				}
+			}
+			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
+		}
 
 		System.out.println("Event updated");
 	}
