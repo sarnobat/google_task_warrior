@@ -1,28 +1,20 @@
 package com.google.api.services.samples.calendar.cmdline;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.mail.FetchProfile;
 import javax.mail.Folder;
-import javax.mail.Header;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
-import javax.mail.internet.MimeMultipart;
 
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
@@ -119,7 +111,7 @@ public class ListDisplaySynchronous {
 								GoogleClientSecrets.load(
 										JacksonFactory.getDefaultInstance(),
 										new InputStreamReader(
-												ListCalendars.class
+												ListDisplaySynchronous.class
 														.getResourceAsStream("/client_secrets.json"))),
 								ImmutableSet.of(CalendarScopes.CALENDAR,
 										CalendarScopes.CALENDAR_READONLY))
@@ -150,7 +142,7 @@ public class ListDisplaySynchronous {
 		JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
 			i++;
-			JSONObject messageMetadata = checkNotNull(getMessageMetadata(aMessage));
+			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
 			System.out.println(i
 					+ "\t"
 					+ messageMetadata.getString("title").split("@")[0].replace(

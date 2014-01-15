@@ -79,11 +79,25 @@ public class Postpone {
 		String calendarId = getCalendarId(calendarName);
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
-		commit(itemToDelete, updateTask, messageIdToDelete);
+		
+		//commit(itemToDelete, updateTask, messageIdToDelete);
 	}
 
 	private static String getCalendarId(String calendarName) {
 
+		final String string = "/Users/sarnobat/.gcal_task_warrior";
+		final File file = new File(string + "/calendars.json");
+		String s;
+		try {
+			s = FileUtils.readFileToString(file, "UTF-8");
+			JSONObject j = new JSONObject(s);
+			String id = ((JSONObject) j.get(calendarName))
+					.getString("calendar_id");
+			return id;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	private static Message getMessage(String title)
