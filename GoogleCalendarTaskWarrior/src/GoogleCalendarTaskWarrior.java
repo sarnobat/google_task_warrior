@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class GoogleCalendarTaskWarrior {
 
 			System.out.println(
 					aCalendar.getSummary() 
-					+ "\t::\t" + aCalendar.getId() 
+					+ "::" +URLDecoder.decode(aCalendar.getId(),"UTF-8") 
 					//+ " :: " + aCalendar.toPrettyString()
 				 	//+ " :: " + new JSONObject(aCalendar) + "\n"
 				 	);
