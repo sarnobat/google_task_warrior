@@ -58,10 +58,9 @@ public class ListUpdate {
 		} catch (MessagingException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		System.out.println("List updated");
 	}
 
 	private static JSONObject getErrands() throws NoSuchProviderException,
@@ -76,10 +75,10 @@ public class ListUpdate {
 		Store theImapClient = Session.getInstance(props).getStore("imaps");
 		theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com",
 				password);
-//		System.out.println(theImapClient);
+		// System.out.println(theImapClient);
 		Folder folder = theImapClient
 				.getFolder("3 - Urg - time sensitive - this week");
-//		System.out.println(folder.getURLName());
+		// System.out.println(folder.getURLName());
 		folder.open(Folder.READ_ONLY);
 
 		Message[] msgs = folder.getMessages();
@@ -92,11 +91,11 @@ public class ListUpdate {
 		int i = 0;
 		final JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
-			System.out.print('.');
+			// System.out.print('.');
 			i++;
 			String title = aMessage.getSubject().split("@")[0].replace(
 					"Reminder: ", "");
-//			System.out.println(i + "\t" + title);
+			// System.out.println(i + "\t" + title);
 			MimeMultipart s = (MimeMultipart) aMessage.getContent();
 			String body = (String) s.getBodyPart(0).getContent();
 			if (body.trim().length() < 1) {
@@ -112,14 +111,14 @@ public class ListUpdate {
 				throw new RuntimeException("eid not in string 2");
 			}
 			String eventID = m.group(1);
-//			System.out.println(eventID);
+			// System.out.println(eventID);
 			JSONObject errandJsonObject = new JSONObject();
 			errandJsonObject.put("eventID", eventID);
 			errandJsonObject.put("title", title);
 			json.put(Integer.toString(i), errandJsonObject);
 		}
 
-//		System.out.println(json.toString());
+		// System.out.println(json.toString());
 		return json;
 	}
 }
