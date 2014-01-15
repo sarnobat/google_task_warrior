@@ -91,8 +91,8 @@ public class Postpone {
 					com.google.api.services.calendar.model.Events s = events
 							.list(calendar.getId()).execute();
 					// System.out.println(s.values());
-					java.util.List<Event> l = s.getItems();
-					Map m = new HashMap();
+					// java.util.List<Event> l = s.getItems();
+					// Map m = new HashMap();
 					Event target = null;
 					{
 						com.google.api.services.calendar.model.Events events2;
@@ -104,8 +104,9 @@ public class Postpone {
 									.execute();
 							java.util.List<Event> items = events2.getItems();
 							for (Event e : items) {
-								System.out.println(e.getSummary());
-								if (e.getHtmlLink().contains(eventID)) {
+								// System.out.println(e.getSummary());
+								if (e.getHtmlLink() != null
+										&& e.getHtmlLink().contains(eventID)) {
 									target = e;
 								}
 							}
@@ -114,36 +115,59 @@ public class Postpone {
 
 					}
 					{
-						for (Event e : l) {
-							if (e.getHtmlLink().contains(eventID)) {
-								target = e;
-							}
-							// System.out.println(e.getStart()+"::"+e.getSummary());
-						}
+						// for (Event e : l) {
+						// if (e.getHtmlLink().contains(eventID)) {
+						// target = e;
+						// }
+						// //
+						// System.out.println(e.getStart()+"::"+e.getSummary());
+						// }
 					}
 					if (target == null) {
 						throw new RuntimeException("Couldn't find event");
 					}
-					Event l1 = l.get(0);
-					System.out.println(l1);
+					// Event l1 = l.get(0);
+					// System.out.println(l1);
 
-					// System.out.println(s);
+					System.out.println(target);
 					Event clonedEvent = target.clone();
 					// events.get(calendarId, eventID).execute().clone();
 					if (clonedEvent.getRecurrence() != null) {
 						throw new RuntimeException(
 								"Use optional param 'singleEvents' to break recurring events into single ones");
 					}
-					java.util.Calendar c = java.util.Calendar.getInstance();
-					c.add(java.util.Calendar.DATE, daysToPostpone);
-					System.out.println(c.getTime());
-					_4: {
-						EventDateTime startTime = clonedEvent.getStart();
-						long dateTime = c.getTimeInMillis();
-						startTime.setDateTime(new DateTime(dateTime));
-						Patch patch = events.patch(calendarId, eventID,
-								clonedEvent);
-						patch.execute();
+
+					{
+						// First retrieve the event from the API.
+						Event event = getCalendarService().events()
+								.get(calendarId, target.getId()).execute();
+
+						java.util.Calendar c = java.util.Calendar.getInstance();
+						c.add(java.util.Calendar.DATE, daysToPostpone);
+						System.out.println(c.getTime());
+						_4: {
+							EventDateTime startTime = event.getStart();
+							System.out.println(startTime);
+							System.out.println(target.getId());
+							
+							long dateTime = c.getTimeInMillis();
+							startTime.setDateTime(new DateTime(dateTime));
+
+							EventDateTime endTime = event.getEnd();
+							long endTimeMillis = c.getTimeInMillis();
+							endTime.setDateTime(new DateTime(endTimeMillis));
+							// Patch patch = events.patch(calendarId,
+							// target.getId(),
+							// clonedEvent);
+							// patch.execute();
+						}
+						Event updatedEvent = getCalendarService().events()
+								.update(calendarId, target.getId(), event)
+								.execute();
+
+						// Print the updated date.
+						System.out.println(updatedEvent.getUpdated());
+						System.out.println(event.getHtmlLink());
 					}
 
 				}
