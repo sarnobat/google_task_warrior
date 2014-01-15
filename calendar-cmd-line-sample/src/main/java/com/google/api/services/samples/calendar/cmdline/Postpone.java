@@ -63,7 +63,7 @@ public class Postpone {
 			daysToPostponeString = "1";
 		} else if (args.length == 1) {
 			itemToDelete = args[0];
-			daysToPostponeString = "1";
+			daysToPostponeString = "30";
 		} else {
 			itemToDelete = args[0];
 			daysToPostponeString = args[1];
@@ -120,16 +120,16 @@ public class Postpone {
 			String messageIdToDelete) throws NoSuchProviderException,
 			MessagingException, IOException {
 		_3: {
-			JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
-					messageIdToDelete, mTasksFileLastDisplayed);
+			// JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
+			// messageIdToDelete, mTasksFileLastDisplayed);
 
-			JSONObject fileJsonLatest = getReducedJson(itemToDelete,
-					messageIdToDelete, mTasksFileLatest);
+			// JSONObject fileJsonLatest = getReducedJson(itemToDelete,
+			// messageIdToDelete, mTasksFileLatest);
 
-			FileUtils.writeStringToFile(mTasksFileLastDisplayed,
-					fileJsonLastDisplayed.toString());
-			FileUtils.writeStringToFile(mTasksFileLatest,
-					fileJsonLatest.toString());
+			// FileUtils.writeStringToFile(mTasksFileLastDisplayed,
+			// fileJsonLastDisplayed.toString());
+			// FileUtils.writeStringToFile(mTasksFileLatest,
+			// fileJsonLatest.toString());
 		}
 
 		// All persistent changes are done right at the end, so that any
@@ -362,6 +362,7 @@ public class Postpone {
 			String messageIdToDelete, File file2) throws IOException {
 		String latestFileContents = FileUtils.readFileToString(file2);
 		JSONObject fileJson = new JSONObject(latestFileContents);
+		System.out.println(fileJson.toString());
 		JSONObject removed = (JSONObject) fileJson.remove(itemToDelete);
 		if (!messageIdToDelete.equals(removed.getString(MESSAGE_ID))) {
 			throw new RuntimeException(removed.getString("title"));
