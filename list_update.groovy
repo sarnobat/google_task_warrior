@@ -80,21 +80,31 @@ public class ListUpdate {
 			if (body.trim().length() < 1) {
 				System.out.println("body is empty");
 			}
-			Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
 
-			if (!body.contains("eid")) {
-				continue;
-			}
-			Matcher m = pattern.matcher(body);
-			if (!m.find()) {
-				throw new RuntimeException("eid not in string 2");
-			}
-			String eventID = m.group(1);
 			JSONObject errandJsonObject = new JSONObject();
-			errandJsonObject.put("eventID", eventID);
+			if (body.contains("eid")) {
+				Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
+				Matcher m = pattern.matcher(body);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
+				}
+				String eventID = m.group(1);
+				errandJsonObject.put("eventID", eventID);
+			}
+			if (body.contains("Calendar:")) {
+				Pattern pattern = Pattern.compile("Calendar: (.*)");
+				Matcher m = pattern.matcher(body);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
+				}
+				String calendarName = m.group(1);
+				System.out.println(calendarName);
+				errandJsonObject.put("calendar_name", calendarName);
+			}
 			errandJsonObject.put("title", title);
 			errandJsonObject.put("Message-ID", messageID);
 			json.put(Integer.toString(i), errandJsonObject);
+
 		}
 		return json;
 	}
@@ -131,7 +141,7 @@ public class ListUpdate {
 	private static Store connect() throws NoSuchProviderException,
 			MessagingException {
 		Properties props = System.getProperties();
-		String password = System.getenv("GMAIL_PASSWORD");
+		String password = "varelA77";// System.getenv("GMAIL_PASSWORD");
 		if (password == null) {
 			throw new RuntimeException(
 					"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");

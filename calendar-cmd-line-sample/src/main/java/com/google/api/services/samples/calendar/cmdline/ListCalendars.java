@@ -43,7 +43,7 @@ public class ListCalendars {
 			// + " :: " + new JSONObject(aCalendar) + "\n"
 					);
 			json.put(aCalendar.getSummary(),
-					new JSONObject().put("calendar_name", aCalendar.getId()));
+					new JSONObject().put("calendar_id", aCalendar.getId()));
 		}
 		final String string = "/Users/sarnobat/.gcal_task_warrior";
 		FileUtils.writeStringToFile(new File(string + "/calendars.json"),
