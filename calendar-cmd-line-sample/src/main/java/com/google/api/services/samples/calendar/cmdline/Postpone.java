@@ -46,18 +46,7 @@ public class Postpone {
 			+ "/tasks_last_displayed.json");
 	private static final File mTasksFileLatest = new File(DIR_PATH
 			+ "/tasks.json");
-	private static final Calendar mCs = cs();
-
-	private static Calendar cs() {
-		try {
-			return getCalendarService();
-		} catch (GeneralSecurityException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
+	private static final Calendar mCs = getCalendarService();
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
@@ -306,35 +295,42 @@ public class Postpone {
 
 	@Deprecated
 	// only do this once
-	private static Calendar getCalendarService()
-			throws GeneralSecurityException, IOException {
+	private static Calendar getCalendarService() {
 		System.out.println("Authenticating...");
 
-		HttpTransport httpTransport = GoogleNetHttpTransport
-				.newTrustedTransport();
-		Calendar client = new Calendar.Builder(
-				httpTransport,
-				JacksonFactory.getDefaultInstance(),
-				new AuthorizationCodeInstalledApp(
-						new GoogleAuthorizationCodeFlow.Builder(
-								httpTransport,
-								JacksonFactory.getDefaultInstance(),
-								GoogleClientSecrets.load(
-										JacksonFactory.getDefaultInstance(),
-										new InputStreamReader(
-												Postpone.class
-														.getResourceAsStream("/client_secrets.json"))),
-								ImmutableSet.of(CalendarScopes.CALENDAR,
-										CalendarScopes.CALENDAR_READONLY))
-								.setDataStoreFactory(
-										new FileDataStoreFactory(
-												new java.io.File(
-														System.getProperty("user.home"),
-														".store/calendar_sample")))
-								.build(), new LocalServerReceiver())
-						.authorize("user")).setApplicationName(
-				"gcal-task-warrior").build();
-		return client;
+		HttpTransport httpTransport;
+		try {
+			httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+			Calendar client = new Calendar.Builder(
+					httpTransport,
+					JacksonFactory.getDefaultInstance(),
+					new AuthorizationCodeInstalledApp(
+							new GoogleAuthorizationCodeFlow.Builder(
+									httpTransport,
+									JacksonFactory.getDefaultInstance(),
+									GoogleClientSecrets.load(
+											JacksonFactory.getDefaultInstance(),
+											new InputStreamReader(
+													Postpone.class
+															.getResourceAsStream("/client_secrets.json"))),
+									ImmutableSet.of(CalendarScopes.CALENDAR,
+											CalendarScopes.CALENDAR_READONLY))
+									.setDataStoreFactory(
+											new FileDataStoreFactory(
+													new java.io.File(
+															System.getProperty("user.home"),
+															".store/calendar_sample")))
+									.build(), new LocalServerReceiver())
+							.authorize("user")).setApplicationName(
+					"gcal-task-warrior").build();
+			return client;
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 
 	}
 
