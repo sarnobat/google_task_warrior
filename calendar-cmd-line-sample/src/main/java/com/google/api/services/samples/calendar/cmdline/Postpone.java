@@ -242,9 +242,8 @@ public class Postpone {
 		return target;
 	}
 
-	private static Update createUpdateTask(String calendarId,
-			String eventID, int daysToPostpone) throws IOException,
-			GeneralSecurityException {
+	private static Update createUpdateTask(String calendarId, String eventID,
+			int daysToPostpone) throws IOException, GeneralSecurityException {
 		Event target = getEvent(eventID);
 
 		Event clonedEvent = target.clone();
@@ -257,21 +256,23 @@ public class Postpone {
 			// First retrieve the event from the API.
 			Event event = getCalendarService().events()
 					.get(calendarId, target.getId()).execute();
+			{
+				java.util.Calendar c = java.util.Calendar.getInstance();
+				c.add(java.util.Calendar.DATE, daysToPostpone);
 
-			java.util.Calendar c = java.util.Calendar.getInstance();
-			c.add(java.util.Calendar.DATE, daysToPostpone);
-			System.out.println(c.getTime());
-			_4: {
-				EventDateTime startTime = event.getStart();
-				System.out.println(startTime);
-				System.out.println(target.getId());
+				System.out.println(c.getTime());
+				_4: {
+					EventDateTime startTime = event.getStart();
+					System.out.println(startTime);
+					System.out.println(target.getId());
 
-				long dateTime = c.getTimeInMillis();
-				startTime.setDateTime(new DateTime(dateTime));
+					long dateTime = c.getTimeInMillis();
+					startTime.setDateTime(new DateTime(dateTime));
 
-				EventDateTime endTime = event.getEnd();
-				long endTimeMillis = c.getTimeInMillis();
-				endTime.setDateTime(new DateTime(endTimeMillis));
+					EventDateTime endTime = event.getEnd();
+					long endTimeMillis = c.getTimeInMillis();
+					endTime.setDateTime(new DateTime(endTimeMillis));
+				}
 			}
 			update = getCalendarService().events().update(calendarId,
 					target.getId(), event);
