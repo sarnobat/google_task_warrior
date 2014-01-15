@@ -246,15 +246,15 @@ public class Postpone {
 			int daysToPostpone) throws IOException, GeneralSecurityException {
 		Event originalEvent = getEvent(eventID);
 
-		Event clonedEvent = originalEvent.clone();
-		if (clonedEvent.getRecurrence() != null) {
+		if (originalEvent.getRecurrence() != null) {
 			throw new RuntimeException(
 					"Use optional param 'singleEvents' to break recurring events into single ones");
 		}
 
-		// First retrieve the event from the API.
+		// I don't know why the service uses a different ID
+		String internalEventId = originalEvent.getId();
 		Event event = getCalendarService().events()
-				.get(calendarId, originalEvent.getId()).execute();
+				.get(calendarId, internalEventId).execute();
 		{
 			EventDateTime eventStartTime = event.getStart();
 			System.out.println(eventStartTime);
@@ -266,9 +266,9 @@ public class Postpone {
 			endTime.setDateTime(new DateTime(endTimeMillis));
 
 		}
-		System.out.println(originalEvent.getId());
+		System.out.println(internalEventId);
 		Update update = getCalendarService().events().update(calendarId,
-				originalEvent.getId(), event);
+				internalEventId, event);
 
 		return update;
 	}
