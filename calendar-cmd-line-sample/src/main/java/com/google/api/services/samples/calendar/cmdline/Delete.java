@@ -19,11 +19,13 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
 public class Delete {
+	static final String string = "/Users/sarnobat/.gcal_task_warrior";
+	static final String string2 = string + "/tasks_last_displayed.json";
+	static final File file = new File(string2);
+
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException {
 		String itemToDelete = args[0];
-		final String string = "/Users/sarnobat/.gcal_task_warrior";
-		final File file = new File(string + "/tasks.json");
 		String errands = FileUtils.readFileToString(file);
 		JSONObject obj = new JSONObject(errands);
 		String messageIdToDelete = ((JSONObject) obj.get(itemToDelete))
@@ -39,6 +41,31 @@ public class Delete {
 				break;
 			}
 		}
+
+		deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
+		System.out.println("Files updated");
+	}
+
+	private static void deleteMessageFromLocalJson(String itemToDelete,
+			String messageIdToDelete) throws IOException {
+		String displayedFileContents = FileUtils.readFileToString(file);
+		JSONObject displayedFileJson = new JSONObject(displayedFileContents);
+		JSONObject removed = (JSONObject) displayedFileJson
+				.remove(itemToDelete);
+		if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
+			throw new RuntimeException(removed.getString("title"));
+		}
+		FileUtils.writeStringToFile(file, displayedFileJson.toString());
+		File file2 = new File(string
+				+ "/tasks.json");
+		String latestFileContents = FileUtils.readFileToString(file2);
+		JSONObject latestFileJson = new JSONObject(latestFileContents);
+		JSONObject removed2 = (JSONObject) latestFileJson.remove(itemToDelete);
+		if (!messageIdToDelete.equals(removed2.getString("Message-ID"))) {
+			throw new RuntimeException(removed2.getString("title"));
+		}
+		FileUtils.writeStringToFile(file2, latestFileJson.toString());
+
 	}
 
 	private static Message[] getMessages() throws NoSuchProviderException,
