@@ -53,17 +53,25 @@ public class Postpone {
 		tooSlow(args);
 	}
 
+	/**
+	 * 
+	 * @param args
+	 *            - item number,
+	 */
 	@Deprecated
 	private static void tooSlow(String[] args) throws IOException,
 			GeneralSecurityException, NoSuchProviderException,
 			MessagingException {
 		String itemToDelete = args[0];
+
+		String daysToPostponeString = args[1];
 		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
 		String calendarName = eventJson.getString("calendar_name");
 		System.out.println(calendarName);
-		Update update = createUpdateTask(args, eventJson, calendarName);
+		Update update = createUpdateTask(args, eventJson, calendarName,
+				daysToPostponeString);
 
 		String messageIdToDelete = eventJson.getString(MESSAGE_ID);
 
@@ -114,7 +122,8 @@ public class Postpone {
 	}
 
 	private static Update createUpdateTask(String[] args, JSONObject eventJson,
-			String calendarName) throws IOException, GeneralSecurityException {
+			String calendarName, String daysToPostponeString)
+			throws IOException, GeneralSecurityException {
 		Update update;
 		_1: {
 			String calendars = FileUtils.readFileToString(new File(dirPath
@@ -129,17 +138,18 @@ public class Postpone {
 			System.out.println("Will update event " + eventID + " in calendar "
 					+ calendarId);
 
-			update = createUpdateTask(args, calendarName, calendarId, eventID);
+			update = createUpdateTask(args, calendarName, calendarId, eventID,
+					daysToPostponeString);
 		}
 		return update;
 	}
 
 	private static Update createUpdateTask(String[] args, String calendarName,
-			String calendarId, String eventID) throws GeneralSecurityException,
-			IOException {
+			String calendarId, String eventID, String daysToPostponeString)
+			throws GeneralSecurityException, IOException {
 		Update update;
 		createUpdateTask: {
-			int daysToPostpone = Integer.parseInt(args[1]);
+			int daysToPostpone = Integer.parseInt(daysToPostponeString);
 			// Get event's current time
 			update = createUpdateTask(calendarName, calendarId, eventID,
 					daysToPostpone);
