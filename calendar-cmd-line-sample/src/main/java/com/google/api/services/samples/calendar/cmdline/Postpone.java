@@ -2,6 +2,8 @@ package com.google.api.services.samples.calendar.cmdline;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
 import java.util.Enumeration;
 import java.util.Properties;
 
@@ -18,49 +20,125 @@ import javax.mail.Store;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.DateTime;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
+import com.google.common.collect.ImmutableSet;
+
 public class Postpone {
 	static final String string = "/Users/sarnobat/.gcal_task_warrior";
 	static final String string2 = string + "/tasks_last_displayed.json";
 	static final File file = new File(string2);
 
 	public static void main(String[] args) throws IOException,
-			NoSuchProviderException, MessagingException {
+			NoSuchProviderException, MessagingException,
+			GeneralSecurityException {
 		String itemToDelete = args[0];
 		String errands = FileUtils.readFileToString(file);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
 		String calendarName = eventJson.getString("calendar_name");
-		{
-			String messageIdToDelete = eventJson.getString("Message-ID");
 
-			System.out.println("Will delete [" + messageIdToDelete + "] "
-					+ eventJson.getString("title") + " from calendar "
-					+ calendarName);
-			Message[] messages = getMessages();
-			for (Message aMessage : messages) {
-				String aMessageID = getMessageID(aMessage);
-				if (aMessageID.equals(messageIdToDelete)) {
-					aMessage.setFlag(Flags.Flag.DELETED, true);
-					System.out.println("Deleted " + aMessage.getSubject());
-					break;
-				}
-			}
-			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
-		}
-		{
+		_1: {
 			String calendars = FileUtils.readFileToString(new File(string
 					+ "/calendars.json"));
 			JSONObject calendarsJson = new JSONObject(calendars);
 			JSONObject calendarJson = (JSONObject) calendarsJson
 					.get(calendarName);
+			System.out.println(calendarJson.toString());
 			String calendarId = calendarJson.getString("calendar_id");
 			String eventID = eventJson.getString("eventID");
 
 			System.out.println("Will update event event " + eventID
 					+ " in calendar " + calendarId);
+
+			_2: {
+				int daysToPostpone = 1;
+				// Get event's current time
+				_3: {
+					Event clonedEvent = getCalendarService().events()
+							.get(calendarId, eventID).execute().clone();
+					if (clonedEvent.getRecurrence() != null) {
+						throw new RuntimeException(
+								"I'm not sure how to move an instance of a recurring event");
+					}
+					java.util.Calendar c = java.util.Calendar.getInstance();
+					c.add(java.util.Calendar.DATE, daysToPostpone);
+					System.out.println(c.getTime());
+					_4: {
+						EventDateTime startTime = clonedEvent.getStart();
+						long dateTime = c.getTimeInMillis();
+						startTime.setDateTime(new DateTime(dateTime));
+						getCalendarService().events().patch(calendarId,
+								eventID, clonedEvent);
+					}
+
+				}
+
+				// Set event's time as x days from now
+			}
 		}
+//		_5: {
+//			String messageIdToDelete = eventJson.getString("Message-ID");
+//
+//			System.out.println("Will delete [" + messageIdToDelete + "] "
+//					+ eventJson.getString("title") + " from calendar "
+//					+ calendarName);
+//			Message[] messages = getMessages();
+//			for (Message aMessage : messages) {
+//				String aMessageID = getMessageID(aMessage);
+//				if (aMessageID.equals(messageIdToDelete)) {
+//					aMessage.setFlag(Flags.Flag.DELETED, true);
+//					System.out.println("Deleted " + aMessage.getSubject());
+//					break;
+//				}
+//			}
+//			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
+//		}
 
 		System.out.println("Event updated");
+	}
+
+	private static Calendar getCalendarService()
+			throws GeneralSecurityException, IOException {
+		System.out.println("Authenticating...");
+
+		HttpTransport httpTransport = GoogleNetHttpTransport
+				.newTrustedTransport();
+		Calendar client = new Calendar.Builder(
+				httpTransport,
+				JacksonFactory.getDefaultInstance(),
+				new AuthorizationCodeInstalledApp(
+						new GoogleAuthorizationCodeFlow.Builder(
+								httpTransport,
+								JacksonFactory.getDefaultInstance(),
+								GoogleClientSecrets.load(
+										JacksonFactory.getDefaultInstance(),
+										new InputStreamReader(
+												Postpone.class
+														.getResourceAsStream("/client_secrets.json"))),
+								ImmutableSet.of(CalendarScopes.CALENDAR,
+										CalendarScopes.CALENDAR_READONLY))
+								.setDataStoreFactory(
+										new FileDataStoreFactory(
+												new java.io.File(
+														System.getProperty("user.home"),
+														".store/calendar_sample")))
+								.build(), new LocalServerReceiver())
+						.authorize("user")).setApplicationName(
+				"gcal-task-warrior").build();
+		return client;
+
 	}
 
 	private static void deleteMessageFromLocalJson(String itemToDelete,

@@ -100,7 +100,10 @@ public class ListUpdate {
 				String calendarName = m.group(1);
 				//System.out.println(calendarName);
 				errandJsonObject.put("calendar_name", calendarName);
+			} else {
+				errandJsonObject.put("calendar_name", "<not found>");
 			}
+			
 			errandJsonObject.put("title", title);
 			errandJsonObject.put("Message-ID", messageID);
 			json.put(Integer.toString(i), errandJsonObject);

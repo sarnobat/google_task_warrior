@@ -98,9 +98,12 @@ public class ListUpdate {
 					throw new RuntimeException("eid not in string 2");
 				}
 				String calendarName = m.group(1);
-				System.out.println(calendarName);
+				//System.out.println(calendarName);
 				errandJsonObject.put("calendar_name", calendarName);
+			} else {
+				errandJsonObject.put("calendar_name", "<not found>");
 			}
+			
 			errandJsonObject.put("title", title);
 			errandJsonObject.put("Message-ID", messageID);
 			json.put(Integer.toString(i), errandJsonObject);
