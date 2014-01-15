@@ -171,38 +171,23 @@ public class Postpone {
 			throws GeneralSecurityException, IOException {
 		int daysToPostpone = Integer.parseInt(daysToPostponeString);
 		// Get event's current time
-		return createUpdateTask(calendarName, calendarId, eventID,
-				daysToPostpone);
+
+		thisDoesNothing(calendarName);
+		return createUpdateTask(calendarId, eventID, daysToPostpone);
 	}
 
-	private static Update createUpdateTask(String calendarName,
-			String calendarId, String eventID, int daysToPostpone)
+	// TODO: delete this?
+	@Deprecated
+	private static void thisDoesNothing(String calendarName)
 			throws GeneralSecurityException, IOException {
-		Update update;
-		_3: {
+
+		{
 			Events events = getCalendarService().events();
 			CalendarListEntry calendar = getCalendar(calendarName);
-			
-			// TODO: delete this?
+
 			com.google.api.services.calendar.model.Events s = events.list(
 					calendar.getId()).execute();
-			
-			Event target = getEvent(eventID);
-
-			if (target == null) {
-				throw new RuntimeException("Couldn't find event");
-			}
-
-			System.out.println(target);
-			Event clonedEvent = target.clone();
-			if (clonedEvent.getRecurrence() != null) {
-				throw new RuntimeException(
-						"Use optional param 'singleEvents' to break recurring events into single ones");
-			}
-
-			update = createUpdateTask(calendarId, daysToPostpone, target);
 		}
-		return update;
 	}
 
 	private static CalendarListEntry getCalendar(String calendarName)
@@ -248,12 +233,25 @@ public class Postpone {
 				}
 			}
 		}
+		if (target == null) {
+			throw new RuntimeException("Couldn't find event");
+		}
+
+		System.out.println(target);
+
 		return target;
 	}
 
 	private static Update createUpdateTask(String calendarId,
-			int daysToPostpone, Event target) throws IOException,
+			String eventID, int daysToPostpone) throws IOException,
 			GeneralSecurityException {
+		Event target = getEvent(eventID);
+
+		Event clonedEvent = target.clone();
+		if (clonedEvent.getRecurrence() != null) {
+			throw new RuntimeException(
+					"Use optional param 'singleEvents' to break recurring events into single ones");
+		}
 		Update update;
 		createUpdateTask1: {
 			// First retrieve the event from the API.
