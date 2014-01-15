@@ -53,31 +53,19 @@ public class Postpone {
 		tooSlow(args);
 	}
 
-	/**
-	 * 
-	 * @param args
-	 *            - item number,
-	 */
 	@Deprecated
 	private static void tooSlow(String[] args) throws IOException,
 			GeneralSecurityException, NoSuchProviderException,
 			MessagingException {
 		String itemToDelete = args[0];
-
 		String daysToPostponeString = args[1];
-		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
-		JSONObject obj = new JSONObject(errands);
-		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
-		String calendarName = eventJson.getString("calendar_name");
-		System.out.println(calendarName);
-		Update update = createUpdateTask(args, eventJson, calendarName,
-				daysToPostponeString);
+		JSONObject eventJson = getEventJson(itemToDelete);
+		Update update = createUpdateCall(daysToPostponeString, eventJson);
 
 		String messageIdToDelete = eventJson.getString(MESSAGE_ID);
 
 		System.out.println("Will delete [" + messageIdToDelete + "] "
-				+ eventJson.getString("title") + " from calendar "
-				+ calendarName);
+				+ eventJson.getString("title") + " from calendar ");
 		getMessages(messageIdToDelete);
 		JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
 				messageIdToDelete, tasksFileLastDisplayed);
@@ -88,6 +76,28 @@ public class Postpone {
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
 		commit(update, fileJsonLastDisplayed, fileJsonLatest);
+	}
+
+	private static Update createUpdateCall(String daysToPostponeString,
+			JSONObject eventJson) throws IOException, GeneralSecurityException {
+		String calendarName = eventJson.getString("calendar_name");
+		System.out.println(calendarName);
+		Update update = createUpdateTask(eventJson, calendarName,
+				daysToPostponeString);
+		return update;
+	}
+
+	private static JSONObject getEventJson(String itemToDelete)
+			throws IOException {
+		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
+		JSONObject eventJson = getEventJson(itemToDelete, errands);
+		return eventJson;
+	}
+
+	private static JSONObject getEventJson(String itemToDelete, String errands) {
+		JSONObject obj = new JSONObject(errands);
+		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
+		return eventJson;
 	}
 
 	private static void commit(Update update, JSONObject fileJson1,
@@ -121,16 +131,14 @@ public class Postpone {
 		}
 	}
 
-	private static Update createUpdateTask(String[] args, JSONObject eventJson,
+	private static Update createUpdateTask(JSONObject eventJson,
 			String calendarName, String daysToPostponeString)
 			throws IOException, GeneralSecurityException {
 		Update update;
 		_1: {
 			String calendars = FileUtils.readFileToString(new File(dirPath
 					+ "/calendars.json"));
-			JSONObject calendarsJson = new JSONObject(calendars);
-			JSONObject calendarJson = (JSONObject) calendarsJson
-					.get(calendarName);
+			JSONObject calendarJson = getEventJson(calendarName, calendars);
 			System.out.println(calendarJson.toString());
 			String calendarId = calendarJson.getString("calendar_id");
 			String eventID = eventJson.getString("eventID");
@@ -138,13 +146,13 @@ public class Postpone {
 			System.out.println("Will update event " + eventID + " in calendar "
 					+ calendarId);
 
-			update = createUpdateTask(args, calendarName, calendarId, eventID,
+			update = createUpdateTask(calendarName, calendarId, eventID,
 					daysToPostponeString);
 		}
 		return update;
 	}
 
-	private static Update createUpdateTask(String[] args, String calendarName,
+	private static Update createUpdateTask(String calendarName,
 			String calendarId, String eventID, String daysToPostponeString)
 			throws GeneralSecurityException, IOException {
 		Update update;
