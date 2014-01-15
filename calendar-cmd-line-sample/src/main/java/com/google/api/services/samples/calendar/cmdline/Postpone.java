@@ -65,6 +65,11 @@ public class Postpone {
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
 		System.out.println(title);
+		String eventId  = getEventIdFromTitle();
+		Update updateTask = createUpdateTask(calendarName,
+				calendarId, eventId, daysToPostponeString);
+		commit(itemToDelete, update,
+				messageIdToDelete) ;
 	}
 
 	@SuppressWarnings("unused")
@@ -81,6 +86,12 @@ public class Postpone {
 
 		System.out.println("Will delete [" + messageIdToDelete + "] "
 				+ eventJson.getString("title") + " from calendar ");
+		commit(itemToDelete, update, messageIdToDelete);
+	}
+
+	private static void commit(String itemToDelete, Update update,
+			String messageIdToDelete) throws NoSuchProviderException,
+			MessagingException, IOException {
 		getMessages(messageIdToDelete);
 		JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
 				messageIdToDelete, mTasksFileLastDisplayed);
@@ -90,18 +101,20 @@ public class Postpone {
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
-		commit(update, fileJsonLastDisplayed, fileJsonLatest);
+		commitInternal(update, fileJsonLastDisplayed, fileJsonLatest);
 	}
 
+	@Deprecated
 	private static Update createUpdateCall(String daysToPostponeString,
 			JSONObject eventJson) throws IOException, GeneralSecurityException {
 		String calendarName = eventJson.getString("calendar_name");
 		System.out.println(calendarName);
-		Update update = createUpdateTask(eventJson, calendarName,
+		Update update = createUpdateTaskDeprecated(eventJson, calendarName,
 				daysToPostponeString);
 		return update;
 	}
 
+	// Still useful
 	private static JSONObject getEventJson(String itemToDelete,
 			File tasksFileLastDisplayed) throws IOException {
 		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
@@ -115,7 +128,7 @@ public class Postpone {
 		return eventJson;
 	}
 
-	private static void commit(Update update, JSONObject fileJson1,
+	private static void commitInternal(Update update, JSONObject fileJson1,
 			JSONObject fileJson2) throws IOException {
 		commit: {
 			FileUtils.writeStringToFile(mTasksFileLastDisplayed,
@@ -146,7 +159,8 @@ public class Postpone {
 		}
 	}
 
-	private static Update createUpdateTask(JSONObject eventJson,
+	@Deprecated
+	private static Update createUpdateTaskDeprecated(JSONObject eventJson,
 			String calendarName, String daysToPostponeString)
 			throws IOException, GeneralSecurityException {
 		Update update;
@@ -167,6 +181,7 @@ public class Postpone {
 		return update;
 	}
 
+	// Useful
 	private static Update createUpdateTask(String calendarName,
 			String calendarId, String eventID, String daysToPostponeString)
 			throws GeneralSecurityException, IOException {
