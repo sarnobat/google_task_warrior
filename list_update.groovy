@@ -65,38 +65,12 @@ public class ListUpdate {
 	@SuppressWarnings("unused")
 	private static JSONObject getErrands() throws NoSuchProviderException,
 			MessagingException, IOException {
-		Properties props = System.getProperties();
-		String password = "varelA77";// System.getenv("GMAIL_PASSWORD");
-		if (password == null) {
-			throw new RuntimeException(
-					"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
-		}
-		props.setProperty("mail.store.protocol", "imap");
-		Store theImapClient = Session.getInstance(props).getStore("imaps");
-		theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com",
-				password);
-		Folder folder = theImapClient
-				.getFolder("3 - Urg - time sensitive - this week");
-		folder.open(Folder.READ_ONLY);
-
-		Message[] msgs = folder.getMessages();
-
-		FetchProfile fp = new FetchProfile();
-		fp.add(FetchProfile.Item.ENVELOPE);
-		fp.add("X-mailer");
-		folder.fetch(msgs, fp);
+		Message[] msgs = getMessages();
 
 		int i = 0;
 		final JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
-			Enumeration allHeaders = aMessage.getAllHeaders();
-			String messageID = "<not found>";
-			while (allHeaders.hasMoreElements()) {
-				Header e = (Header) allHeaders.nextElement();
-				if (e.getName().equals("Message-ID")) {
-					messageID = e.getValue();
-				}
-			}
+			String messageID = getMessageID(aMessage);
 
 			i++;
 			String title = aMessage.getSubject().split("@")[0].replace(
@@ -123,5 +97,49 @@ public class ListUpdate {
 			json.put(Integer.toString(i), errandJsonObject);
 		}
 		return json;
+	}
+
+	private static String getMessageID(Message aMessage)
+			throws MessagingException {
+		Enumeration allHeaders = aMessage.getAllHeaders();
+		String messageID = "<not found>";
+		while (allHeaders.hasMoreElements()) {
+			Header e = (Header) allHeaders.nextElement();
+			if (e.getName().equals("Message-ID")) {
+				messageID = e.getValue();
+			}
+		}
+		return messageID;
+	}
+
+	private static Message[] getMessages() throws NoSuchProviderException,
+			MessagingException {
+		Store theImapClient = connect();
+		Folder folder = theImapClient
+				.getFolder("3 - Urg - time sensitive - this week");
+		folder.open(Folder.READ_ONLY);
+
+		Message[] msgs = folder.getMessages();
+
+		FetchProfile fp = new FetchProfile();
+		fp.add(FetchProfile.Item.ENVELOPE);
+		fp.add("X-mailer");
+		folder.fetch(msgs, fp);
+		return msgs;
+	}
+
+	private static Store connect() throws NoSuchProviderException,
+			MessagingException {
+		Properties props = System.getProperties();
+		String password = "varelA77";// System.getenv("GMAIL_PASSWORD");
+		if (password == null) {
+			throw new RuntimeException(
+					"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
+		}
+		props.setProperty("mail.store.protocol", "imap");
+		Store theImapClient = Session.getInstance(props).getStore("imaps");
+		theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com",
+				password);
+		return theImapClient;
 	}
 }
