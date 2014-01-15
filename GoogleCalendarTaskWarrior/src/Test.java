@@ -21,18 +21,46 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 public class Test {
 
 	private static final String APPLICATION_NAME = "gcal-task-warrior";
-
 	private static final java.io.File DATA_STORE_DIR = new java.io.File(
 			System.getProperty("user.home"), ".store/calendar_sample");
-
-	private static FileDataStoreFactory dataStoreFactory;
-
 	private static final JsonFactory JSON_FACTORY = JacksonFactory
 			.getDefaultInstance();
 
+	private static FileDataStoreFactory dataStoreFactory;
 	private static HttpTransport httpTransport;
-
 	private static Calendar client;
+
+	public static void main(String[] args) {
+		try {
+			httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+
+			dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
+
+			Credential credential = authorize();
+
+			client = new Calendar.Builder(httpTransport, JSON_FACTORY,
+					credential).setApplicationName(APPLICATION_NAME).build();
+
+			List<CalendarListEntry> object = (List<CalendarListEntry>) client
+					.calendarList().list().execute().get("items");
+			for (CalendarListEntry aCalendar : object) {
+				System.out.println(aCalendar.getSummary() + "::"
+						+ aCalendar.getId() + "::" + aCalendar.getClass()
+						+ "::" + aCalendar);
+			}
+			System.out.println("Items: \t\t" + object);
+			for (Object o : client.calendarList().list().execute().keySet()) {
+				System.out.println(":::" + o);
+				// com.google.api.client.util.Data l;
+			}
+
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		System.exit(1);
+	}
 
 	private static Credential authorize() throws Exception {
 		// load client secrets
@@ -63,70 +91,4 @@ public class Test {
 				new LocalServerReceiver()).authorize("user");
 	}
 
-	public static void main(String[] args) {
-		try {
-			// initialize the transport
-			httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-			// initialize the data store factory
-			dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-
-			// authorization
-			Credential credential = authorize();
-
-			// set up global Calendar instance
-			client = new Calendar.Builder(httpTransport, JSON_FACTORY,
-					credential).setApplicationName(APPLICATION_NAME).build();
-
-			System.out.println(client.getServicePath());
-			System.out.println(client.getBaseUrl());
-			System.out.println(client.getRootUrl());
-			System.out
-					.println(client
-							.calendars()
-							.get("14tgse4ldpicq5o4pq2metp460@group.calendar.google.com")
-							.values());
-			System.out
-					.println("Fields:"
-							+ client.calendars()
-									.get("14tgse4ldpicq5o4pq2metp460@group.calendar.google.com")
-									.getFields());
-
-			List<CalendarListEntry> object = (List<CalendarListEntry>) client
-					.calendarList().list().execute().get("items");
-			for (CalendarListEntry aCalendar : object) {
-				System.out.println(aCalendar.getSummary() + "::"
-						+ aCalendar.getId() + "::" + aCalendar.getClass()
-						+ "::" + aCalendar);
-			}
-			System.out.println("Items: \t\t" + object);
-			for (Object o : client.calendarList().list().execute().keySet()) {
-				System.out.println(":::" + o);
-				// com.google.api.client.util.Data l;
-			}
-
-			for (Object o : client
-					.calendars()
-					.get("14tgse4ldpicq5o4pq2metp460@group.calendar.google.com")
-					.entrySet()) {
-				System.out.println(o);
-			}
-			System.out.println(client.settings().list().size());
-			System.out.println(client.calendarList().list().size());
-			// assertEquals(0, client.calendarList().list().size());
-			// assertEquals(0, client.events().list().size());
-
-			for (Object o : client.calendarList().list().keySet()) {
-				System.out.println(o);
-			}
-
-			System.out.println("Success! Now add code here.");
-
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-		System.exit(1);
-	}
 }
