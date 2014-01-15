@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.FetchProfile;
@@ -32,10 +30,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.Calendar.CalendarList;
 import com.google.api.services.calendar.Calendar.Events;
-import com.google.api.services.calendar.Calendar.Events.List;
-import com.google.api.services.calendar.Calendar.Events.Patch;
 import com.google.api.services.calendar.Calendar.Events.Update;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarListEntry;
@@ -46,16 +41,15 @@ import com.google.common.collect.ImmutableSet;
 public class Postpone {
 	static final String string = "/Users/sarnobat/.gcal_task_warrior";
 	static final String latestFilePath = string + "/tasks_last_displayed.json";
-	@Deprecated
-	static final File file = new File(latestFilePath);
 	static final File tasksFileLatest = new File(latestFilePath);
 	static final File tasksFile = new File(string + "/tasks.json");
 
+	@SuppressWarnings("unused")
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
 		String itemToDelete = args[0];
-		String errands = FileUtils.readFileToString(file);
+		String errands = FileUtils.readFileToString(tasksFileLatest);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
 		String calendarName = eventJson.getString("calendar_name");
@@ -281,7 +275,7 @@ public class Postpone {
 	private static Store connect() throws NoSuchProviderException,
 			MessagingException {
 		Properties props = System.getProperties();
-		String password = "varelA77";// System.getenv("GMAIL_PASSWORD");
+		String password = System.getenv("GMAIL_PASSWORD");
 		if (password == null) {
 			throw new RuntimeException(
 					"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
@@ -293,9 +287,10 @@ public class Postpone {
 		return theImapClient;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static String getMessageID(Message aMessage)
 			throws MessagingException {
-		Enumeration allHeaders = aMessage.getAllHeaders();
+		Enumeration<Header> allHeaders = (Enumeration<Header>) aMessage.getAllHeaders();
 		String messageID = "<not found>";
 		while (allHeaders.hasMoreElements()) {
 			Header e = (Header) allHeaders.nextElement();
