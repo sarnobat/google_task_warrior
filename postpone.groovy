@@ -50,7 +50,7 @@ public class Postpone {
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
-		String itemToDelete = args[1];
+		String itemToDelete = args[0];
 		String errands = FileUtils.readFileToString(file);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
@@ -71,7 +71,7 @@ public class Postpone {
 					+ calendarId);
 
 			_2: {
-				int daysToPostpone = Integer.parseInt(args[0]);
+				int daysToPostpone = Integer.parseInt(args[1]);
 				// Get event's current time
 				_3: {
 					Events events = getCalendarService().events();

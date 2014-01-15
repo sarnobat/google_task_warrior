@@ -23,22 +23,22 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
 public class ListDisplay {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		final String string = "/Users/sarnobat/.gcal_task_warrior";
 		final File file = new File(string + "/tasks.json");
 		if (file.exists()) {
 			try {
-				String errands = FileUtils.readFileToString(file);
-				JSONObject obj = new JSONObject(errands);
-				SortedMap<Integer, String> m = new TreeMap<Integer, String>();
-				for (Object o : obj.keySet()) {
-					String key = (String) o;
-					JSONObject val = (JSONObject) obj.get(key);
+				String errandsStr = FileUtils.readFileToString(file);
+				JSONObject errandsJson = new JSONObject(errandsStr);
+				SortedMap<Integer, String> errandMap = new TreeMap<Integer, String>();
+				for (Object errandNumber : errandsJson.keySet()) {
+					String key = (String) errandNumber;
+					JSONObject val = (JSONObject) errandsJson.get(key);
 					String title = val.getString("title");
-					m.put(Integer.parseInt(key), title);
+					errandMap.put(Integer.parseInt(key), title);
 				}
-				for (Object key : m.keySet()) {
-					String title = m.get(key);
+				for (Object key : errandMap.keySet()) {
+					String title = errandMap.get(key);
 					System.out.println(key + "\t" + title);
 				}
 			} catch (IOException e) {
