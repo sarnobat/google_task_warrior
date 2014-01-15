@@ -36,6 +36,7 @@ import com.google.api.services.calendar.Calendar.CalendarList;
 import com.google.api.services.calendar.Calendar.Events;
 import com.google.api.services.calendar.Calendar.Events.List;
 import com.google.api.services.calendar.Calendar.Events.Patch;
+import com.google.api.services.calendar.Calendar.Events.Update;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
@@ -56,7 +57,7 @@ public class Postpone {
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
 		String calendarName = eventJson.getString("calendar_name");
 		System.out.println(calendarName);
-
+		Update update;
 		_1: {
 			String calendars = FileUtils.readFileToString(new File(string
 					+ "/calendars.json"));
@@ -168,13 +169,9 @@ public class Postpone {
 							// clonedEvent);
 							// patch.execute();
 						}
-						Event updatedEvent = getCalendarService().events()
-								.update(calendarId, target.getId(), event)
-								.execute();
+						update = getCalendarService().events().update(
+								calendarId, target.getId(), event);
 
-						// Print the updated date.
-						System.out.println(updatedEvent.getUpdated());
-						System.out.println(event.getHtmlLink());
 					}
 
 				}
@@ -200,7 +197,14 @@ public class Postpone {
 			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
 		}
 
-		System.out.println("Event updated");
+		commit: {
+			Event updatedEvent = update.execute();
+
+			// Print the updated date.
+			System.out.println(updatedEvent.getUpdated());
+			System.out.println(updatedEvent.getHtmlLink());
+			System.out.println("Event updated");
+		}
 	}
 
 	private static Calendar getCalendarService()
@@ -237,22 +241,28 @@ public class Postpone {
 
 	private static void deleteMessageFromLocalJson(String itemToDelete,
 			String messageIdToDelete) throws IOException {
-		String displayedFileContents = FileUtils.readFileToString(file);
-		JSONObject displayedFileJson = new JSONObject(displayedFileContents);
-		JSONObject removed = (JSONObject) displayedFileJson
-				.remove(itemToDelete);
-		if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
-			throw new RuntimeException(removed.getString("title"));
+		{
+			String displayedFileContents = FileUtils.readFileToString(file);
+			JSONObject displayedFileJson = new JSONObject(displayedFileContents);
+			JSONObject removed = (JSONObject) displayedFileJson
+					.remove(itemToDelete);
+			if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
+				throw new RuntimeException(removed.getString("title"));
+			}
+			FileUtils.writeStringToFile(file, displayedFileJson.toString());
 		}
-		FileUtils.writeStringToFile(file, displayedFileJson.toString());
-		File file2 = new File(string + "/tasks.json");
-		String latestFileContents = FileUtils.readFileToString(file2);
-		JSONObject latestFileJson = new JSONObject(latestFileContents);
-		JSONObject removed2 = (JSONObject) latestFileJson.remove(itemToDelete);
-		if (!messageIdToDelete.equals(removed2.getString("Message-ID"))) {
-			throw new RuntimeException(removed2.getString("title"));
+		String string3 = string + "/tasks.json";
+		File file2 = new File(string3);
+		{
+			String latestFileContents = FileUtils.readFileToString(file2);
+			JSONObject latestFileJson = new JSONObject(latestFileContents);
+			JSONObject removed2 = (JSONObject) latestFileJson
+					.remove(itemToDelete);
+			if (!messageIdToDelete.equals(removed2.getString("Message-ID"))) {
+				throw new RuntimeException(removed2.getString("title"));
+			}
+			FileUtils.writeStringToFile(file2, latestFileJson.toString());
 		}
-		FileUtils.writeStringToFile(file2, latestFileJson.toString());
 
 	}
 
