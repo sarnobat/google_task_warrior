@@ -1,5 +1,6 @@
 package com.google.api.services.samples.calendar.cmdline;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -11,7 +12,12 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
 
+import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
+
 public class ListDisplaySynchronous {
+	static final String string = "/Users/sarnobat/.gcal_task_warrior";
+	static final File file = new File(string + "/tasks.json");
 	public static void main(String[] args) throws NoSuchProviderException,
 			MessagingException, IOException {
 
@@ -20,19 +26,20 @@ public class ListDisplaySynchronous {
 		System.out.println("List updated");
 	}
 
-	@SuppressWarnings("unused")
 	private static void getErrands() throws NoSuchProviderException,
 			MessagingException, IOException {
 		Message[] msgs = getMessages();
 		System.out.println("Messages obtained");
 		int i = 0;
+		JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
-
 			i++;
 			String title = aMessage.getSubject().split("@")[0].replace(
 					"Reminder: ", "");
 			System.out.println(i + "\t" + title);
+			json.put(Integer.toString(i), title);
 		}
+		FileUtils.writeStringToFile(file, json.toString());
 	}
 
 	private static Message[] getMessages() throws NoSuchProviderException,
