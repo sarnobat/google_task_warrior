@@ -28,7 +28,7 @@ public class GoogleCalendarTaskWarrior {
 		@SuppressWarnings("unchecked")
 		List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
 				.calendarList().list().execute().get("items");
-		Map m = new TreeMap();
+
 		for (CalendarListEntry aCalendar : allCalendars) {
 
 			System.out.println(aCalendar.getSummary() + " :: "
