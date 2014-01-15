@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
@@ -16,6 +18,7 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.internet.MimeMultipart;
 
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
@@ -66,12 +69,30 @@ public class Postpone {
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
 		System.out.println(title);
-		String eventId = getEventIdFromTitleViaEmail();
-		String calendarName = getCalendarNameViaEmail();
+		Message msg = getMessage(title);
+		String messageIdToDelete = getMessageID(msg);
+		String eventId = getEventID(msg);
+		String calendarName = getCalendarName(msg);
 		String calendarId = getCalendarIdViaCalendarService();
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
 		commit(itemToDelete, updateTask, messageIdToDelete);
+	}
+
+	private static Message getMessage(String title)
+			throws NoSuchProviderException, MessagingException {
+		Message[] msgs = getMessages();
+		Message msg = null;
+		for (Message aMsg : msgs) {
+			if (aMsg.getSubject().equals(title)) {
+				msg = aMsg;
+				break;
+			}
+		}
+		if (msg == null) {
+			throw new RuntimeException();
+		}
+		return msg;
 	}
 
 	private static void commit(String itemToDelete, Update update,
@@ -174,6 +195,32 @@ public class Postpone {
 			throw new RuntimeException("couldn't find calendar");
 		}
 		return calendar;
+	}
+
+	private static String getEventID(Message aMessage) throws IOException,
+			MessagingException {
+		String eventID = "<none>";
+		{
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			{
+				String body = (String) s.getBodyPart(0).getContent();
+
+				if (body.trim().length() < 1) {
+					System.out.println("body is empty");
+				}
+
+				if (body.contains("eid")) {
+					Pattern pattern = Pattern.compile("eid=([^&" + '$'
+							+ "\\s]*)");
+					Matcher m = pattern.matcher(body);
+					if (!m.find()) {
+						throw new RuntimeException("eid not in string 2");
+					}
+					eventID = m.group(1);
+				}
+			}
+		}
+		return eventID;
 	}
 
 	private static Event getEvent(String eventID) throws IOException,
@@ -411,4 +458,107 @@ public class Postpone {
 			commit(itemToDelete, update, messageIdToDelete);
 		}
 	}
+
+	private static class Slow {
+		private static void getBodyMetadataSlow(Message aMessage) {
+
+			try {
+				String eventID = getEventID(aMessage);
+
+				// errandJsonObject.put("eventID", eventID);
+
+				String calendarName = getCalendarName(aMessage);
+				// errandJsonObject.put("calendar_name", calendarName);
+
+				String messageID = getMessageID(aMessage);
+				// errandJsonObject.put("Message-ID", messageID);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		private static String getCalendarName(Message aMessage)
+				throws IOException, MessagingException {
+			String calendarName;
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			String body1 = (String) s.getBodyPart(0).getContent();
+			if (body1.contains("Calendar:")) {
+				Pattern pattern = Pattern.compile("Calendar: (.*)");
+				Matcher m = pattern.matcher(body1);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
+				}
+				calendarName = m.group(1);
+			} else {
+				calendarName = "<not found>";
+			}
+
+			return calendarName;
+		}
+
+		private static String getEventID(Message aMessage) throws IOException,
+				MessagingException {
+			String eventID = "<none>";
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			String body = (String) s.getBodyPart(0).getContent();
+
+			if (body.trim().length() < 1) {
+				System.out.println("body is empty");
+			}
+
+			if (body.contains("eid")) {
+				Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
+				Matcher m = pattern.matcher(body);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
+				}
+				eventID = m.group(1);
+			}
+			return eventID;
+		}
+
+		private static String getMessageID(Message aMessage) {
+			try {
+				Enumeration allHeaders;
+				allHeaders = aMessage.getAllHeaders();
+
+				String messageID = "<not found>";
+				while (allHeaders.hasMoreElements()) {
+					Header e = (Header) allHeaders.nextElement();
+					if (e.getName().equals("Message-ID")) {
+						messageID = e.getValue();
+					}
+				}
+				return messageID;
+			} catch (MessagingException e1) {
+				e1.printStackTrace();
+			}
+			return null;
+		}
+	}
+
+	private static String getCalendarName(Message aMessage) throws IOException,
+			MessagingException {
+		String calendarName;
+		{
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			String body1 = (String) s.getBodyPart(0).getContent();
+			if (body1.contains("Calendar:")) {
+				Pattern pattern = Pattern.compile("Calendar: (.*)");
+				Matcher m = pattern.matcher(body1);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
+				}
+				calendarName = m.group(1);
+			} else {
+				calendarName = "<not found>";
+			}
+		}
+		return calendarName;
+	}
+
 }
