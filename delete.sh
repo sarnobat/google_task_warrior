@@ -1,2 +1,2 @@
 groovy delete.groovy "$@"
-groovy list_update.groovy &	
+#groovy list_update.groovy &	
