@@ -18,6 +18,7 @@ import org.json.JSONObject;
 public class ListDisplaySynchronous {
 	static final String string = "/Users/sarnobat/.gcal_task_warrior";
 	static final File file = new File(string + "/tasks.json");
+
 	public static void main(String[] args) throws NoSuchProviderException,
 			MessagingException, IOException {
 
@@ -30,6 +31,13 @@ public class ListDisplaySynchronous {
 			MessagingException, IOException {
 		Message[] msgs = getMessages();
 		System.out.println("Messages obtained");
+
+		JSONObject json = createsJson(msgs);
+		FileUtils.writeStringToFile(file, json.toString());
+	}
+
+	private static JSONObject createsJson(Message[] msgs)
+			throws MessagingException {
 		int i = 0;
 		JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
@@ -39,7 +47,7 @@ public class ListDisplaySynchronous {
 			System.out.println(i + "\t" + title);
 			json.put(Integer.toString(i), title);
 		}
-		FileUtils.writeStringToFile(file, json.toString());
+		return json;
 	}
 
 	private static Message[] getMessages() throws NoSuchProviderException,

@@ -31,13 +31,14 @@ public class ListDisplaySynchronous {
 			MessagingException, IOException {
 		Message[] msgs = getMessages();
 		System.out.println("Messages obtained");
-		int i = 0;
-		JSONObject json = getErrandsAsJson(msgs, i);
+
+		JSONObject json = createsJson(msgs);
 		FileUtils.writeStringToFile(file, json.toString());
 	}
 
-	private static JSONObject getErrandsAsJson(Message[] msgs, int i)
+	private static JSONObject createsJson(Message[] msgs)
 			throws MessagingException {
+		int i = 0;
 		JSONObject json = new JSONObject();
 		for (Message aMessage : msgs) {
 			i++;

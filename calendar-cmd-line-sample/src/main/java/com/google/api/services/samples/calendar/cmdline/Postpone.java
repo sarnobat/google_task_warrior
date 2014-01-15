@@ -41,10 +41,10 @@ import com.google.common.collect.ImmutableSet;
 public class Postpone {
 	@Deprecated
 	private static final String MESSAGE_ID = "Message-ID";
-	static final String dirPath = "/Users/sarnobat/.gcal_task_warrior";
-	static final File tasksFileLastDisplayed = new File(dirPath
+	private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
+	private static final File mTasksFileLastDisplayed = new File(DIR_PATH
 			+ "/tasks_last_displayed.json");
-	static final File tasksFileLatest = new File(dirPath + "/tasks.json");
+	private static final File tasksFileLatest = new File(DIR_PATH + "/tasks.json");
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
@@ -60,7 +60,8 @@ public class Postpone {
 			String daysToPostponeString) throws IOException,
 			GeneralSecurityException, NoSuchProviderException,
 			MessagingException {
-		JSONObject eventJson = getEventJson(itemToDelete);
+		JSONObject eventJson = getEventJson(itemToDelete,
+				mTasksFileLastDisplayed);
 		Update update = createUpdateCall(daysToPostponeString, eventJson);
 
 		String messageIdToDelete = eventJson.getString(MESSAGE_ID);
@@ -69,7 +70,7 @@ public class Postpone {
 				+ eventJson.getString("title") + " from calendar ");
 		getMessages(messageIdToDelete);
 		JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
-				messageIdToDelete, tasksFileLastDisplayed);
+				messageIdToDelete, mTasksFileLastDisplayed);
 
 		JSONObject fileJsonLatest = getReducedJson(itemToDelete,
 				messageIdToDelete, tasksFileLatest);
@@ -88,8 +89,8 @@ public class Postpone {
 		return update;
 	}
 
-	private static JSONObject getEventJson(String itemToDelete)
-			throws IOException {
+	private static JSONObject getEventJson(String itemToDelete,
+			File tasksFileLastDisplayed) throws IOException {
 		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
 		JSONObject eventJson = getEventJson(itemToDelete, errands);
 		return eventJson;
@@ -104,7 +105,7 @@ public class Postpone {
 	private static void commit(Update update, JSONObject fileJson1,
 			JSONObject fileJson2) throws IOException {
 		commit: {
-			FileUtils.writeStringToFile(tasksFileLastDisplayed,
+			FileUtils.writeStringToFile(mTasksFileLastDisplayed,
 					fileJson1.toString());
 			FileUtils.writeStringToFile(tasksFileLatest, fileJson2.toString());
 			Event updatedEvent = update.execute();
@@ -137,7 +138,7 @@ public class Postpone {
 			throws IOException, GeneralSecurityException {
 		Update update;
 		_1: {
-			String calendars = FileUtils.readFileToString(new File(dirPath
+			String calendars = FileUtils.readFileToString(new File(DIR_PATH
 					+ "/calendars.json"));
 			JSONObject calendarJson = getEventJson(calendarName, calendars);
 			System.out.println(calendarJson.toString());
