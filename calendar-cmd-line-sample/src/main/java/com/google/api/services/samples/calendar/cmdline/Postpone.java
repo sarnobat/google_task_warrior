@@ -50,14 +50,20 @@ public class Postpone {
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
+		tooSlow(args);
+	}
+
+	@Deprecated
+	private static void tooSlow(String[] args) throws IOException,
+			GeneralSecurityException, NoSuchProviderException,
+			MessagingException {
 		String itemToDelete = args[0];
 		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
 		String calendarName = eventJson.getString("calendar_name");
 		System.out.println(calendarName);
-		Update update;
-		update = createUpdateTask(args, eventJson, calendarName);
+		Update update = createUpdateTask(args, eventJson, calendarName);
 
 		String messageIdToDelete = eventJson.getString(MESSAGE_ID);
 
@@ -65,14 +71,19 @@ public class Postpone {
 				+ eventJson.getString("title") + " from calendar "
 				+ calendarName);
 		getMessages(messageIdToDelete);
-		JSONObject fileJson1 = getReducedJson(itemToDelete, messageIdToDelete,
-				tasksFileLastDisplayed);
+		JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
+				messageIdToDelete, tasksFileLastDisplayed);
 
-		JSONObject fileJson2 = getReducedJson(itemToDelete, messageIdToDelete,
-				tasksFileLatest);
+		JSONObject fileJsonLatest = getReducedJson(itemToDelete,
+				messageIdToDelete, tasksFileLatest);
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
+		commit(update, fileJsonLastDisplayed, fileJsonLatest);
+	}
+
+	private static void commit(Update update, JSONObject fileJson1,
+			JSONObject fileJson2) throws IOException {
 		commit: {
 			FileUtils.writeStringToFile(tasksFileLastDisplayed,
 					fileJson1.toString());
