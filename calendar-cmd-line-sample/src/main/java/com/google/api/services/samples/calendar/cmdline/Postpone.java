@@ -195,30 +195,7 @@ public class Postpone {
 			}
 			com.google.api.services.calendar.model.Events s = events.list(
 					calendar.getId()).execute();
-			Event target = null;
-			findCalendarEvent: {
-				com.google.api.services.calendar.model.Events events2;
-
-				String pageToken = null;
-
-				while (true) {
-					events2 = getCalendarService().events().list("primary")
-							.setPageToken(pageToken).execute();
-					events2 = getCalendarService().events().list("primary")
-							.setPageToken(pageToken).execute();
-					java.util.List<Event> items = events2.getItems();
-					for (Event e : items) {
-						if (e.getHtmlLink() != null
-								&& e.getHtmlLink().contains(eventID)) {
-							target = e;
-						}
-					}
-					pageToken = events2.getNextPageToken();
-					if (pageToken == null) {
-						break;
-					}
-				}
-			}
+			Event target = getEvent(eventID);
 
 			if (target == null) {
 				throw new RuntimeException("Couldn't find event");
@@ -234,6 +211,35 @@ public class Postpone {
 			update = createUpdateTask(calendarId, daysToPostpone, target);
 		}
 		return update;
+	}
+
+	private static Event getEvent(String eventID) throws IOException,
+			GeneralSecurityException {
+		Event target = null;
+		findCalendarEvent: {
+			com.google.api.services.calendar.model.Events events2;
+
+			String pageToken = null;
+
+			while (true) {
+				events2 = getCalendarService().events().list("primary")
+						.setPageToken(pageToken).execute();
+				events2 = getCalendarService().events().list("primary")
+						.setPageToken(pageToken).execute();
+				java.util.List<Event> items = events2.getItems();
+				for (Event e : items) {
+					if (e.getHtmlLink() != null
+							&& e.getHtmlLink().contains(eventID)) {
+						target = e;
+					}
+				}
+				pageToken = events2.getNextPageToken();
+				if (pageToken == null) {
+					break;
+				}
+			}
+		}
+		return target;
 	}
 
 	private static Update createUpdateTask(String calendarId,
