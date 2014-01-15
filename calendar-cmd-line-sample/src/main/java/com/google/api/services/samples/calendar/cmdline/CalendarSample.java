@@ -122,6 +122,12 @@ public class CalendarSample {
 			client = new Calendar.Builder(httpTransport, JSON_FACTORY,
 					credential).setApplicationName(APPLICATION_NAME).build();
 
+			
+			
+			for (Object o : client.calendarList().list().keySet()) {
+				System.out.println(o);
+			}
+			
 			System.out.println("Success! Now add code here.");
 
 		} catch (IOException e) {
