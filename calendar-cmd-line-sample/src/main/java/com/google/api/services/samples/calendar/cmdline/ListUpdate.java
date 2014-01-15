@@ -85,8 +85,7 @@ public class ListUpdate {
 		JSONObject errandJsonObject;
 		{
 			errandJsonObject = new JSONObject();
-			String title = aMessage.getSubject().split("@")[0].replace(
-					"Reminder: ", "");
+			String title = getTitle(aMessage);
 			errandJsonObject.put("title", title);
 
 			String eventID = getEventID(aMessage);
@@ -99,6 +98,12 @@ public class ListUpdate {
 			errandJsonObject.put("Message-ID", messageID);
 		}
 		return errandJsonObject;
+	}
+
+	private static String getTitle(Message aMessage) throws MessagingException {
+		String title = aMessage.getSubject().split("@")[0].replace(
+				"Reminder: ", "");
+		return title;
 	}
 
 	private static String getCalendarName(Message aMessage) throws IOException,

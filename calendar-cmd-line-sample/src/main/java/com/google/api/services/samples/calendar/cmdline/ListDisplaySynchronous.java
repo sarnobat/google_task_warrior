@@ -55,7 +55,10 @@ public class ListDisplaySynchronous {
 			// json.put(Integer.toString(i),
 			// messageMetadata);
 
-			System.out.println(i + "\t" + aMessage.getSubject());
+			System.out.println(i
+					+ "\t"
+					+ messageMetadata.getString("title").split("@")[0].replace(
+							"Reminder: ", ""));
 		}
 		return json;
 	}
@@ -65,21 +68,18 @@ public class ListDisplaySynchronous {
 		try {
 			errandJsonObject = new JSONObject();
 			String title;
-
-			title = aMessage.getSubject().split("@")[0].replace("Reminder: ",
-					"");
+			// Leave this as-s for writing. Only when displaying should you
+			// abbreviate
+			title = aMessage.getSubject();
 
 			errandJsonObject.put("title", title);
-			//getBodyMetadataSlow(aMessage);
+			// getBodyMetadataSlow(aMessage);
 			return errandJsonObject;
 		} catch (MessagingException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-
-	
-	
 
 	private static Message[] getMessages() throws NoSuchProviderException,
 			MessagingException {
