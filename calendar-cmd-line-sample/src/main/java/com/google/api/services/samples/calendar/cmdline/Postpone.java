@@ -71,7 +71,7 @@ public class Postpone {
 		// postpone(itemToDelete, daysToPostponeString);
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
-		System.out.println("Title:\t"+title);
+		System.out.println("Title:\t" + title);
 		Message msg = getMessage(title);
 		String messageIdToDelete = getMessageID(msg);
 		String eventId = getEventID(msg);
@@ -80,7 +80,7 @@ public class Postpone {
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
 
-		// commit(itemToDelete, updateTask, messageIdToDelete);
+		commit(itemToDelete, updateTask, messageIdToDelete);
 	}
 
 	private static String getCalendarId(String calendarName) {
@@ -119,16 +119,28 @@ public class Postpone {
 	private static void commit(String itemToDelete, Update update,
 			String messageIdToDelete) throws NoSuchProviderException,
 			MessagingException, IOException {
-		getMessages(messageIdToDelete);
-		JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
-				messageIdToDelete, mTasksFileLastDisplayed);
+		_3: {
+			JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
+					messageIdToDelete, mTasksFileLastDisplayed);
 
-		JSONObject fileJsonLatest = getReducedJson(itemToDelete,
-				messageIdToDelete, mTasksFileLatest);
+			JSONObject fileJsonLatest = getReducedJson(itemToDelete,
+					messageIdToDelete, mTasksFileLatest);
+
+			FileUtils.writeStringToFile(mTasksFileLastDisplayed,
+					fileJsonLastDisplayed.toString());
+			FileUtils.writeStringToFile(mTasksFileLatest,
+					fileJsonLatest.toString());
+		}
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
-		commitInternal(update, fileJsonLastDisplayed, fileJsonLatest);
+		deleteEmail(messageIdToDelete);
+		Event updatedEvent = update.execute();
+
+		// Print the updated date.
+		System.out.println(updatedEvent.getUpdated());
+		System.out.println(updatedEvent.getHtmlLink());
+		System.out.println("Calendar updated");
 	}
 
 	// Still useful
@@ -145,22 +157,7 @@ public class Postpone {
 		return eventJson;
 	}
 
-	private static void commitInternal(Update update, JSONObject fileJson1,
-			JSONObject fileJson2) throws IOException {
-		commit: {
-			FileUtils.writeStringToFile(mTasksFileLastDisplayed,
-					fileJson1.toString());
-			FileUtils.writeStringToFile(mTasksFileLatest, fileJson2.toString());
-			Event updatedEvent = update.execute();
-
-			// Print the updated date.
-			System.out.println(updatedEvent.getUpdated());
-			System.out.println(updatedEvent.getHtmlLink());
-			System.out.println("Event updated");
-		}
-	}
-
-	private static void getMessages(String messageIdToDelete)
+	private static void deleteEmail(String messageIdToDelete)
 			throws NoSuchProviderException, MessagingException {
 		Message[] messages;
 		messages = getMessages();
@@ -168,7 +165,7 @@ public class Postpone {
 			String aMessageID = getMessageID(aMessage);
 			if (aMessageID.equals(messageIdToDelete)) {
 				aMessage.setFlag(Flags.Flag.DELETED, true);
-				System.out.println("Deleted " + aMessage.getSubject());
+				System.out.println("Deleted email:\t" + aMessage.getSubject());
 				break;
 			}
 		}
@@ -203,7 +200,8 @@ public class Postpone {
 		com.google.api.services.calendar.model.CalendarList theCalendarList = mCs
 				.calendarList().list().execute();
 		CalendarListEntry calendar = null;
-		System.out.println("Number of calendars:\t"+theCalendarList.getItems().size());
+		System.out.println("Number of calendars:\t"
+				+ theCalendarList.getItems().size());
 		for (CalendarListEntry aCalendar : theCalendarList.getItems()) {
 			if (calendarName.equals(aCalendar.getSummary())) {
 				calendar = aCalendar;
@@ -269,7 +267,7 @@ public class Postpone {
 							+ eventID + " . Perhaps it is a repeated event?");
 		}
 
-		System.out.println("Event:\t"+target);
+		System.out.println("Event:\t" + target);
 
 		return target;
 	}
@@ -288,7 +286,7 @@ public class Postpone {
 		Event event = mCs.events().get(calendarId, internalEventId).execute();
 		_1: {
 			EventDateTime eventStartTime = event.getStart();
-			System.out.println("Event original start time:\t"+eventStartTime);
+			System.out.println("Event original start time:\t" + eventStartTime);
 			long newStartTime = getNewStartTime(daysToPostpone);
 			eventStartTime.setDateTime(new DateTime(newStartTime));
 
@@ -297,7 +295,7 @@ public class Postpone {
 			endTime.setDateTime(new DateTime(endTimeMillis));
 
 		}
-		System.out.println("Internal Event ID:\t"+internalEventId);
+		System.out.println("Internal Event ID:\t" + internalEventId);
 		Update update = mCs.events().update(calendarId, internalEventId, event);
 
 		return update;
@@ -317,7 +315,7 @@ public class Postpone {
 		java.util.Calendar c = java.util.Calendar.getInstance();
 		c.add(java.util.Calendar.DATE, daysToPostpone);
 		long newStartDateTimeMillis = c.getTimeInMillis();
-		System.out.println("New start time:\t"+c.getTime());
+		System.out.println("New start time:\t" + c.getTime());
 		return newStartDateTimeMillis;
 	}
 
@@ -426,7 +424,7 @@ public class Postpone {
 				JSONObject eventJson) throws IOException,
 				GeneralSecurityException {
 			String calendarName = eventJson.getString("calendar_name");
-			System.out.println("Calendar name:\t"+calendarName);
+			System.out.println("Calendar name:\t" + calendarName);
 			Update update = createUpdateTaskDeprecated(eventJson, calendarName,
 					daysToPostponeString);
 			return update;
@@ -441,7 +439,7 @@ public class Postpone {
 				String calendars = FileUtils.readFileToString(new File(DIR_PATH
 						+ "/calendars.json"));
 				JSONObject calendarJson = getEventJson(calendarName, calendars);
-				System.out.println("Calendars:\t"+calendarJson.toString());
+				System.out.println("Calendars:\t" + calendarJson.toString());
 				String calendarId = calendarJson.getString("calendar_id");
 				String eventID = eventJson.getString("eventID");
 
