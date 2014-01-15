@@ -45,7 +45,9 @@ public class ListDisplaySynchronous {
 			String title = aMessage.getSubject().split("@")[0].replace(
 					"Reminder: ", "");
 			System.out.println(i + "\t" + title);
-			json.put(Integer.toString(i), title);
+			JSONObject jsonValue = new JSONObject();
+			jsonValue.put("title", title);
+			json.put(Integer.toString(i), jsonValue);
 		}
 		return json;
 	}

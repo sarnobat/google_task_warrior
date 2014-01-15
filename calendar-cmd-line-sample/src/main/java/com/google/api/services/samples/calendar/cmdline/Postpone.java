@@ -44,14 +44,26 @@ public class Postpone {
 	private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
 	private static final File mTasksFileLastDisplayed = new File(DIR_PATH
 			+ "/tasks_last_displayed.json");
-	private static final File tasksFileLatest = new File(DIR_PATH + "/tasks.json");
+	private static final File mTasksFileLatest = new File(DIR_PATH
+			+ "/tasks.json");
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
-		String itemToDelete = args[0];
-		String daysToPostponeString = args[1];
-		postpone(itemToDelete, daysToPostponeString);
+		String itemToDelete;
+		String daysToPostponeString;
+
+		if (args.length == 0) {
+			itemToDelete = "1";
+			daysToPostponeString = "1";
+		} else {
+			itemToDelete = args[0];
+			daysToPostponeString = args[1];
+		}
+		// postpone(itemToDelete, daysToPostponeString);
+		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
+		String title = eventJson.getString("title");
+		System.out.println(title);
 	}
 
 	@SuppressWarnings("unused")
@@ -73,7 +85,7 @@ public class Postpone {
 				messageIdToDelete, mTasksFileLastDisplayed);
 
 		JSONObject fileJsonLatest = getReducedJson(itemToDelete,
-				messageIdToDelete, tasksFileLatest);
+				messageIdToDelete, mTasksFileLatest);
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
@@ -97,8 +109,8 @@ public class Postpone {
 	}
 
 	private static JSONObject getEventJson(String itemToDelete, String errands) {
-		JSONObject obj = new JSONObject(errands);
-		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
+		JSONObject allErrandsJson = new JSONObject(errands);
+		JSONObject eventJson = (JSONObject) allErrandsJson.get(itemToDelete);
 		return eventJson;
 	}
 
@@ -107,7 +119,7 @@ public class Postpone {
 		commit: {
 			FileUtils.writeStringToFile(mTasksFileLastDisplayed,
 					fileJson1.toString());
-			FileUtils.writeStringToFile(tasksFileLatest, fileJson2.toString());
+			FileUtils.writeStringToFile(mTasksFileLatest, fileJson2.toString());
 			Event updatedEvent = update.execute();
 
 			// Print the updated date.
