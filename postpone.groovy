@@ -39,17 +39,16 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.collect.ImmutableSet;
 
 public class Postpone {
-	static final String string = "/Users/sarnobat/.gcal_task_warrior";
-	static final String latestFilePath = string + "/tasks_last_displayed.json";
-	static final File tasksFileLatest = new File(latestFilePath);
-	static final File tasksFile = new File(string + "/tasks.json");
+	static final String dirPath = "/Users/sarnobat/.gcal_task_warrior";
+	static final File tasksFileLastDisplayed = new File(dirPath + "/tasks_last_displayed.json");
+	static final File tasksFileLatest = new File(dirPath + "/tasks.json");
 
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
 		String itemToDelete = args[0];
-		String errands = FileUtils.readFileToString(tasksFileLatest);
+		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
 		String calendarName = eventJson.getString("calendar_name");
@@ -58,7 +57,7 @@ public class Postpone {
 		JSONObject fileJson1;
 		JSONObject fileJson2;
 		_1: {
-			String calendars = FileUtils.readFileToString(new File(string
+			String calendars = FileUtils.readFileToString(new File(dirPath
 					+ "/calendars.json"));
 			JSONObject calendarsJson = new JSONObject(calendars);
 			JSONObject calendarJson = (JSONObject) calendarsJson
@@ -194,16 +193,16 @@ public class Postpone {
 				}
 			}
 			fileJson1 = getReducedJson(itemToDelete, messageIdToDelete,
-					tasksFileLatest);
+					tasksFileLastDisplayed);
 
 			fileJson2 = getReducedJson(itemToDelete, messageIdToDelete,
-					tasksFile);
+					tasksFileLatest);
 		}
 
 		// All persistent changes are done right at the end, so that any exceptions can get thrown first.
 		commit: {
-			FileUtils.writeStringToFile(tasksFileLatest, fileJson1.toString());
-			FileUtils.writeStringToFile(tasksFile, fileJson2.toString());
+			FileUtils.writeStringToFile(tasksFileLastDisplayed, fileJson1.toString());
+			FileUtils.writeStringToFile(tasksFileLatest, fileJson2.toString());
 			Event updatedEvent = update.execute();
 
 			// Print the updated date.
