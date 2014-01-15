@@ -97,6 +97,12 @@
 			<artifactId>google-api-client</artifactId>
 			<version>1.17.0-rc</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.googlecode.gmail4j</groupId>
+			<artifactId>gmail4j</artifactId>
+			<version>0.4</version>
+		</dependency>
 	</dependencies>
 
 </project>
