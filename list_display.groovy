@@ -55,7 +55,10 @@ public class ListDisplaySynchronous {
 			// json.put(Integer.toString(i),
 			// messageMetadata);
 
-			System.out.println(i + "\t" + aMessage.getSubject());
+			System.out.println(i
+					+ "\t"
+					+ messageMetadata.getString("title").split("@")[0].replace(
+							"Reminder: ", ""));
 		}
 		return json;
 	}
@@ -65,96 +68,15 @@ public class ListDisplaySynchronous {
 		try {
 			errandJsonObject = new JSONObject();
 			String title;
-
-			title = aMessage.getSubject().split("@")[0].replace("Reminder: ",
-					"");
+			// Leave this as-s for writing. Only when displaying should you
+			// abbreviate
+			title = aMessage.getSubject();
 
 			errandJsonObject.put("title", title);
-			//getBodyMetadataSlow(aMessage);
+			// getBodyMetadataSlow(aMessage);
 			return errandJsonObject;
 		} catch (MessagingException e) {
 			e.printStackTrace();
-		}
-		return null;
-	}
-
-	@Deprecated
-	private static void getBodyMetadataSlow(Message aMessage) {
-
-		try {
-			String eventID = getEventID(aMessage);
-
-			// errandJsonObject.put("eventID", eventID);
-
-			String calendarName = getCalendarName(aMessage);
-			// errandJsonObject.put("calendar_name", calendarName);
-
-			String messageID = getMessageID(aMessage);
-			// errandJsonObject.put("Message-ID", messageID);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (MessagingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	private static String getCalendarName(Message aMessage) throws IOException,
-			MessagingException {
-		String calendarName;
-		MimeMultipart s = (MimeMultipart) aMessage.getContent();
-		String body1 = (String) s.getBodyPart(0).getContent();
-		if (body1.contains("Calendar:")) {
-			Pattern pattern = Pattern.compile("Calendar: (.*)");
-			Matcher m = pattern.matcher(body1);
-			if (!m.find()) {
-				throw new RuntimeException("eid not in string 2");
-			}
-			calendarName = m.group(1);
-		} else {
-			calendarName = "<not found>";
-		}
-
-		return calendarName;
-	}
-
-	private static String getEventID(Message aMessage) throws IOException,
-			MessagingException {
-		String eventID = "<none>";
-		MimeMultipart s = (MimeMultipart) aMessage.getContent();
-		String body = (String) s.getBodyPart(0).getContent();
-
-		if (body.trim().length() < 1) {
-			System.out.println("body is empty");
-		}
-
-		if (body.contains("eid")) {
-			Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
-			Matcher m = pattern.matcher(body);
-			if (!m.find()) {
-				throw new RuntimeException("eid not in string 2");
-			}
-			eventID = m.group(1);
-		}
-		return eventID;
-	}
-
-	private static String getMessageID(Message aMessage) {
-		try {
-			Enumeration allHeaders;
-			allHeaders = aMessage.getAllHeaders();
-
-			String messageID = "<not found>";
-			while (allHeaders.hasMoreElements()) {
-				Header e = (Header) allHeaders.nextElement();
-				if (e.getName().equals("Message-ID")) {
-					messageID = e.getValue();
-				}
-			}
-			return messageID;
-		} catch (MessagingException e1) {
-			e1.printStackTrace();
 		}
 		return null;
 	}
