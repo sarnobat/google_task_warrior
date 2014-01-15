@@ -181,20 +181,12 @@ public class Postpone {
 		Update update;
 		_3: {
 			Events events = getCalendarService().events();
-			com.google.api.services.calendar.model.CalendarList lc = getCalendarService()
-					.calendarList().list().execute();
-			CalendarListEntry calendar = null;
-			System.out.println(lc.getItems().size());
-			for (CalendarListEntry c : lc.getItems()) {
-				if (calendarName.equals(c.getSummary())) {
-					calendar = c;
-				}
-			}
-			if (calendar == null) {
-				throw new RuntimeException("couldn't find calendar");
-			}
+			CalendarListEntry calendar = getCalendar(calendarName);
+			
+			// TODO: delete this?
 			com.google.api.services.calendar.model.Events s = events.list(
 					calendar.getId()).execute();
+			
 			Event target = getEvent(eventID);
 
 			if (target == null) {
@@ -211,6 +203,23 @@ public class Postpone {
 			update = createUpdateTask(calendarId, daysToPostpone, target);
 		}
 		return update;
+	}
+
+	private static CalendarListEntry getCalendar(String calendarName)
+			throws IOException, GeneralSecurityException {
+		com.google.api.services.calendar.model.CalendarList lc = getCalendarService()
+				.calendarList().list().execute();
+		CalendarListEntry calendar = null;
+		System.out.println(lc.getItems().size());
+		for (CalendarListEntry c : lc.getItems()) {
+			if (calendarName.equals(c.getSummary())) {
+				calendar = c;
+			}
+		}
+		if (calendar == null) {
+			throw new RuntimeException("couldn't find calendar");
+		}
+		return calendar;
 	}
 
 	private static Event getEvent(String eventID) throws IOException,
