@@ -22,7 +22,8 @@ import javax.mail.internet.MimeMultipart;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
-public class ListDisplay {
+@Deprecated // Too much faulty behavior from weak consistency
+public class ListDisplayFromFileCache {
 	public static void main(String[] args) throws IOException {
 		final String string = "/Users/sarnobat/.gcal_task_warrior";
 		final File file = new File(string + "/tasks.json");
