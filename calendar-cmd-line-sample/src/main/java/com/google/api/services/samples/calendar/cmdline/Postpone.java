@@ -39,8 +39,9 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.collect.ImmutableSet;
 
 public class Postpone {
-	@Deprecated
+
 	private static final String MESSAGE_ID = "Message-ID";
+
 	private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
 	private static final File mTasksFileLastDisplayed = new File(DIR_PATH
 			+ "/tasks_last_displayed.json");
@@ -70,8 +71,6 @@ public class Postpone {
 				daysToPostponeString);
 		commit(itemToDelete, update, messageIdToDelete);
 	}
-
-	
 
 	private static void commit(String itemToDelete, Update update,
 			String messageIdToDelete) throws NoSuchProviderException,
@@ -392,6 +391,7 @@ public class Postpone {
 			}
 			return update;
 		}
+
 		@SuppressWarnings("unused")
 		@Deprecated
 		private static void postpone(String itemToDelete,
