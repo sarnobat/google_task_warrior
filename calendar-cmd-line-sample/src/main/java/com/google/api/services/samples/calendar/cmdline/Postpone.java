@@ -64,14 +64,14 @@ public class Postpone {
 		} else if (args.length == 1) {
 			itemToDelete = args[0];
 			daysToPostponeString = "1";
-		}else {
+		} else {
 			itemToDelete = args[0];
 			daysToPostponeString = args[1];
 		}
 		// postpone(itemToDelete, daysToPostponeString);
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
-		System.out.println(title);
+		System.out.println("Title:\t"+title);
 		Message msg = getMessage(title);
 		String messageIdToDelete = getMessageID(msg);
 		String eventId = getEventID(msg);
@@ -91,8 +91,8 @@ public class Postpone {
 		try {
 			s = FileUtils.readFileToString(file, "UTF-8");
 			JSONObject j = new JSONObject(s);
-			String id = ((JSONObject) j.get(calendarName))
-					.getString("calendar_id");
+			JSONObject jsonObject = (JSONObject) j.get(calendarName);
+			String id = jsonObject.getString("calendar_id");
 			return id;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -203,7 +203,7 @@ public class Postpone {
 		com.google.api.services.calendar.model.CalendarList theCalendarList = mCs
 				.calendarList().list().execute();
 		CalendarListEntry calendar = null;
-		System.out.println(theCalendarList.getItems().size());
+		System.out.println("Number of calendars:\t"+theCalendarList.getItems().size());
 		for (CalendarListEntry aCalendar : theCalendarList.getItems()) {
 			if (calendarName.equals(aCalendar.getSummary())) {
 				calendar = aCalendar;
@@ -252,8 +252,8 @@ public class Postpone {
 						.execute();
 				java.util.List<Event> items = events2.getItems();
 				for (Event e : items) {
-					if (e.getHtmlLink() != null
-							&& e.getHtmlLink().contains(eventID)) {
+					String htmlLink = e.getHtmlLink();
+					if (htmlLink != null && htmlLink.contains(eventID)) {
 						target = e;
 					}
 				}
@@ -264,10 +264,12 @@ public class Postpone {
 			}
 		}
 		if (target == null) {
-			throw new RuntimeException("Couldn't find event");
+			throw new RuntimeException(
+					"Couldn't find event in service: https://www.google.com/calendar/render?eid="
+							+ eventID + " . Perhaps it is a repeated event?");
 		}
 
-		System.out.println(target);
+		System.out.println("Event:\t"+target);
 
 		return target;
 	}
@@ -286,7 +288,7 @@ public class Postpone {
 		Event event = mCs.events().get(calendarId, internalEventId).execute();
 		_1: {
 			EventDateTime eventStartTime = event.getStart();
-			System.out.println(eventStartTime);
+			System.out.println("Event original start time:\t"+eventStartTime);
 			long newStartTime = getNewStartTime(daysToPostpone);
 			eventStartTime.setDateTime(new DateTime(newStartTime));
 
@@ -295,7 +297,7 @@ public class Postpone {
 			endTime.setDateTime(new DateTime(endTimeMillis));
 
 		}
-		System.out.println(internalEventId);
+		System.out.println("Internal Event ID:\t"+internalEventId);
 		Update update = mCs.events().update(calendarId, internalEventId, event);
 
 		return update;
@@ -312,13 +314,12 @@ public class Postpone {
 	}
 
 	private static long getNewStartTime(int daysToPostpone) {
-			java.util.Calendar c = java.util.Calendar.getInstance();
-			c.add(java.util.Calendar.DATE, daysToPostpone);
-			long newStartDateTimeMillis = c.getTimeInMillis();
-			System.out.println(c.getTime());
-			return newStartDateTimeMillis;
-		}
-	
+		java.util.Calendar c = java.util.Calendar.getInstance();
+		c.add(java.util.Calendar.DATE, daysToPostpone);
+		long newStartDateTimeMillis = c.getTimeInMillis();
+		System.out.println("New start time:\t"+c.getTime());
+		return newStartDateTimeMillis;
+	}
 
 	private static Calendar getCalendarService() {
 		System.out.println("Authenticating...");
@@ -425,7 +426,7 @@ public class Postpone {
 				JSONObject eventJson) throws IOException,
 				GeneralSecurityException {
 			String calendarName = eventJson.getString("calendar_name");
-			System.out.println(calendarName);
+			System.out.println("Calendar name:\t"+calendarName);
 			Update update = createUpdateTaskDeprecated(eventJson, calendarName,
 					daysToPostponeString);
 			return update;
@@ -440,7 +441,7 @@ public class Postpone {
 				String calendars = FileUtils.readFileToString(new File(DIR_PATH
 						+ "/calendars.json"));
 				JSONObject calendarJson = getEventJson(calendarName, calendars);
-				System.out.println(calendarJson.toString());
+				System.out.println("Calendars:\t"+calendarJson.toString());
 				String calendarId = calendarJson.getString("calendar_id");
 				String eventID = eventJson.getString("eventID");
 
@@ -556,7 +557,7 @@ public class Postpone {
 	private static String getCalendarName(Message aMessage) throws IOException,
 			MessagingException {
 		String calendarName;
-		_2:{
+		_2: {
 			MimeMultipart s = (MimeMultipart) aMessage.getContent();
 			String body1 = (String) s.getBodyPart(0).getContent();
 			if (body1.contains("Calendar:")) {
@@ -567,7 +568,7 @@ public class Postpone {
 				}
 				calendarName = m.group(1);
 			} else {
-				calendarName = "<not found>";
+				throw new RuntimeException(aMessage.getSubject());
 			}
 		}
 		return calendarName;
