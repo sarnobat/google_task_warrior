@@ -52,13 +52,11 @@ public class ListDisplaySynchronous {
 		for (Message aMessage : msgs) {
 			i++;
 			JSONObject messageMetadata = checkNotNull(getMessageMetadata(aMessage));
-			// json.put(Integer.toString(i),
-			// messageMetadata);
-
 			System.out.println(i
 					+ "\t"
 					+ messageMetadata.getString("title").split("@")[0].replace(
 							"Reminder: ", ""));
+			json.put(Integer.toString(i), messageMetadata);
 		}
 		return json;
 	}
