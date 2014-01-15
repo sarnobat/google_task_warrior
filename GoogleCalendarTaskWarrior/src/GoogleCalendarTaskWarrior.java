@@ -18,17 +18,18 @@ import com.google.common.collect.ImmutableSet;
 
 public class GoogleCalendarTaskWarrior {
 
-	private static Calendar client;
-
 	public static void main(String[] args) throws IOException,
 			GeneralSecurityException {
-		client = getCalendarService();
+		Calendar client = getCalendarService();
 		@SuppressWarnings("unchecked")
 		List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
 				.calendarList().list().execute().get("items");
 		for (CalendarListEntry aCalendar : allCalendars) {
+			
+			
 			System.out.println(aCalendar.getSummary() + "::"
-					+ aCalendar.getId() + "::" + aCalendar.getClass() + "::"
+					+ aCalendar.getId() + "::"
+					// + aCalendar.getClass() + "::"
 					+ aCalendar);
 		}
 	}
@@ -37,8 +38,7 @@ public class GoogleCalendarTaskWarrior {
 			throws GeneralSecurityException, IOException {
 		HttpTransport httpTransport = GoogleNetHttpTransport
 				.newTrustedTransport();
-
-		client = new Calendar.Builder(
+		Calendar client = new Calendar.Builder(
 				httpTransport,
 				JacksonFactory.getDefaultInstance(),
 				new AuthorizationCodeInstalledApp(
