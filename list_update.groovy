@@ -131,7 +131,7 @@ public class ListUpdate {
 	private static Store connect() throws NoSuchProviderException,
 			MessagingException {
 		Properties props = System.getProperties();
-		String password = "varelA77";// System.getenv("GMAIL_PASSWORD");
+		String password = System.getenv("GMAIL_PASSWORD");
 		if (password == null) {
 			throw new RuntimeException(
 					"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
