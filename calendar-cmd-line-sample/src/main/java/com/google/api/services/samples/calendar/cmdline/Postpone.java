@@ -29,29 +29,37 @@ public class Postpone {
 		String errands = FileUtils.readFileToString(file);
 		JSONObject obj = new JSONObject(errands);
 		JSONObject eventJson = (JSONObject) obj.get(itemToDelete);
-		String messageIdToDelete = eventJson.getString("Message-ID");
 		String calendarName = eventJson.getString("calendar_name");
-		System.out.println("Will delete [" + messageIdToDelete + "] "
-				+ eventJson.getString("title") + " from calendar "
-				+ calendarName);
-		Message[] messages = getMessages();
-		for (Message aMessage : messages) {
-			String aMessageID = getMessageID(aMessage);
-			if (aMessageID.equals(messageIdToDelete)) {
-				aMessage.setFlag(Flags.Flag.DELETED, true);
-				System.out.println("Deleted " + aMessage.getSubject());
-				break;
+		{
+			String messageIdToDelete = eventJson.getString("Message-ID");
+
+			System.out.println("Will delete [" + messageIdToDelete + "] "
+					+ eventJson.getString("title") + " from calendar "
+					+ calendarName);
+			Message[] messages = getMessages();
+			for (Message aMessage : messages) {
+				String aMessageID = getMessageID(aMessage);
+				if (aMessageID.equals(messageIdToDelete)) {
+					aMessage.setFlag(Flags.Flag.DELETED, true);
+					System.out.println("Deleted " + aMessage.getSubject());
+					break;
+				}
 			}
+			deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
 		}
-		String calendars = FileUtils.readFileToString(new File(string
-				+ "/calendars.json"));
-		JSONObject calendarsJson = new JSONObject(calendars);
-		JSONObject calendarJson = (JSONObject) calendarsJson.get(calendarName);
-		String calendarId = calendarJson.getString("calendar_id");
-		String eventID = eventJson.getString("eventID");
-		System.out.println("Will update event event " + eventID
-				+ " in calendar " + calendarId);
-		// deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
+		{
+			String calendars = FileUtils.readFileToString(new File(string
+					+ "/calendars.json"));
+			JSONObject calendarsJson = new JSONObject(calendars);
+			JSONObject calendarJson = (JSONObject) calendarsJson
+					.get(calendarName);
+			String calendarId = calendarJson.getString("calendar_id");
+			String eventID = eventJson.getString("eventID");
+
+			System.out.println("Will update event event " + eventID
+					+ " in calendar " + calendarId);
+		}
+
 		System.out.println("Event updated");
 	}
 
