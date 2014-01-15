@@ -49,16 +49,17 @@ public class Postpone {
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
-		//tooSlow(args);
+		String itemToDelete = args[0];
+		String daysToPostponeString = args[1];
+		postpone(itemToDelete, daysToPostponeString);
 	}
 
 	@SuppressWarnings("unused")
 	@Deprecated
-	private static void tooSlow(String[] args) throws IOException,
+	private static void postpone(String itemToDelete,
+			String daysToPostponeString) throws IOException,
 			GeneralSecurityException, NoSuchProviderException,
 			MessagingException {
-		String itemToDelete = args[0];
-		String daysToPostponeString = args[1];
 		JSONObject eventJson = getEventJson(itemToDelete);
 		Update update = createUpdateCall(daysToPostponeString, eventJson);
 
