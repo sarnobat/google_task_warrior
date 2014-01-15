@@ -97,7 +97,7 @@
 			<artifactId>google-api-client</artifactId>
 			<version>1.17.0-rc</version>
 		</dependency>
-	</dependencies>
+	
 
 	<dependency>
 		<groupId>com.google.guava</groupId>
@@ -105,10 +105,5 @@
 		<version>15.0</version>
 	</dependency>
 	
-	<dependency>
-		<groupId>com.google.collections</groupId>
-		<artifactId>google-collections</artifactId>
-		<version>1.0</version>
-	</dependency>
-
+</dependencies>
 </project>

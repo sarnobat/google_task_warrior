@@ -1,8 +1,6 @@
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -17,6 +15,7 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarListEntry;
+import com.google.common.collect.ImmutableSet;
 
 public class GoogleCalendarTaskWarrior {
 
@@ -41,8 +40,8 @@ public class GoogleCalendarTaskWarrior {
 			HttpTransport httpTransport = GoogleNetHttpTransport
 					.newTrustedTransport();
 			FileDataStoreFactory dataStoreFactory = new FileDataStoreFactory(
-					new java.io.File(
-							System.getProperty("user.home"), ".store/calendar_sample"));
+					new java.io.File(System.getProperty("user.home"),
+							".store/calendar_sample"));
 
 			Credential credential;
 			{
@@ -66,8 +65,8 @@ public class GoogleCalendarTaskWarrior {
 					}
 
 					GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-							httpTransport, JSON_FACTORY, clientSecrets,  ImmutableSet.of(
-									CalendarScopes.CALENDAR,
+							httpTransport, JSON_FACTORY, clientSecrets,
+							ImmutableSet.of(CalendarScopes.CALENDAR,
 									CalendarScopes.CALENDAR_READONLY))
 							.setDataStoreFactory(dataStoreFactory).build();
 
