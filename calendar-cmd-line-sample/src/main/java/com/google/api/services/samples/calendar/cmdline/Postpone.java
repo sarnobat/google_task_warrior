@@ -244,40 +244,54 @@ public class Postpone {
 
 	private static Update createUpdateTask(String calendarId, String eventID,
 			int daysToPostpone) throws IOException, GeneralSecurityException {
-		Event target = getEvent(eventID);
+		Event originalEvent = getEvent(eventID);
 
-		Event clonedEvent = target.clone();
+		Event clonedEvent = originalEvent.clone();
 		if (clonedEvent.getRecurrence() != null) {
 			throw new RuntimeException(
 					"Use optional param 'singleEvents' to break recurring events into single ones");
 		}
-		Update update;
-		createUpdateTask1: {
-			// First retrieve the event from the API.
-			Event event = getCalendarService().events()
-					.get(calendarId, target.getId()).execute();
-			{
-				java.util.Calendar c = java.util.Calendar.getInstance();
-				c.add(java.util.Calendar.DATE, daysToPostpone);
 
-				System.out.println(c.getTime());
-				_4: {
-					EventDateTime startTime = event.getStart();
-					System.out.println(startTime);
-					System.out.println(target.getId());
+		// First retrieve the event from the API.
+		Event event = getCalendarService().events()
+				.get(calendarId, originalEvent.getId()).execute();
+		{
+			EventDateTime eventStartTime = event.getStart();
+			System.out.println(eventStartTime);
+			long newStartTime = getNewStartTime(daysToPostpone);
+			eventStartTime.setDateTime(new DateTime(newStartTime));
 
-					long dateTime = c.getTimeInMillis();
-					startTime.setDateTime(new DateTime(dateTime));
+			EventDateTime endTime = event.getEnd();
+			long endTimeMillis = getNewEndDateTime(daysToPostpone);
+			endTime.setDateTime(new DateTime(endTimeMillis));
 
-					EventDateTime endTime = event.getEnd();
-					long endTimeMillis = c.getTimeInMillis();
-					endTime.setDateTime(new DateTime(endTimeMillis));
-				}
-			}
-			update = getCalendarService().events().update(calendarId,
-					target.getId(), event);
 		}
+		System.out.println(originalEvent.getId());
+		Update update = getCalendarService().events().update(calendarId,
+				originalEvent.getId(), event);
+
 		return update;
+	}
+
+	private static long getNewEndDateTime(int daysToPostpone) {
+		long endTimeMillis;
+		{
+			java.util.Calendar c = java.util.Calendar.getInstance();
+			c.add(java.util.Calendar.DATE, daysToPostpone);
+
+			endTimeMillis = c.getTimeInMillis();
+		}
+		return endTimeMillis;
+	}
+
+	private static long getNewStartTime(int daysToPostpone) {
+		{
+			java.util.Calendar c = java.util.Calendar.getInstance();
+			c.add(java.util.Calendar.DATE, daysToPostpone);
+			long newStartDateTimeMillis = c.getTimeInMillis();
+			System.out.println(c.getTime());
+			return newStartDateTimeMillis;
+		}
 	}
 
 	private static Calendar getCalendarService()
