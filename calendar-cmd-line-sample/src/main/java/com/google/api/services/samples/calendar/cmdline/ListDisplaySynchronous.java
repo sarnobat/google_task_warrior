@@ -56,7 +56,7 @@ public class ListDisplaySynchronous {
 			// json.put(Integer.toString(i),
 			// messageMetadata);
 
-			System.out.println(i+"\t" + aMessage.getSubject());
+			System.out.println(i + "\t" + aMessage.getSubject());
 		}
 		return json;
 	}
@@ -155,11 +155,11 @@ public class ListDisplaySynchronous {
 		System.out.println("Getting Message list");
 		Message[] msgs = folder.getMessages();
 
-		// FetchProfile fp = new FetchProfile();
-		// fp.add(FetchProfile.Item.ENVELOPE);
-		// System.out.print("Fetching attributes...");
-		// folder.fetch(msgs, fp);
-		// System.out.println("done");
+		FetchProfile fp = new FetchProfile();
+		fp.add(FetchProfile.Item.ENVELOPE);
+		System.out.print("Fetching attributes...");
+		folder.fetch(msgs, fp);
+		System.out.println("done");
 		return msgs;
 	}
 
