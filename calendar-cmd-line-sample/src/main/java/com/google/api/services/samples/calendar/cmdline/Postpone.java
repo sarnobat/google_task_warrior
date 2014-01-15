@@ -46,6 +46,18 @@ public class Postpone {
 			+ "/tasks_last_displayed.json");
 	private static final File mTasksFileLatest = new File(DIR_PATH
 			+ "/tasks.json");
+	private static final Calendar mCs = cs();
+
+	private static Calendar cs() {
+		try {
+			return getCalendarService();
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
@@ -182,7 +194,7 @@ public class Postpone {
 			throws GeneralSecurityException, IOException {
 
 		{
-			Events events = getCalendarService().events();
+			Events events = mCs.events();
 			CalendarListEntry calendar = getCalendar(calendarName);
 
 			com.google.api.services.calendar.model.Events s = events.list(
@@ -192,13 +204,13 @@ public class Postpone {
 
 	private static CalendarListEntry getCalendar(String calendarName)
 			throws IOException, GeneralSecurityException {
-		com.google.api.services.calendar.model.CalendarList lc = getCalendarService()
+		com.google.api.services.calendar.model.CalendarList theCalendarList = mCs
 				.calendarList().list().execute();
 		CalendarListEntry calendar = null;
-		System.out.println(lc.getItems().size());
-		for (CalendarListEntry c : lc.getItems()) {
-			if (calendarName.equals(c.getSummary())) {
-				calendar = c;
+		System.out.println(theCalendarList.getItems().size());
+		for (CalendarListEntry aCalendar : theCalendarList.getItems()) {
+			if (calendarName.equals(aCalendar.getSummary())) {
+				calendar = aCalendar;
 			}
 		}
 		if (calendar == null) {
@@ -216,10 +228,10 @@ public class Postpone {
 			String pageToken = null;
 
 			while (true) {
-				events2 = getCalendarService().events().list("primary")
-						.setPageToken(pageToken).execute();
-				events2 = getCalendarService().events().list("primary")
-						.setPageToken(pageToken).execute();
+				events2 = mCs.events().list("primary").setPageToken(pageToken)
+						.execute();
+				events2 = mCs.events().list("primary").setPageToken(pageToken)
+						.execute();
 				java.util.List<Event> items = events2.getItems();
 				for (Event e : items) {
 					if (e.getHtmlLink() != null
@@ -253,8 +265,7 @@ public class Postpone {
 
 		// I don't know why the service uses a different ID
 		String internalEventId = originalEvent.getId();
-		Event event = getCalendarService().events()
-				.get(calendarId, internalEventId).execute();
+		Event event = mCs.events().get(calendarId, internalEventId).execute();
 		{
 			EventDateTime eventStartTime = event.getStart();
 			System.out.println(eventStartTime);
@@ -267,8 +278,7 @@ public class Postpone {
 
 		}
 		System.out.println(internalEventId);
-		Update update = getCalendarService().events().update(calendarId,
-				internalEventId, event);
+		Update update = mCs.events().update(calendarId, internalEventId, event);
 
 		return update;
 	}
@@ -294,6 +304,8 @@ public class Postpone {
 		}
 	}
 
+	@Deprecated
+	// only do this once
 	private static Calendar getCalendarService()
 			throws GeneralSecurityException, IOException {
 		System.out.println("Authenticating...");
