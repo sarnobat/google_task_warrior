@@ -46,13 +46,13 @@ public class Postpone {
 			+ "/tasks_last_displayed.json");
 	static final File tasksFileLatest = new File(dirPath + "/tasks.json");
 
-	@SuppressWarnings("unused")
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
 			GeneralSecurityException {
-		tooSlow(args);
+		//tooSlow(args);
 	}
 
+	@SuppressWarnings("unused")
 	@Deprecated
 	private static void tooSlow(String[] args) throws IOException,
 			GeneralSecurityException, NoSuchProviderException,
