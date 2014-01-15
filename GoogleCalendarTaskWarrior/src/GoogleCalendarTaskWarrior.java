@@ -2,6 +2,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.json.JSONObject;
 
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -24,13 +28,14 @@ public class GoogleCalendarTaskWarrior {
 		@SuppressWarnings("unchecked")
 		List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
 				.calendarList().list().execute().get("items");
+		Map m = new TreeMap();
 		for (CalendarListEntry aCalendar : allCalendars) {
-			
-			
-			System.out.println(aCalendar.getSummary() + "::"
-					+ aCalendar.getId() + "::"
-					// + aCalendar.getClass() + "::"
-					+ aCalendar);
+
+			System.out.println(aCalendar.getSummary() + " :: "
+					+ aCalendar.getId() + " :: "
+			// + aCalendar.getClass() + "::"
+			// + new JSONObject(aCalendar)
+					);
 		}
 	}
 
