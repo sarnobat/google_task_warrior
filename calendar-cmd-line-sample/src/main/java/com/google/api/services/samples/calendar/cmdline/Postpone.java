@@ -169,14 +169,10 @@ public class Postpone {
 	private static Update createUpdateTask(String calendarName,
 			String calendarId, String eventID, String daysToPostponeString)
 			throws GeneralSecurityException, IOException {
-		Update update;
-		createUpdateTask: {
-			int daysToPostpone = Integer.parseInt(daysToPostponeString);
-			// Get event's current time
-			update = createUpdateTask(calendarName, calendarId, eventID,
-					daysToPostpone);
-		}
-		return update;
+		int daysToPostpone = Integer.parseInt(daysToPostponeString);
+		// Get event's current time
+		return createUpdateTask(calendarName, calendarId, eventID,
+				daysToPostpone);
 	}
 
 	private static Update createUpdateTask(String calendarName,
