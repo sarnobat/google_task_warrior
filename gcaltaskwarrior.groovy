@@ -25,6 +25,8 @@ public class GoogleCalendarTaskWarrior {
 	public static void main(String[] args) throws IOException,
 			GeneralSecurityException {
 		Calendar client = getCalendarService();
+		
+		System.out.println("Getting calendars...");
 		@SuppressWarnings("unchecked")
 		List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
 				.calendarList().list().execute().get("items");
@@ -40,6 +42,8 @@ public class GoogleCalendarTaskWarrior {
 
 	private static Calendar getCalendarService()
 			throws GeneralSecurityException, IOException {
+		System.out.println("Authenticating...");
+			
 		HttpTransport httpTransport = GoogleNetHttpTransport
 				.newTrustedTransport();
 		Calendar client = new Calendar.Builder(
