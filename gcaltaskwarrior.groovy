@@ -33,10 +33,12 @@ public class GoogleCalendarTaskWarrior {
 
 		for (CalendarListEntry aCalendar : allCalendars) {
 
-			System.out.println(aCalendar.getSummary() + " :: "
-					+ aCalendar.getId() + " :: "
-					+ aCalendar.toPrettyString() + " :: "
-					+ new JSONObject(aCalendar) + "\n");
+			System.out.println(
+					aCalendar.getSummary() 
+					//+ " :: " + aCalendar.getId() 
+					//+ " :: " + aCalendar.toPrettyString()
+				 	//+ " :: " + new JSONObject(aCalendar) + "\n"
+				 	);
 		}
 	}
 
