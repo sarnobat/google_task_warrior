@@ -3,8 +3,11 @@ package com.google.api.services.samples.calendar.cmdline;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,10 +76,14 @@ public class Postpone {
 		String messageIdToDelete = getMessageID(msg);
 		String eventId = getEventID(msg);
 		String calendarName = getCalendarName(msg);
-		String calendarId = getCalendarIdViaCalendarService();
+		String calendarId = getCalendarId(calendarName);
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
 		commit(itemToDelete, updateTask, messageIdToDelete);
+	}
+
+	private static String getCalendarId(String calendarName) {
+
 	}
 
 	private static Message getMessage(String title)
@@ -560,5 +567,4 @@ public class Postpone {
 		}
 		return calendarName;
 	}
-
 }

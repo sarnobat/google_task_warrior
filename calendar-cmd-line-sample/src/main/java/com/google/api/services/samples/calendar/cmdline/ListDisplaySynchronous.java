@@ -4,7 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.security.GeneralSecurityException;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +27,19 @@ import javax.mail.internet.MimeMultipart;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.CalendarScopes;
+import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 
 public class ListDisplaySynchronous {
 	static final String string = "/Users/sarnobat/.gcal_task_warrior";
@@ -31,9 +48,91 @@ public class ListDisplaySynchronous {
 	public static void main(String[] args) throws NoSuchProviderException,
 			MessagingException, IOException {
 
+		writeCalendarsToFileInSeparateThread();
 		getErrands();
 
 		System.out.println("List updated");
+	}
+
+	private static void writeCalendarsToFileInSeparateThread() {
+		new Thread() {
+			public void run() {
+				writeCalendars();
+			}
+		}.start();
+	}
+
+	private static void writeCalendars() {
+
+		JSONObject json;
+		try {
+			json = getCalendars();
+
+			final String string = "/Users/sarnobat/.gcal_task_warrior";
+			final File file = new File(string + "/calendars.json");
+			FileUtils.writeStringToFile(file, json.toString(), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static JSONObject getCalendars() throws GeneralSecurityException,
+			IOException, UnsupportedEncodingException {
+		Calendar client = getCalendarService();
+
+		System.out.println("Getting calendars...");
+		@SuppressWarnings("unchecked")
+		List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
+				.calendarList().list().execute().get("items");
+		JSONObject json = new JSONObject();
+
+		for (CalendarListEntry aCalendar : allCalendars) {
+			// System.out.println(aCalendar.getSummary() + "::"
+			// + URLDecoder.decode(aCalendar.getId(), "UTF-8"));
+			json.put(aCalendar.getSummary(),
+					new JSONObject().put("calendar_id", aCalendar.getId()));
+		}
+		return json;
+	}
+
+	/************************************************************************
+	 * Boilerplate
+	 ************************************************************************/
+
+	private static Calendar getCalendarService()
+			throws GeneralSecurityException, IOException {
+		System.out.println("Authenticating...");
+
+		HttpTransport httpTransport = GoogleNetHttpTransport
+				.newTrustedTransport();
+		Calendar client = new Calendar.Builder(
+				httpTransport,
+				JacksonFactory.getDefaultInstance(),
+				new AuthorizationCodeInstalledApp(
+						new GoogleAuthorizationCodeFlow.Builder(
+								httpTransport,
+								JacksonFactory.getDefaultInstance(),
+								GoogleClientSecrets.load(
+										JacksonFactory.getDefaultInstance(),
+										new InputStreamReader(
+												ListCalendars.class
+														.getResourceAsStream("/client_secrets.json"))),
+								ImmutableSet.of(CalendarScopes.CALENDAR,
+										CalendarScopes.CALENDAR_READONLY))
+								.setDataStoreFactory(
+										new FileDataStoreFactory(
+												new java.io.File(
+														System.getProperty("user.home"),
+														".store/calendar_sample")))
+								.build(), new LocalServerReceiver())
+						.authorize("user")).setApplicationName(
+				"gcal-task-warrior").build();
+		return client;
+
 	}
 
 	private static void getErrands() throws NoSuchProviderException,

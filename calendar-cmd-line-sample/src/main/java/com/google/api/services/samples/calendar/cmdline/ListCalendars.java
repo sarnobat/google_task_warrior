@@ -3,6 +3,7 @@ package com.google.api.services.samples.calendar.cmdline;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -27,6 +28,36 @@ public class ListCalendars {
 
 	public static void main(String[] args) throws IOException,
 			GeneralSecurityException {
+		final String string = "/Users/sarnobat/.gcal_task_warrior";
+		final File file = new File(string + "/calendars.json");
+		writeCalendarsToFileInSeparateThread(file);
+	}
+
+	private static void writeCalendarsToFileInSeparateThread(final File file) {
+		new Thread() {
+			public void run() {
+
+				writeCalendars(file);
+			}
+		}.run();
+	}
+
+	private static void writeCalendars(File file) {
+		JSONObject json;
+		try {
+			json = getCalendars();
+			FileUtils.writeStringToFile(file, json.toString(), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static JSONObject getCalendars() throws GeneralSecurityException,
+			IOException, UnsupportedEncodingException {
 		Calendar client = getCalendarService();
 
 		System.out.println("Getting calendars...");
@@ -45,9 +76,7 @@ public class ListCalendars {
 			json.put(aCalendar.getSummary(),
 					new JSONObject().put("calendar_id", aCalendar.getId()));
 		}
-		final String string = "/Users/sarnobat/.gcal_task_warrior";
-		FileUtils.writeStringToFile(new File(string + "/calendars.json"),
-				json.toString(), "UTF-8");
+		return json;
 	}
 
 	/************************************************************************
