@@ -3,11 +3,8 @@ package com.google.api.services.samples.calendar.cmdline;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.security.GeneralSecurityException;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,7 +61,10 @@ public class Postpone {
 		if (args.length == 0) {
 			itemToDelete = "1";
 			daysToPostponeString = "1";
-		} else {
+		} else if (args.length == 1) {
+			itemToDelete = args[0];
+			daysToPostponeString = "1";
+		}else {
 			itemToDelete = args[0];
 			daysToPostponeString = args[1];
 		}
@@ -79,8 +79,8 @@ public class Postpone {
 		String calendarId = getCalendarId(calendarName);
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
-		
-		//commit(itemToDelete, updateTask, messageIdToDelete);
+
+		// commit(itemToDelete, updateTask, messageIdToDelete);
 	}
 
 	private static String getCalendarId(String calendarName) {
@@ -163,17 +163,16 @@ public class Postpone {
 	private static void getMessages(String messageIdToDelete)
 			throws NoSuchProviderException, MessagingException {
 		Message[] messages;
-		{
-			messages = getMessages();
-			for (Message aMessage : messages) {
-				String aMessageID = getMessageID(aMessage);
-				if (aMessageID.equals(messageIdToDelete)) {
-					aMessage.setFlag(Flags.Flag.DELETED, true);
-					System.out.println("Deleted " + aMessage.getSubject());
-					break;
-				}
+		messages = getMessages();
+		for (Message aMessage : messages) {
+			String aMessageID = getMessageID(aMessage);
+			if (aMessageID.equals(messageIdToDelete)) {
+				aMessage.setFlag(Flags.Flag.DELETED, true);
+				System.out.println("Deleted " + aMessage.getSubject());
+				break;
 			}
 		}
+
 	}
 
 	// Useful
@@ -192,13 +191,11 @@ public class Postpone {
 	private static void thisDoesNothing(String calendarName)
 			throws GeneralSecurityException, IOException {
 
-		{
-			Events events = mCs.events();
-			CalendarListEntry calendar = getCalendar(calendarName);
+		Events events = mCs.events();
+		CalendarListEntry calendar = getCalendar(calendarName);
 
-			com.google.api.services.calendar.model.Events s = events.list(
-					calendar.getId()).execute();
-		}
+		com.google.api.services.calendar.model.Events s = events.list(
+				calendar.getId()).execute();
 	}
 
 	private static CalendarListEntry getCalendar(String calendarName)
@@ -221,26 +218,22 @@ public class Postpone {
 	private static String getEventID(Message aMessage) throws IOException,
 			MessagingException {
 		String eventID = "<none>";
-		{
-			MimeMultipart s = (MimeMultipart) aMessage.getContent();
-			{
-				String body = (String) s.getBodyPart(0).getContent();
+		MimeMultipart s = (MimeMultipart) aMessage.getContent();
+		String body = (String) s.getBodyPart(0).getContent();
 
-				if (body.trim().length() < 1) {
-					System.out.println("body is empty");
-				}
-
-				if (body.contains("eid")) {
-					Pattern pattern = Pattern.compile("eid=([^&" + '$'
-							+ "\\s]*)");
-					Matcher m = pattern.matcher(body);
-					if (!m.find()) {
-						throw new RuntimeException("eid not in string 2");
-					}
-					eventID = m.group(1);
-				}
-			}
+		if (body.trim().length() < 1) {
+			System.out.println("body is empty");
 		}
+
+		if (body.contains("eid")) {
+			Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
+			Matcher m = pattern.matcher(body);
+			if (!m.find()) {
+				throw new RuntimeException("eid not in string 2");
+			}
+			eventID = m.group(1);
+		}
+
 		return eventID;
 	}
 
@@ -291,7 +284,7 @@ public class Postpone {
 		// I don't know why the service uses a different ID
 		String internalEventId = originalEvent.getId();
 		Event event = mCs.events().get(calendarId, internalEventId).execute();
-		{
+		_1: {
 			EventDateTime eventStartTime = event.getStart();
 			System.out.println(eventStartTime);
 			long newStartTime = getNewStartTime(daysToPostpone);
@@ -310,24 +303,22 @@ public class Postpone {
 
 	private static long getNewEndDateTime(int daysToPostpone) {
 		long endTimeMillis;
-		{
-			java.util.Calendar c = java.util.Calendar.getInstance();
-			c.add(java.util.Calendar.DATE, daysToPostpone);
+		java.util.Calendar c = java.util.Calendar.getInstance();
+		c.add(java.util.Calendar.DATE, daysToPostpone);
 
-			endTimeMillis = c.getTimeInMillis();
-		}
+		endTimeMillis = c.getTimeInMillis();
+
 		return endTimeMillis;
 	}
 
 	private static long getNewStartTime(int daysToPostpone) {
-		{
 			java.util.Calendar c = java.util.Calendar.getInstance();
 			c.add(java.util.Calendar.DATE, daysToPostpone);
 			long newStartDateTimeMillis = c.getTimeInMillis();
 			System.out.println(c.getTime());
 			return newStartDateTimeMillis;
 		}
-	}
+	
 
 	private static Calendar getCalendarService() {
 		System.out.println("Authenticating...");
@@ -565,7 +556,7 @@ public class Postpone {
 	private static String getCalendarName(Message aMessage) throws IOException,
 			MessagingException {
 		String calendarName;
-		{
+		_2:{
 			MimeMultipart s = (MimeMultipart) aMessage.getContent();
 			String body1 = (String) s.getBodyPart(0).getContent();
 			if (body1.contains("Calendar:")) {
