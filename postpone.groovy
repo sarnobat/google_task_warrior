@@ -66,7 +66,7 @@ public class Postpone {
 		}
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
-		System.out.println("Title:\t" + title);
+		System.out.println("Title:\n\t" + title);
 		Message msg = getMessage(title);
 		String messageIdToDelete = getMessageID(msg);
 		String eventId = getEventID(msg);
