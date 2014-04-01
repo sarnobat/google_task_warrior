@@ -1,5 +1,3 @@
-
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -48,7 +46,7 @@ public class Postpone {
 	private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
 	private static final File mTasksFileLatest = new File(DIR_PATH
 			+ "/tasks.json");
-	private static final Calendar mCs = getCalendarService();
+	private static final Calendar _service = getCalendarService();
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException,
@@ -198,7 +196,7 @@ public class Postpone {
 	private static void thisDoesNothing(String calendarName)
 			throws GeneralSecurityException, IOException {
 
-		Events events = mCs.events();
+		Events events = _service.events();
 		CalendarListEntry calendar = getCalendar(calendarName);
 
 		com.google.api.services.calendar.model.Events s = events.list(
@@ -207,7 +205,7 @@ public class Postpone {
 
 	private static CalendarListEntry getCalendar(String calendarName)
 			throws IOException, GeneralSecurityException {
-		com.google.api.services.calendar.model.CalendarList theCalendarList = mCs
+		com.google.api.services.calendar.model.CalendarList theCalendarList = _service
 				.calendarList().list().execute();
 		CalendarListEntry calendar = null;
 		System.out.println("Number of calendars:\t"
@@ -249,21 +247,21 @@ public class Postpone {
 			GeneralSecurityException {
 		Event target = null;
 		findCalendarEvent: {
-			com.google.api.services.calendar.model.Events events2;
+			com.google.api.services.calendar.model.Events eventList;
 
 			String pageToken = null;
 
 			while (true) {
-				events2 = mCs.events().list("primary").setPageToken(pageToken)
+				eventList = _service.events().list("primary").setPageToken(pageToken)
 						.execute();
-				java.util.List<Event> items = events2.getItems();
+				java.util.List<Event> items = eventList.getItems();
 				for (Event e : items) {
 					String htmlLink = e.getHtmlLink();
 					if (htmlLink != null && htmlLink.contains(eventID)) {
 						target = e;
 					}
 				}
-				pageToken = events2.getNextPageToken();
+				pageToken = eventList.getNextPageToken();
 				if (pageToken == null) {
 					break;
 				}
@@ -291,7 +289,7 @@ public class Postpone {
 
 		// I don't know why the service uses a different ID
 		String internalEventId = originalEvent.getId();
-		Event event = mCs.events().get(calendarId, internalEventId).execute();
+		Event event = _service.events().get(calendarId, internalEventId).execute();
 		_1: {
 			EventDateTime eventStartTime = event.getStart();
 			System.out.println("Event original start time:\t" + eventStartTime);
@@ -304,7 +302,7 @@ public class Postpone {
 
 		}
 		System.out.println("Internal Event ID:\t" + internalEventId);
-		Update update = mCs.events().update(calendarId, internalEventId, event);
+		Update update = _service.events().update(calendarId, internalEventId, event);
 
 		return update;
 	}
