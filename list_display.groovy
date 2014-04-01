@@ -18,7 +18,7 @@ import javax.mail.Session;
 import javax.mail.Store;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
