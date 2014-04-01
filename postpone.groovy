@@ -70,8 +70,11 @@ public class Postpone {
 		Message msg = getMessage(title);
 		String messageIdToDelete = getMessageID(msg);
 		String eventId = getEventID(msg);
+		System.out.println("Event ID\n\t" + eventId);
 		String calendarName = getCalendarName(msg);
+		System.out.println("Calendar name\n\t" + calendarName);
 		String calendarId = getCalendarId(calendarName);
+		System.out.println("Calendar ID:\n\t" + calendarId);
 		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
 				daysToPostponeString);
 
@@ -278,12 +281,35 @@ public class Postpone {
 		Event theTargetEvent = getNonRecurringEvent(iEventId);
 
 		if (theTargetEvent == null) {
-			
-//			com.google.api.services.calendar.model.Events allEventsList = _service
-//					.events().instances(iCalendarId, iEventId).execute();
-			throw new RuntimeException(
-					"Couldn't find event in service: https://www.google.com/calendar/render?eid="
-							+ iEventId + " . Perhaps it is a repeated event?");
+
+			com.google.api.services.calendar.model.Events allEventsList;
+
+			String aNextPageToken = null;
+
+			while (true) {
+				allEventsList = _service.events().list(iCalendarId)
+						.setPageToken(aNextPageToken).execute();
+				java.util.List<Event> allEventItems = allEventsList.getItems();
+				for (Event anEvent : allEventItems) {
+					String anHtmlLink = anEvent.getHtmlLink();
+//					System.out.println(anHtmlLink);
+//					System.out.println("\t"+anEvent.getSummary());
+					if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
+						theTargetEvent = anEvent;
+					}
+				}
+				aNextPageToken = allEventsList.getNextPageToken();
+				if (aNextPageToken == null) {
+					break;
+				}
+			}
+
+			if (theTargetEvent == null) {
+				throw new RuntimeException(
+						"Couldn't find event in service: https://www.google.com/calendar/render?eid="
+								+ iEventId
+								+ " . Perhaps it is a repeated event? The event ID in the email is the latest one; the html link from the service is the first in the series. I can't get instances() to return all instances in the series because I think you need to pass the first event Id, not the latest. ");
+			}
 		}
 
 		System.out.println("Event:\n\t" + theTargetEvent);
@@ -304,6 +330,7 @@ public class Postpone {
 						.setPageToken(aNextPageToken).execute();
 				java.util.List<Event> allEventItems = allEventsList.getItems();
 				for (Event anEvent : allEventItems) {
+					//System.out.println(anEvent.getSummary());
 					String anHtmlLink = anEvent.getHtmlLink();
 					if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
 						theTargetEvent = anEvent;
