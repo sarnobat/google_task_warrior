@@ -1,4 +1,4 @@
-package com.google.api.services.samples.calendar.cmdline;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -46,8 +46,6 @@ public class Postpone {
 	private static final String MESSAGE_ID = "Message-ID";
 
 	private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
-	private static final File mTasksFileLastDisplayed = new File(DIR_PATH
-			+ "/tasks_last_displayed.json");
 	private static final File mTasksFileLatest = new File(DIR_PATH
 			+ "/tasks.json");
 	private static final Calendar mCs = getCalendarService();
@@ -68,7 +66,6 @@ public class Postpone {
 			itemToDelete = args[0];
 			daysToPostponeString = args[1];
 		}
-		// postpone(itemToDelete, daysToPostponeString);
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
 		System.out.println("Title:\t" + title);
@@ -119,18 +116,7 @@ public class Postpone {
 	private static void commit(String itemToDelete, final Update update,
 			final String messageIdToDelete) throws NoSuchProviderException,
 			MessagingException, IOException {
-		_3: {
-			// JSONObject fileJsonLastDisplayed = getReducedJson(itemToDelete,
-			// messageIdToDelete, mTasksFileLastDisplayed);
 
-			// JSONObject fileJsonLatest = getReducedJson(itemToDelete,
-			// messageIdToDelete, mTasksFileLatest);
-
-			// FileUtils.writeStringToFile(mTasksFileLastDisplayed,
-			// fileJsonLastDisplayed.toString());
-			// FileUtils.writeStringToFile(mTasksFileLatest,
-			// fileJsonLatest.toString());
-		}
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
@@ -382,18 +368,6 @@ public class Postpone {
 
 	}
 
-	private static JSONObject getReducedJson(String itemToDelete,
-			String messageIdToDelete, File file2) throws IOException {
-		String latestFileContents = FileUtils.readFileToString(file2);
-		JSONObject fileJson = new JSONObject(latestFileContents);
-		System.out.println(fileJson.toString());
-		JSONObject removed = (JSONObject) fileJson.remove(itemToDelete);
-		if (!messageIdToDelete.equals(removed.getString(MESSAGE_ID))) {
-			throw new RuntimeException(removed.getString("title"));
-		}
-		return fileJson;
-	}
-
 	private static Message[] getMessages() throws NoSuchProviderException,
 			MessagingException {
 		Store theImapClient = connect();
@@ -440,142 +414,8 @@ public class Postpone {
 		return messageID;
 	}
 
-	@Deprecated
-	// It's too expensive to get the event ID before deleting
-	private static class PostponeByMessageID {
+	
 
-		@Deprecated
-		private static Update createUpdateCall(String daysToPostponeString,
-				JSONObject eventJson) throws IOException,
-				GeneralSecurityException {
-			String calendarName = eventJson.getString("calendar_name");
-			System.out.println("Calendar name:\t" + calendarName);
-			Update update = createUpdateTaskDeprecated(eventJson, calendarName,
-					daysToPostponeString);
-			return update;
-		}
-
-		@Deprecated
-		private static Update createUpdateTaskDeprecated(JSONObject eventJson,
-				String calendarName, String daysToPostponeString)
-				throws IOException, GeneralSecurityException {
-			Update update;
-			_1: {
-				String calendars = FileUtils.readFileToString(new File(DIR_PATH
-						+ "/calendars.json"));
-				JSONObject calendarJson = getEventJson(calendarName, calendars);
-				System.out.println("Calendars:\t" + calendarJson.toString());
-				String calendarId = calendarJson.getString("calendar_id");
-				String eventID = eventJson.getString("eventID");
-
-				System.out.println("Will update event " + eventID
-						+ " in calendar " + calendarId);
-
-				update = createUpdateTask(calendarName, calendarId, eventID,
-						daysToPostponeString);
-			}
-			return update;
-		}
-
-		@SuppressWarnings("unused")
-		@Deprecated
-		private static void postpone(String itemToDelete,
-				String daysToPostponeString) throws IOException,
-				GeneralSecurityException, NoSuchProviderException,
-				MessagingException {
-			JSONObject eventJson = getEventJson(itemToDelete,
-					mTasksFileLastDisplayed);
-			Update update = createUpdateCall(daysToPostponeString, eventJson);
-
-			String messageIdToDelete = eventJson.getString(MESSAGE_ID);
-
-			System.out.println("Will delete [" + messageIdToDelete + "] "
-					+ eventJson.getString("title") + " from calendar ");
-			commit(itemToDelete, update, messageIdToDelete);
-		}
-	}
-
-	private static class Slow {
-		private static void getBodyMetadataSlow(Message aMessage) {
-
-			try {
-				String eventID = getEventID(aMessage);
-
-				// errandJsonObject.put("eventID", eventID);
-
-				String calendarName = getCalendarName(aMessage);
-				// errandJsonObject.put("calendar_name", calendarName);
-
-				String messageID = getMessageID(aMessage);
-				// errandJsonObject.put("Message-ID", messageID);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (MessagingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		private static String getCalendarName(Message aMessage)
-				throws IOException, MessagingException {
-			String calendarName;
-			MimeMultipart s = (MimeMultipart) aMessage.getContent();
-			String body1 = (String) s.getBodyPart(0).getContent();
-			if (body1.contains("Calendar:")) {
-				Pattern pattern = Pattern.compile("Calendar: (.*)");
-				Matcher m = pattern.matcher(body1);
-				if (!m.find()) {
-					throw new RuntimeException("eid not in string 2");
-				}
-				calendarName = m.group(1);
-			} else {
-				calendarName = "<not found>";
-			}
-
-			return calendarName;
-		}
-
-		private static String getEventID(Message aMessage) throws IOException,
-				MessagingException {
-			String eventID = "<none>";
-			MimeMultipart s = (MimeMultipart) aMessage.getContent();
-			String body = (String) s.getBodyPart(0).getContent();
-
-			if (body.trim().length() < 1) {
-				System.out.println("body is empty");
-			}
-
-			if (body.contains("eid")) {
-				Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
-				Matcher m = pattern.matcher(body);
-				if (!m.find()) {
-					throw new RuntimeException("eid not in string 2");
-				}
-				eventID = m.group(1);
-			}
-			return eventID;
-		}
-
-		private static String getMessageID(Message aMessage) {
-			try {
-				Enumeration allHeaders;
-				allHeaders = aMessage.getAllHeaders();
-
-				String messageID = "<not found>";
-				while (allHeaders.hasMoreElements()) {
-					Header e = (Header) allHeaders.nextElement();
-					if (e.getName().equals("Message-ID")) {
-						messageID = e.getValue();
-					}
-				}
-				return messageID;
-			} catch (MessagingException e1) {
-				e1.printStackTrace();
-			}
-			return null;
-		}
-	}
 
 	private static String getCalendarName(Message aMessage) throws IOException,
 			MessagingException {
