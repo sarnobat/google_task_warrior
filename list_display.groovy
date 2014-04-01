@@ -1,4 +1,4 @@
-package com.google.api.services.samples.calendar.cmdline;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -143,9 +143,16 @@ public class ListDisplaySynchronous {
 		for (Message aMessage : msgs) {
 			i++;
 			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
+			String[] aTitle = messageMetadata.getString("title").split("@");
+			
+			String string2 = aTitle[1];
+			String repeating = "";
+			if (string2.contains("Repeating")) {
+				repeating = "[Repeating] ";
+			}
 			System.out.println(i
 					+ "\t"
-					+ messageMetadata.getString("title").split("@")[0].replace(
+					+ repeating + aTitle[0].replace(
 							"Reminder: ", ""));
 			json.put(Integer.toString(i), messageMetadata);
 		}
