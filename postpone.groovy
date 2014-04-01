@@ -33,6 +33,7 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.Calendar.Events;
 import com.google.api.services.calendar.Calendar.Events.Update;
+import com.google.api.services.calendar.CalendarRequest;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
@@ -75,10 +76,29 @@ public class Postpone {
 		System.out.println("Calendar name\n\t" + calendarName);
 		String calendarId = getCalendarId(calendarName);
 		System.out.println("Calendar ID:\n\t" + calendarId);
-		Update updateTask = createUpdateTask(calendarName, calendarId, eventId,
-				daysToPostponeString);
+		CalendarRequest<Event> calendarAction;
+		try {
+			calendarAction = createUpdateTask(calendarName, calendarId, eventId,
+					daysToPostponeString);
+		} catch (IsRecurringEventException e) {
 
-		commit(itemToDelete, updateTask, messageIdToDelete);
+			calendarAction = createInsertTask(daysToPostponeString, title);
+		}
+		commit(calendarAction, messageIdToDelete);
+
+	}
+
+	private static CalendarRequest<Event> createInsertTask(
+			String daysToPostponeString, String title) throws IOException {
+		CalendarRequest<Event> updateTask;
+		Event event = new Event();
+		event.setSummary(title);
+		event.setStart(new EventDateTime());
+		event.setEnd(new EventDateTime());
+		int daysToPostpone = Integer.parseInt(daysToPostponeString);
+		postponeEvent(daysToPostpone, event);
+		updateTask = _service.events().insert("primary", event);
+		return updateTask;
 	}
 
 	private static String getCalendarId(String calendarName) {
@@ -114,27 +134,19 @@ public class Postpone {
 		return msg;
 	}
 
-	private static void commit(String itemToDelete, final Update update,
+	private static void commit(final CalendarRequest<Event> update,
 			final String messageIdToDelete) throws NoSuchProviderException,
 			MessagingException, IOException {
 
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					deleteEmail(messageIdToDelete);
-				} catch (NoSuchProviderException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (MessagingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}.start();
+		deleteEmailInSeparateThread(messageIdToDelete);
 
+		executeCalendarRequest(update);
+	}
+
+	private static void executeCalendarRequest(
+			final CalendarRequest<Event> update) {
 		new Thread() {
 			@Override
 			public void run() {
@@ -146,6 +158,24 @@ public class Postpone {
 					System.out.println(updatedEvent.getHtmlLink());
 					System.out.println("Calendar updated");
 				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}.start();
+	}
+
+	private static void deleteEmailInSeparateThread(
+			final String messageIdToDelete) {
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					deleteEmail(messageIdToDelete);
+				} catch (NoSuchProviderException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (MessagingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -185,7 +215,8 @@ public class Postpone {
 	// Useful
 	private static Update createUpdateTask(String calendarName,
 			String calendarId, String eventID, String daysToPostponeString)
-			throws GeneralSecurityException, IOException {
+			throws GeneralSecurityException, IOException,
+			IsRecurringEventException {
 		int daysToPostpone = Integer.parseInt(daysToPostponeString);
 		// Get event's current time
 
@@ -210,7 +241,7 @@ public class Postpone {
 		com.google.api.services.calendar.model.CalendarList theCalendarList = _service
 				.calendarList().list().execute();
 		CalendarListEntry calendar = null;
-		System.out.println("Number of calendars:\t"
+		System.out.println("Number of calendars (not needed):\n\t"
 				+ theCalendarList.getItems().size());
 		for (CalendarListEntry aCalendar : theCalendarList.getItems()) {
 			if (calendarName.equals(aCalendar.getSummary())) {
@@ -246,7 +277,8 @@ public class Postpone {
 	}
 
 	private static Update createUpdateTask(String calendarId, String eventID,
-			int daysToPostpone) throws IOException, GeneralSecurityException {
+			int daysToPostpone) throws IOException, GeneralSecurityException,
+			IsRecurringEventException {
 		Event originalEvent = getEvent(eventID, calendarId);
 
 		if (originalEvent.getRecurrence() != null) {
@@ -258,6 +290,15 @@ public class Postpone {
 		String internalEventId = originalEvent.getId();
 		Event event = _service.events().get(calendarId, internalEventId)
 				.execute();
+		postponeEvent(daysToPostpone, event);
+		System.out.println("Internal Event ID:\t" + internalEventId);
+		Update update = _service.events().update(calendarId, internalEventId,
+				event);
+
+		return update;
+	}
+
+	private static void postponeEvent(int daysToPostpone, Event event) {
 		_1: {
 			EventDateTime eventStartTime = event.getStart();
 			System.out.println("Event original start time:\t" + eventStartTime);
@@ -269,15 +310,11 @@ public class Postpone {
 			endTime.setDateTime(new DateTime(endTimeMillis));
 
 		}
-		System.out.println("Internal Event ID:\t" + internalEventId);
-		Update update = _service.events().update(calendarId, internalEventId,
-				event);
-
-		return update;
 	}
 
 	private static Event getEvent(String iEventId, String iCalendarId)
-			throws IOException, GeneralSecurityException {
+			throws IOException, GeneralSecurityException,
+			IsRecurringEventException {
 		Event theTargetEvent = getNonRecurringEvent(iEventId);
 
 		if (theTargetEvent == null) {
@@ -292,8 +329,8 @@ public class Postpone {
 				java.util.List<Event> allEventItems = allEventsList.getItems();
 				for (Event anEvent : allEventItems) {
 					String anHtmlLink = anEvent.getHtmlLink();
-//					System.out.println(anHtmlLink);
-//					System.out.println("\t"+anEvent.getSummary());
+					// System.out.println(anHtmlLink);
+					// System.out.println("\t"+anEvent.getSummary());
 					if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
 						theTargetEvent = anEvent;
 					}
@@ -305,7 +342,7 @@ public class Postpone {
 			}
 
 			if (theTargetEvent == null) {
-				throw new RuntimeException(
+				throw new IsRecurringEventException(
 						"Couldn't find event in service: https://www.google.com/calendar/render?eid="
 								+ iEventId
 								+ " . Perhaps it is a repeated event? The event ID in the email is the latest one; the html link from the service is the first in the series. I can't get instances() to return all instances in the series because I think you need to pass the first event Id, not the latest. ");
@@ -330,7 +367,7 @@ public class Postpone {
 						.setPageToken(aNextPageToken).execute();
 				java.util.List<Event> allEventItems = allEventsList.getItems();
 				for (Event anEvent : allEventItems) {
-					//System.out.println(anEvent.getSummary());
+					// System.out.println(anEvent.getSummary());
 					String anHtmlLink = anEvent.getHtmlLink();
 					if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
 						theTargetEvent = anEvent;
@@ -466,5 +503,11 @@ public class Postpone {
 			}
 		}
 		return calendarName;
+	}
+
+	private static class IsRecurringEventException extends Exception {
+		IsRecurringEventException(String message) {
+			super(message);
+		}
 	}
 }
