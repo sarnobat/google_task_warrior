@@ -1,0 +1,36 @@
+<html>
+<head>
+<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"> -->
+<script src="jquery/jquery-1.9.1.js">
+</script>
+<script>
+$(document).ready(function(){
+    $.getJSON("http://netgear.rohidekar.com:4456/not_now/items" ,function(result){
+//    	console.debug(result.tasks);
+      $.each(result, function(i, field){
+              $.each(JSON.parse(field), function(k,v){
+                if (k == 'daysToPostpone') {
+                	return;
+                }
+              	var title = (v.title.split(/@/)[0]);
+				var title2 = title.replace("Reminder","");
+              	$("#items").append(k + " " + capitaliseFirstLetter(title2) + "<br>");
+            });
+      });
+    });
+});
+
+function capitaliseFirstLetter(string)
+{
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+</script>
+</head>
+<body>
+
+<textarea id="urls">http://www.yahoo.com</textarea>
+<button>Stash this</button>
+<div id="items"></div>
+
+</body>
+</html>
