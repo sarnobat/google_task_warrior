@@ -243,39 +243,39 @@ public class Postpone {
 		return eventID;
 	}
 
-	private static Event getEvent(String eventID) throws IOException,
+	private static Event getEvent(String iEventID) throws IOException,
 			GeneralSecurityException {
-		Event target = null;
+		Event theTargetEvent = null;
 		findCalendarEvent: {
-			com.google.api.services.calendar.model.Events eventList;
+			com.google.api.services.calendar.model.Events allEventsList;
 
-			String pageToken = null;
+			String aNextPageToken = null;
 
 			while (true) {
-				eventList = _service.events().list("primary").setPageToken(pageToken)
+				allEventsList = _service.events().list("primary").setPageToken(aNextPageToken)
 						.execute();
-				java.util.List<Event> items = eventList.getItems();
-				for (Event e : items) {
-					String htmlLink = e.getHtmlLink();
-					if (htmlLink != null && htmlLink.contains(eventID)) {
-						target = e;
+				java.util.List<Event> allEventItems = allEventsList.getItems();
+				for (Event anEvent : allEventItems) {
+					String anHtmlLink = anEvent.getHtmlLink();
+					if (anHtmlLink != null && anHtmlLink.contains(iEventID)) {
+						theTargetEvent = anEvent;
 					}
 				}
-				pageToken = eventList.getNextPageToken();
-				if (pageToken == null) {
+				aNextPageToken = allEventsList.getNextPageToken();
+				if (aNextPageToken == null) {
 					break;
 				}
 			}
 		}
-		if (target == null) {
+		if (theTargetEvent == null) {
 			throw new RuntimeException(
 					"Couldn't find event in service: https://www.google.com/calendar/render?eid="
-							+ eventID + " . Perhaps it is a repeated event?");
+							+ iEventID + " . Perhaps it is a repeated event?");
 		}
 
-		System.out.println("Event:\t" + target);
+		System.out.println("Event:\t" + theTargetEvent);
 
-		return target;
+		return theTargetEvent;
 	}
 
 	private static Update createUpdateTask(String calendarId, String eventID,
