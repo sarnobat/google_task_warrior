@@ -64,7 +64,7 @@ public class ListDisplaySynchronous {
 
 			final String string = "/Users/sarnobat/.gcal_task_warrior";
 			final File file = new File(string + "/calendars.json");
-			FileUtils.writeStringToFile(file, json.toString(), "UTF-8");
+			FileUtils.writeStringToFile(file, json.toString(2), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		} catch (GeneralSecurityException e) {
@@ -134,8 +134,26 @@ public class ListDisplaySynchronous {
 		Message[] msgs = getMessages();
 		System.out.println("Messages obtained");
 
+		int postponeCount = getPostponeCount();
 		JSONObject json = createJsonListOfEvents(msgs);
-		FileUtils.writeStringToFile(file, json.toString());
+		json.put("daysToPostpone", postponeCount);
+		
+		FileUtils.writeStringToFile(file, json.toString(2));
+	}
+
+	private static int getPostponeCount() throws IOException {
+		String errands = FileUtils.readFileToString(file);
+
+		JSONObject allErrandsJsonOriginal = new JSONObject(errands);
+
+		int daysToPostponeSaved;
+		if (allErrandsJsonOriginal.has("daysToPostpone")) {
+			daysToPostponeSaved = allErrandsJsonOriginal
+					.getInt("daysToPostpone");
+		} else {
+			daysToPostponeSaved = 30;
+		}
+		return daysToPostponeSaved;
 	}
 
 	private static JSONObject createJsonListOfEvents(Message[] msgs)

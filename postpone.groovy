@@ -60,11 +60,43 @@ public class Postpone {
 			daysToPostponeString = "1";
 		} else if (args.length == 1) {
 			itemToDelete = args[0];
-			daysToPostponeString = "30";
+			
+			// TODO: move this to the commit section. Don't write the updated json out until the service calls succeed
+			_1:{	
+				String errands = FileUtils.readFileToString(mTasksFileLatest);
+				JSONObject allErrandsJsonModified;
+
+				JSONObject allErrandsJsonOriginal = new JSONObject(errands);
+				allErrandsJsonModified = allErrandsJsonOriginal ;
+				
+
+				int daysToPostponeInitial = 30;
+				if (allErrandsJsonOriginal.has("daysToPostpone")) {
+					int daysToPostponeSaved = allErrandsJsonOriginal
+							.getInt("daysToPostpone");
+					
+					int daysToPostponeIncremented = daysToPostponeSaved + 1;
+					if (daysToPostponeIncremented >= daysToPostponeInitial * 3) {
+						daysToPostponeIncremented = daysToPostponeInitial;
+					}
+					daysToPostponeString = Integer
+							.toString(daysToPostponeIncremented);
+					allErrandsJsonModified.put("daysToPostpone",
+							daysToPostponeIncremented);
+				} else {
+
+					daysToPostponeString = Integer.toString(daysToPostponeInitial);
+					allErrandsJsonModified.put("daysToPostpone",
+							daysToPostponeInitial);
+				}
+				FileUtils.writeStringToFile(mTasksFileLatest,
+						allErrandsJsonModified.toString(2));
+			}
 		} else {
 			itemToDelete = args[0];
 			daysToPostponeString = args[1];
 		}
+		System.out.println("Will postpone by " + daysToPostponeString + " days.");
 		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 		String title = eventJson.getString("title");
 		System.out.println("Title:\n\t" + title);
@@ -349,7 +381,7 @@ public class Postpone {
 			}
 		}
 
-		System.out.println("Event:\n\t" + theTargetEvent);
+		//System.out.println("Event:\n\t" + theTargetEvent);
 
 		return theTargetEvent;
 	}
