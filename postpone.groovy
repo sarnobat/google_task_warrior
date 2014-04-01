@@ -115,7 +115,6 @@ public class Postpone {
 			final String messageIdToDelete) throws NoSuchProviderException,
 			MessagingException, IOException {
 
-
 		// All persistent changes are done right at the end, so that any
 		// exceptions can get thrown first.
 		new Thread() {
@@ -243,6 +242,37 @@ public class Postpone {
 		return eventID;
 	}
 
+	private static Update createUpdateTask(String calendarId, String eventID,
+			int daysToPostpone) throws IOException, GeneralSecurityException {
+		Event originalEvent = getEvent(eventID);
+
+		if (originalEvent.getRecurrence() != null) {
+			throw new RuntimeException(
+					"Use optional param 'singleEvents' to break recurring events into single ones");
+		}
+
+		// I don't know why the service uses a different ID
+		String internalEventId = originalEvent.getId();
+		Event event = _service.events().get(calendarId, internalEventId)
+				.execute();
+		_1: {
+			EventDateTime eventStartTime = event.getStart();
+			System.out.println("Event original start time:\t" + eventStartTime);
+			long newStartTime = getNewStartTime(daysToPostpone);
+			eventStartTime.setDateTime(new DateTime(newStartTime));
+
+			EventDateTime endTime = event.getEnd();
+			long endTimeMillis = getNewEndDateTime(daysToPostpone);
+			endTime.setDateTime(new DateTime(endTimeMillis));
+
+		}
+		System.out.println("Internal Event ID:\t" + internalEventId);
+		Update update = _service.events().update(calendarId, internalEventId,
+				event);
+
+		return update;
+	}
+
 	private static Event getEvent(String iEventID) throws IOException,
 			GeneralSecurityException {
 		Event theTargetEvent = null;
@@ -252,8 +282,8 @@ public class Postpone {
 			String aNextPageToken = null;
 
 			while (true) {
-				allEventsList = _service.events().list("primary").setPageToken(aNextPageToken)
-						.execute();
+				allEventsList = _service.events().list("primary")
+						.setPageToken(aNextPageToken).execute();
 				java.util.List<Event> allEventItems = allEventsList.getItems();
 				for (Event anEvent : allEventItems) {
 					String anHtmlLink = anEvent.getHtmlLink();
@@ -276,35 +306,6 @@ public class Postpone {
 		System.out.println("Event:\n\t" + theTargetEvent);
 
 		return theTargetEvent;
-	}
-
-	private static Update createUpdateTask(String calendarId, String eventID,
-			int daysToPostpone) throws IOException, GeneralSecurityException {
-		Event originalEvent = getEvent(eventID);
-
-		if (originalEvent.getRecurrence() != null) {
-			throw new RuntimeException(
-					"Use optional param 'singleEvents' to break recurring events into single ones");
-		}
-
-		// I don't know why the service uses a different ID
-		String internalEventId = originalEvent.getId();
-		Event event = _service.events().get(calendarId, internalEventId).execute();
-		_1: {
-			EventDateTime eventStartTime = event.getStart();
-			System.out.println("Event original start time:\t" + eventStartTime);
-			long newStartTime = getNewStartTime(daysToPostpone);
-			eventStartTime.setDateTime(new DateTime(newStartTime));
-
-			EventDateTime endTime = event.getEnd();
-			long endTimeMillis = getNewEndDateTime(daysToPostpone);
-			endTime.setDateTime(new DateTime(endTimeMillis));
-
-		}
-		System.out.println("Internal Event ID:\t" + internalEventId);
-		Update update = _service.events().update(calendarId, internalEventId, event);
-
-		return update;
 	}
 
 	private static long getNewEndDateTime(int daysToPostpone) {
@@ -409,9 +410,6 @@ public class Postpone {
 		}
 		return messageID;
 	}
-
-	
-
 
 	private static String getCalendarName(Message aMessage) throws IOException,
 			MessagingException {
