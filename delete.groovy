@@ -1,5 +1,3 @@
-package com.google.api.services.samples.calendar.cmdline;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -19,53 +17,53 @@ import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
 public class Delete {
-	static final String string = "/Users/sarnobat/.gcal_task_warrior";
-	static final String string2 = string + "/tasks_last_displayed.json";
-	static final File file = new File(string2);
+
+	private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
+
+	private static final File mTasksFileLatest = new File(DIR_PATH
+			+ "/tasks.json");
 
 	public static void main(String[] args) throws IOException,
 			NoSuchProviderException, MessagingException {
 		String itemToDelete = args[0];
-		String errands = FileUtils.readFileToString(file);
-		JSONObject obj = new JSONObject(errands);
-		String messageIdToDelete = ((JSONObject) obj.get(itemToDelete))
-				.getString("Message-ID");
-		System.out.println("Will delete [" + messageIdToDelete + "] "
-				+ ((JSONObject) obj.get(itemToDelete)).getString("title"));
-		Message[] messages = getMessages();
-		for (Message aMessage : messages) {
-			String aMessageID = getMessageID(aMessage);
-			if (aMessageID.equals(messageIdToDelete)) {
-				aMessage.setFlag(Flags.Flag.DELETED, true);
-				System.out.println("Deleted " + aMessage.getSubject());
+
+		JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
+		String title = eventJson.getString("title");
+		System.out.println("Title:\t" + title);
+		Message msg = getMessage(title);
+		String messageIdToDelete = getMessageID(msg);
+		commit(itemToDelete, messageIdToDelete);
+
+	}
+
+	private static JSONObject getEventJson(String itemToDelete, String errands) {
+		JSONObject allErrandsJson = new JSONObject(errands);
+		JSONObject eventJson = (JSONObject) allErrandsJson.get(itemToDelete);
+		return eventJson;
+	}
+
+	// Still useful
+	private static JSONObject getEventJson(String itemToDelete,
+			File tasksFileLastDisplayed) throws IOException {
+		String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
+		JSONObject eventJson = getEventJson(itemToDelete, errands);
+		return eventJson;
+	}
+
+	private static Message getMessage(String title)
+			throws NoSuchProviderException, MessagingException {
+		Message[] msgs = getMessages();
+		Message msg = null;
+		for (Message aMsg : msgs) {
+			if (aMsg.getSubject().equals(title)) {
+				msg = aMsg;
 				break;
 			}
 		}
-
-		deleteMessageFromLocalJson(itemToDelete, messageIdToDelete);
-		System.out.println("Files updated");
-	}
-
-	private static void deleteMessageFromLocalJson(String itemToDelete,
-			String messageIdToDelete) throws IOException {
-		String displayedFileContents = FileUtils.readFileToString(file);
-		JSONObject displayedFileJson = new JSONObject(displayedFileContents);
-		JSONObject removed = (JSONObject) displayedFileJson
-				.remove(itemToDelete);
-		if (!messageIdToDelete.equals(removed.getString("Message-ID"))) {
-			throw new RuntimeException(removed.getString("title"));
+		if (msg == null) {
+			throw new RuntimeException();
 		}
-		FileUtils.writeStringToFile(file, displayedFileJson.toString());
-		File file2 = new File(string
-				+ "/tasks.json");
-		String latestFileContents = FileUtils.readFileToString(file2);
-		JSONObject latestFileJson = new JSONObject(latestFileContents);
-		JSONObject removed2 = (JSONObject) latestFileJson.remove(itemToDelete);
-		if (!messageIdToDelete.equals(removed2.getString("Message-ID"))) {
-			throw new RuntimeException(removed2.getString("title"));
-		}
-		FileUtils.writeStringToFile(file2, latestFileJson.toString());
-
+		return msg;
 	}
 
 	private static Message[] getMessages() throws NoSuchProviderException,
@@ -84,6 +82,19 @@ public class Delete {
 		return msgs;
 	}
 
+	private static String getMessageID(Message aMessage)
+			throws MessagingException {
+		Enumeration<?> allHeaders = aMessage.getAllHeaders();
+		String messageID = "<not found>";
+		while (allHeaders.hasMoreElements()) {
+			Header e = (Header) allHeaders.nextElement();
+			if (e.getName().equals("Message-ID")) {
+				messageID = e.getValue();
+			}
+		}
+		return messageID;
+	}
+
 	private static Store connect() throws NoSuchProviderException,
 			MessagingException {
 		Properties props = System.getProperties();
@@ -99,17 +110,41 @@ public class Delete {
 		return theImapClient;
 	}
 
-	private static String getMessageID(Message aMessage)
-			throws MessagingException {
-		Enumeration allHeaders = aMessage.getAllHeaders();
-		String messageID = "<not found>";
-		while (allHeaders.hasMoreElements()) {
-			Header e = (Header) allHeaders.nextElement();
-			if (e.getName().equals("Message-ID")) {
-				messageID = e.getValue();
+	private static void commit(String itemToDelete,
+			final String messageIdToDelete) throws NoSuchProviderException,
+			MessagingException, IOException {
+
+		// All persistent changes are done right at the end, so that any
+		// exceptions can get thrown first.
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					deleteEmail(messageIdToDelete);
+				} catch (NoSuchProviderException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (MessagingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-		}
-		return messageID;
+		}.start();
+
 	}
 
+	private static void deleteEmail(String messageIdToDelete)
+			throws NoSuchProviderException, MessagingException {
+		Message[] messages;
+		messages = getMessages();
+		for (Message aMessage : messages) {
+			String aMessageID = getMessageID(aMessage);
+			if (aMessageID.equals(messageIdToDelete)) {
+				aMessage.setFlag(Flags.Flag.DELETED, true);
+				System.out.println("Deleted email:\t" + aMessage.getSubject());
+				break;
+			}
+		}
+
+	}
 }
