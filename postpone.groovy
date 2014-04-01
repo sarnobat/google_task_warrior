@@ -244,7 +244,7 @@ public class Postpone {
 
 	private static Update createUpdateTask(String calendarId, String eventID,
 			int daysToPostpone) throws IOException, GeneralSecurityException {
-		Event originalEvent = getEvent(eventID);
+		Event originalEvent = getEvent(eventID, calendarId);
 
 		if (originalEvent.getRecurrence() != null) {
 			throw new RuntimeException(
@@ -273,8 +273,23 @@ public class Postpone {
 		return update;
 	}
 
-	private static Event getEvent(String iEventID) throws IOException,
-			GeneralSecurityException {
+	private static Event getEvent(String iEventID, String calendarId)
+			throws IOException, GeneralSecurityException {
+		Event theTargetEvent = getNonRecurringEvent(iEventID);
+
+		if (theTargetEvent == null) {
+			throw new RuntimeException(
+					"Couldn't find event in service: https://www.google.com/calendar/render?eid="
+							+ iEventID + " . Perhaps it is a repeated event?");
+		}
+
+		System.out.println("Event:\n\t" + theTargetEvent);
+
+		return theTargetEvent;
+	}
+
+	private static Event getNonRecurringEvent(String iEventID)
+			throws IOException {
 		Event theTargetEvent = null;
 		findCalendarEvent: {
 			com.google.api.services.calendar.model.Events allEventsList;
@@ -297,14 +312,6 @@ public class Postpone {
 				}
 			}
 		}
-		if (theTargetEvent == null) {
-			throw new RuntimeException(
-					"Couldn't find event in service: https://www.google.com/calendar/render?eid="
-							+ iEventID + " . Perhaps it is a repeated event?");
-		}
-
-		System.out.println("Event:\n\t" + theTargetEvent);
-
 		return theTargetEvent;
 	}
 
