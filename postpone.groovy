@@ -1,5 +1,3 @@
-
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -254,8 +252,6 @@ public class Postpone {
 			String pageToken = null;
 
 			while (true) {
-				events2 = mCs.events().list("primary").setPageToken(pageToken)
-						.execute();
 				events2 = mCs.events().list("primary").setPageToken(pageToken)
 						.execute();
 				java.util.List<Event> items = events2.getItems();
