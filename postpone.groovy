@@ -273,14 +273,17 @@ public class Postpone {
 		return update;
 	}
 
-	private static Event getEvent(String iEventID, String calendarId)
+	private static Event getEvent(String iEventId, String iCalendarId)
 			throws IOException, GeneralSecurityException {
-		Event theTargetEvent = getNonRecurringEvent(iEventID);
+		Event theTargetEvent = getNonRecurringEvent(iEventId);
 
 		if (theTargetEvent == null) {
+			
+//			com.google.api.services.calendar.model.Events allEventsList = _service
+//					.events().instances(iCalendarId, iEventId).execute();
 			throw new RuntimeException(
 					"Couldn't find event in service: https://www.google.com/calendar/render?eid="
-							+ iEventID + " . Perhaps it is a repeated event?");
+							+ iEventId + " . Perhaps it is a repeated event?");
 		}
 
 		System.out.println("Event:\n\t" + theTargetEvent);
@@ -288,7 +291,7 @@ public class Postpone {
 		return theTargetEvent;
 	}
 
-	private static Event getNonRecurringEvent(String iEventID)
+	private static Event getNonRecurringEvent(String iEventId)
 			throws IOException {
 		Event theTargetEvent = null;
 		findCalendarEvent: {
@@ -302,7 +305,7 @@ public class Postpone {
 				java.util.List<Event> allEventItems = allEventsList.getItems();
 				for (Event anEvent : allEventItems) {
 					String anHtmlLink = anEvent.getHtmlLink();
-					if (anHtmlLink != null && anHtmlLink.contains(iEventID)) {
+					if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
 						theTargetEvent = anEvent;
 					}
 				}
