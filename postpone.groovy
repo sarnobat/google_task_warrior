@@ -273,7 +273,7 @@ public class Postpone {
 							+ iEventID + " . Perhaps it is a repeated event?");
 		}
 
-		System.out.println("Event:\t" + theTargetEvent);
+		System.out.println("Event:\n\t" + theTargetEvent);
 
 		return theTargetEvent;
 	}
