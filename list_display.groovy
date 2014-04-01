@@ -1,12 +1,13 @@
-
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.mail.FetchProfile;
 import javax.mail.Folder;
@@ -17,6 +18,7 @@ import javax.mail.Session;
 import javax.mail.Store;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -132,31 +134,41 @@ public class ListDisplaySynchronous {
 		Message[] msgs = getMessages();
 		System.out.println("Messages obtained");
 
-		JSONObject json = createsJson(msgs);
+		JSONObject json = createJsonListOfEvents(msgs);
 		FileUtils.writeStringToFile(file, json.toString());
 	}
 
-	private static JSONObject createsJson(Message[] msgs)
+	private static JSONObject createJsonListOfEvents(Message[] msgs)
 			throws MessagingException {
-		int i = 0;
-		JSONObject json = new JSONObject();
+
+		// JSONObject jsonToBeSaved = new JSONObject();
+		Map<String, JSONObject> messages = new TreeMap<String, JSONObject>();
+		// int i = 0;
 		for (Message aMessage : msgs) {
-			i++;
-			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
+			// i++;
+			JSONObject messageMetadata = Preconditions
+					.checkNotNull(getMessageMetadata(aMessage));
 			String[] aTitle = messageMetadata.getString("title").split("@");
-			
-			String string2 = aTitle[1];
+
 			String repeating = "";
-			if (string2.contains("Repeating")) {
+			if (aTitle[1].contains("Repeating")) {
 				repeating = "[Repeating] ";
 			}
-			System.out.println(i
-					+ "\t"
-					+ repeating + aTitle[0].replace(
-							"Reminder: ", ""));
-			json.put(Integer.toString(i), messageMetadata);
+			String aTitleMain = aTitle[0].replace("Reminder: ", "");
+			String printedTitle = repeating + aTitleMain;
+
+			messages.put(StringUtils.capitalize(printedTitle), messageMetadata);
+			// jsonToBeSaved.put(Integer.toString(i), messageMetadata);
 		}
-		return json;
+		int i = 0;
+		JSONObject jsonToBeSaved = new JSONObject();
+		for (String aTitle : new TreeSet<String>(messages.keySet())) {
+			++i;
+			JSONObject messageMetadata = messages.get(aTitle);
+			System.out.println(i + "\t" + aTitle);
+			jsonToBeSaved.put(Integer.toString(i), messageMetadata);
+		}
+		return jsonToBeSaved;
 	}
 
 	private static JSONObject getMessageMetadata(Message aMessage) {
