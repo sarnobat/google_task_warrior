@@ -4,26 +4,33 @@
 <script src="jquery/jquery-1.9.1.js">
 </script>
 <script>
+
 $(document).ready(function(){
     $.getJSON("http://netgear.rohidekar.com:4456/not_now/items" ,function(result){
-//    	console.debug(result.tasks);
-      $.each(result, function(i, field){
-              $.each(JSON.parse(field), function(k,v){
-                if (k == 'daysToPostpone') {
-                	return;
-                }
-              	var title = (v.title.split(/@/)[0]);
-				var title2 = title.replace("Reminder","");
-              	$("#items").append(k + " " + capitaliseFirstLetter(title2) + "<br>");
-            });
-      });
+		$.each(result, function(i, field){
+			$("#items").append('<table>');
+			$.each(JSON.parse(field), function(k,v){
+				if (k == 'daysToPostpone') {
+					return;
+				}
+				var title = (v.title.split(/@/)[0]);
+				var title2 = title.replace("Reminder: ","");
+				$("#items").append('<tr><td>' + k + "</td><td>&nbsp;</td><td>" + capitalize(title2) + "</td></tr>");
+			});			
+			$("#items").append('</table>');
+		});
     });
 });
 
-function capitaliseFirstLetter(string)
-{
-    return string.charAt(0).toUpperCase() + string.slice(1);
+function capitalize(str) {
+    strVal = '';
+    str = str.split(' ');
+    for (var chr = 0; chr < str.length; chr++) {
+        strVal += str[chr].substring(0, 1).toUpperCase() + str[chr].substring(1, str[chr].length) + ' '
+    }
+    return strVal
 }
+
 </script>
 </head>
 <body>
