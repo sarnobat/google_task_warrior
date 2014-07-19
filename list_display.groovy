@@ -169,7 +169,7 @@ public class ListDisplaySynchronous {
 			String[] aTitle = messageMetadata.getString("title").split("@");
 
 			String repeating = "";
-			if (aTitle[1].contains("Repeating")) {
+			if (aTitle.length > 1 && aTitle[1].contains("Repeating")) {
 				repeating = "[Repeating] ";
 			}
 			String aTitleMain = aTitle[0].replace("Reminder: ", "");
