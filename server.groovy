@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -87,36 +88,18 @@ public class NotNow {
 		@Path("postpone")
 		@Produces("application/json")
 		public Response postpone(@QueryParam("itemNumber") Integer iItemNumber, @QueryParam("daysToPostpone") Integer iDaysToPostpone) throws IOException, NoSuchProviderException, MessagingException, GeneralSecurityException {
-			JsonObjectBuilder json = Json.createObjectBuilder();
 			System.out.println("1");
 			try { 
 				Postpone.postpone(iItemNumber.toString(), iDaysToPostpone.toString());
 			} catch (Exception e) {
+				System.out.println("!");
 				e.printStackTrace();
 				System.out.println(e);
 			}
-			
-//			new Thread() {
-//				public void run() {
-//					try {
-//						ListDisplaySynchronous.getErrands();
-//					} catch (NoSuchProviderException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					} catch (MessagingException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					} catch (IOException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//			}.start();
-
 			System.out.println("2");
 			System.out.println("3");
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
-					.entity(json.build().toString()).type("application/json")
+					.entity("").type("application/json")
 					.build();
 		}
 	}
@@ -124,15 +107,6 @@ public class NotNow {
 	private static class ListDisplaySynchronous {
 		static final String string = "/home/sarnobat/.gcal_task_warrior";
 		static final File file = new File(string + "/tasks.json");
-
-//		public static void main(String[] args) throws NoSuchProviderException,
-//				MessagingException, IOException {
-//
-//			writeCalendarsToFileInSeparateThread();
-//			getErrands();
-//
-//			System.out.println("List updated");
-//		}
 
 		static void writeCalendarsToFileInSeparateThread() {
 			new Thread() {
@@ -198,9 +172,8 @@ public class NotNow {
 									JacksonFactory.getDefaultInstance(),
 									GoogleClientSecrets.load(
 											JacksonFactory.getDefaultInstance(),
-											new InputStreamReader(
-													Preconditions.checkNotNull(ListDisplaySynchronous.class
-															.getResourceAsStream("/client_secrets.json")))),
+											// Only works if you launch the app from the same dir as the json file for some stupid reason
+											new FileReader("/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
 									ImmutableSet.of(CalendarScopes.CALENDAR,
 											CalendarScopes.CALENDAR_READONLY))
 									.setDataStoreFactory(
@@ -215,9 +188,11 @@ public class NotNow {
 
 		}
 
-		static void getErrands() throws NoSuchProviderException,
+		@Deprecated static void getErrands() throws NoSuchProviderException,
 				MessagingException, IOException {
-			JSONObject json = getErrandsJson();
+			JSONObject json2 = getErrandsJson();
+			JSONObject json = new JSONObject();
+			json.put("tasks",json2);
 			
 			FileUtils.writeStringToFile(file, json.toString(2));
 		}
@@ -356,7 +331,7 @@ public class NotNow {
 			System.out.println("Will postpone event "+itemNumber+" by " + daysToPostponeString
 					+ " days.");
 			System.out.println("FYI - file contents at time of postpone are: " + FileUtils.readFileToString(mTasksFileLatest));
-			JSONObject eventJson = getEventJson(itemNumber, mTasksFileLatest);
+			JSONObject eventJson = getEventJsonFromResponse(itemNumber, mTasksFileLatest);
 			String title = eventJson.getString("title");
 			System.out.println("Title:\n\t" + title);
 			Store theImapClient = connect();
@@ -403,6 +378,7 @@ public class NotNow {
 			try {
 				s = FileUtils.readFileToString(file, "UTF-8");
 				JSONObject j = new JSONObject(s);
+				System.out.println("Calendar count: " + j.length());
 				JSONObject jsonObject = (JSONObject) j.get(calendarName);
 				String id = jsonObject.getString("calendar_id");
 				return id;
@@ -480,17 +456,26 @@ public class NotNow {
 		}
 
 		// Still useful
-		private static JSONObject getEventJson(String itemToDelete,
+		private static JSONObject getEventJsonFromResponse(String itemToDelete,
 				File tasksFileLastDisplayed) throws IOException {
 			String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
-			JSONObject eventJson = getEventJson(itemToDelete, errands);
+			JSONObject eventJson = getEventJsonFromResponseHelper(itemToDelete, errands);
 			return eventJson;
 		}
 
-		private static JSONObject getEventJson(String itemToDelete, String errands) {
+		private static JSONObject getEventJsonFromResponseHelper(String itemToDelete, String errands) {
 			JSONObject jsonObject = new JSONObject(errands);
 			JSONObject allErrandsJson = jsonObject.getJSONObject("tasks");
-			JSONObject eventJson = (JSONObject) allErrandsJson.get(itemToDelete);
+			String allErrands = allErrandsJson.toString();
+			return getEventJsonFromFile(itemToDelete, allErrands);
+		}
+
+		/** Inline this into {@link NotNow#getEventJsonFromResponseHelper} */
+		@Deprecated 
+		private static JSONObject getEventJsonFromFile(String itemToDelete,
+				String allErrands) {
+			JSONObject eventJson = (new JSONObject(allErrands))
+					.getJSONObject(itemToDelete);
 			return eventJson;
 		}
 

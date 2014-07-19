@@ -32,7 +32,34 @@ $(document).ready(function(){
 					title2 = "[Repeating] " + title2;
 				}
 				table +='<tr id=event-'+k+'>';
-				table +='<td>' + k + "</td><td>&nbsp;</td><td>" + capitalize(title2) + "</td>";
+				var capitalizedTitle = capitalize(title2);
+				var color = 'black';
+				if (capitalizedTitle.match(/.*Repeating.*/)) {
+					color = '#AAAAAA';
+				}
+				get_color: {
+					var projects = ['yurl', 'coagulate'];
+					$.each(projects, function(index, project) {
+						if (capitalizedTitle.indexOf(project) != -1) {
+						
+							console.debug(project);
+							console.debug(capitalizedTitle);
+							color = '#BBBBBB';
+						}
+					});
+				}
+				{
+					var projects = ['yurl', 'coagulate'];
+					$.each(projects, function(index, project) {
+						if (capitalizedTitle.indexOf(project) != -1) {
+						
+							console.debug(project);
+							console.debug(capitalizedTitle);
+							color = '#BBBBBB';
+						}
+					});
+				}
+				table +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle + "</td>";
 				var quickPostponeAmounts = [1, 4, 7, 15, 30, 60];
 				var quickPostponeAmount;
 				for(var i in quickPostponeAmounts) {
