@@ -15,7 +15,16 @@ $(document).ready(function(){
 				}
 				var title = (v.title.split(/@/)[0]);
 				var title2 = title.replace("Reminder: ","");
-				$("#items").append('<tr><td>' + k + "</td><td>&nbsp;</td><td>" + capitalize(title2) + "</td></tr>");
+				$("#items").append('<tr>');
+				$("#items").append('<td>' + k + "</td><td>&nbsp;</td><td>" + capitalize(title2) + "</td>");
+				var quickPostponeAmounts = [1, 4, 7, 15, 30, 60];
+				var quickPostponeAmount;
+				for(var i in quickPostponeAmounts) {
+					var quickPostponeAmount = quickPostponeAmounts[i];
+					$("#items").append("<td>&nbsp;&nbsp;<button type=button text='kick'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>");
+				}
+				
+				$("#items").append('</tr>');
 			});			
 			$("#items").append('</table>');
 		});
@@ -35,8 +44,6 @@ function capitalize(str) {
 </head>
 <body>
 
-<textarea id="urls">http://www.yahoo.com</textarea>
-<button>Stash this</button>
 <div id="items"></div>
 
 </body>
