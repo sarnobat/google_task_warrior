@@ -1,22 +1,36 @@
 <html>
 <head>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"> -->
-<script src="jquery/jquery-1.9.1.js">
-</script>
+
+<script src="jquery/jquery-1.9.1.js"></script>
+<script type="text/javascript" src="jquery/purl.js"></script>
+
 <script>
 
+var defaultPostponement;
 $(document).ready(function(){
+
+	determineDefaultPostponement: {
+		defaultPostponement = $.url().param('defaultPostponement');
+		if (defaultPostponement == null || defaultPostponement == '') {
+			defaultPostponement = 31;
+			history.pushState(null, null, '/not_now?defaultPostponement=' + defaultPostponement) // HTML5
+		}
+	}
     $.getJSON("http://netgear.rohidekar.com:4456/not_now/items" ,function(result){
 
 		$.each(result, function(i, field){
 			var table = "";
 			table +='<table>';
-			$.each(JSON.parse(field), function(k,v){
+			$.each(field, function(k,v){
 				if (k == 'daysToPostpone') {
 					return;
 				}
 				var title = (v.title.split(/@/)[0]);
 				var title2 = title.replace("Reminder: ","");
+				if (v.title.match(/.*Repeating.*/)) {
+					title2 = "[Repeating] " + title2;
+				}
 				table +='<tr id=event-'+k+'>';
 				table +='<td>' + k + "</td><td>&nbsp;</td><td>" + capitalize(title2) + "</td>";
 				var quickPostponeAmounts = [1, 4, 7, 15, 30, 60];
@@ -25,7 +39,7 @@ $(document).ready(function(){
 					var quickPostponeAmount = quickPostponeAmounts[i];
 					table +="<td>&nbsp;&nbsp;<button type=button onclick='postpone("+k+","+quickPostponeAmount+")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
 				}
-				
+				table +="<td>&nbsp;&nbsp;<button class=defaultpostpone type=button onclick='postponeDefault("+k+")'> " +defaultPostponement + " days</button >"+"&nbsp;&nbsp;</td>";
 				table +='</tr>';
 			});		
 			table +=	'</table>';
@@ -35,11 +49,21 @@ $(document).ready(function(){
 });
 
 function postpone(itemNumber, daysToPostpone) {
-    $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + itemNumber, daysToPostpone,function(result){
+    $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone,function(result){
     	console.log("success"); 
     });
     $("#event-" + itemNumber).remove();
     
+}
+
+function postponeDefault(itemNumber) {
+    $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + defaultPostponement,function(result){
+    	console.log("success2"); 
+    });
+    $("#event-" + itemNumber).remove();
+    defaultPostponement++;
+	history.pushState(null, null, '/not_now?defaultPostponement=' + defaultPostponement) // HTML5
+	$(".defaultpostpone").text( defaultPostponement +  " days");
 }
 
 function capitalize(str) {

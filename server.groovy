@@ -68,17 +68,19 @@ public class NotNow {
 		@GET
 		@Path("items")
 		@Produces("application/json")
-		public Response listItems(@QueryParam("rootId") Integer iRootId) throws IOException {
-			System.out.println("1");
-			JsonObjectBuilder json = Json.createObjectBuilder();
-			System.out.println("2");
-			String s = FileUtils.readFileToString(file);
-			System.out.println(s);
-			json.add("tasks", s);
-			System.out.println("3");
-			return Response.ok().header("Access-Control-Allow-Origin", "*")
-					.entity(json.build().toString()).type("application/json")
-					.build();
+		public Response listItems(@QueryParam("rootId") Integer iRootId) throws Exception {
+			try {
+				JSONObject json2 = ListDisplaySynchronous.getErrandsJson();
+				JSONObject json = new JSONObject();
+				json.put("tasks", json2);
+				FileUtils.writeStringToFile(file, json.toString(2));
+				return Response.ok().header("Access-Control-Allow-Origin", "*")
+						.entity(json.toString()).type("application/json")
+						.build();
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
+			}
 		}
 		
 		@GET
@@ -90,6 +92,7 @@ public class NotNow {
 			try { 
 				Postpone.postpone(iItemNumber.toString(), iDaysToPostpone.toString());
 			} catch (Exception e) {
+				e.printStackTrace();
 				System.out.println(e);
 			}
 			
@@ -214,14 +217,20 @@ public class NotNow {
 
 		static void getErrands() throws NoSuchProviderException,
 				MessagingException, IOException {
+			JSONObject json = getErrandsJson();
+			
+			FileUtils.writeStringToFile(file, json.toString(2));
+		}
+
+		static JSONObject getErrandsJson()
+				throws NoSuchProviderException, MessagingException, IOException {
 			Message[] msgs = getMessages();
 			System.out.println("Messages obtained");
 
 			int postponeCount = getPostponeCount();
 			JSONObject json = createJsonListOfEvents(msgs);
 			json.put("daysToPostpone", postponeCount);
-			
-			FileUtils.writeStringToFile(file, json.toString(2));
+			return json;
 		}
 
 		private static int getPostponeCount() throws IOException {
@@ -312,6 +321,7 @@ public class NotNow {
 			System.out.print("Fetching attributes...");
 			folder.fetch(msgs, fp);
 			System.out.println("done");
+			theImapClient.close();
 			return msgs;
 		}
 
@@ -348,7 +358,8 @@ public class NotNow {
 			JSONObject eventJson = getEventJson(itemNumber, mTasksFileLatest);
 			String title = eventJson.getString("title");
 			System.out.println("Title:\n\t" + title);
-			Message msg = getMessage(title);
+			Store theImapClient = connect();
+			Message msg = getMessage(theImapClient ,title);
 			String messageIdToDelete = getMessageID(msg);
 			String eventId = getEventID(msg);
 			System.out.println("Event ID\n\t" + eventId);
@@ -364,7 +375,10 @@ public class NotNow {
 
 				calendarAction = createInsertTask(daysToPostponeString, title);
 			}
-			commit(calendarAction, messageIdToDelete);
+			commit(theImapClient,calendarAction, messageIdToDelete);
+			if (theImapClient.isConnected()) {
+				theImapClient.close();
+			}
 		}
 
 		private static CalendarRequest<Event> createInsertTask(
@@ -397,9 +411,9 @@ public class NotNow {
 			return null;
 		}
 
-		private static Message getMessage(String title)
+		private static Message getMessage(Store theImapClient ,String title)
 				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages();
+			Message[] msgs = getMessages(theImapClient );
 			Message msg = null;
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
@@ -413,7 +427,7 @@ public class NotNow {
 			return msg;
 		}
 
-		private static void commit(final CalendarRequest<Event> update,
+		private static void commit(Store theImapClient,final CalendarRequest<Event> update,
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
 
@@ -450,7 +464,9 @@ public class NotNow {
 				@Override
 				public void run() {
 					try {
-						deleteEmail(messageIdToDelete);
+						Store theImapClient = connect();
+						deleteEmail(theImapClient ,messageIdToDelete);
+						theImapClient.close();
 					} catch (NoSuchProviderException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -476,10 +492,10 @@ public class NotNow {
 			return eventJson;
 		}
 
-		private static void deleteEmail(String messageIdToDelete)
+		private static void deleteEmail(Store theImapClient ,String messageIdToDelete)
 				throws NoSuchProviderException, MessagingException {
 			Message[] messages;
-			messages = getMessages();
+			messages = getMessages(theImapClient);
 			for (Message aMessage : messages) {
 				String aMessageID = getMessageID(aMessage);
 				if (aMessageID.equals(messageIdToDelete)) {
@@ -488,7 +504,7 @@ public class NotNow {
 					break;
 				}
 			}
-
+			System.out.println("----------------------------");
 		}
 
 		// Useful
@@ -718,12 +734,10 @@ public class NotNow {
 
 		}
 
-		private static Message[] getMessages() throws NoSuchProviderException,
+		private static Message[] getMessages(Store theImapClient) throws NoSuchProviderException,
 				MessagingException {
-			Store theImapClient = connect();
-			Folder folder = theImapClient
-					.getFolder("3 - Urg - time sensitive - this week");
-			folder.open(Folder.READ_WRITE);
+//			Store theImapClient = connect();
+			Folder folder = openUrgentFolder(theImapClient);
 
 			Message[] msgs = folder.getMessages();
 
@@ -731,7 +745,16 @@ public class NotNow {
 			fp.add(FetchProfile.Item.ENVELOPE);
 			fp.add("X-mailer");
 			folder.fetch(msgs, fp);
+//			theImapClient.close();
 			return msgs;
+		}
+
+		private static Folder openUrgentFolder(Store theImapClient)
+				throws MessagingException {
+			Folder folder = theImapClient
+					.getFolder("3 - Urg - time sensitive - this week");
+			folder.open(Folder.READ_WRITE);
+			return folder;
 		}
 
 		private static Store connect() throws NoSuchProviderException,
