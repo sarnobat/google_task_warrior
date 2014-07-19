@@ -87,7 +87,29 @@ public class NotNow {
 		public Response postpone(@QueryParam("itemNumber") Integer iItemNumber, @QueryParam("daysToPostpone") Integer iDaysToPostpone) throws IOException, NoSuchProviderException, MessagingException, GeneralSecurityException {
 			JsonObjectBuilder json = Json.createObjectBuilder();
 			System.out.println("1");
-			Postpone.postpone(iItemNumber.toString(), iDaysToPostpone.toString());
+			try { 
+				Postpone.postpone(iItemNumber.toString(), iDaysToPostpone.toString());
+			} catch (Exception e) {
+				System.out.println(e);
+			}
+			
+			new Thread() {
+				public void run() {
+					try {
+						ListDisplaySynchronous.getErrands();
+					} catch (NoSuchProviderException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (MessagingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}.start();
+
 			System.out.println("2");
 			System.out.println("3");
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
@@ -313,7 +335,7 @@ public class NotNow {
 
 		private static final String MESSAGE_ID = "Message-ID";
 
-		private static final String DIR_PATH = "/Users/sarnobat/.gcal_task_warrior";
+		private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
 		private static final File mTasksFileLatest = new File(DIR_PATH
 				+ "/tasks.json");
 		private static final Calendar _service = getCalendarService();
@@ -360,7 +382,7 @@ public class NotNow {
 
 		private static String getCalendarId(String calendarName) {
 
-			final String string = "/Users/sarnobat/.gcal_task_warrior";
+			final String string = "/home/sarnobat/.gcal_task_warrior";
 			final File file = new File(string + "/calendars.json");
 			String s;
 			try {
