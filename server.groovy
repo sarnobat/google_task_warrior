@@ -96,22 +96,22 @@ public class NotNow {
 				System.out.println(e);
 			}
 			
-			new Thread() {
-				public void run() {
-					try {
-						ListDisplaySynchronous.getErrands();
-					} catch (NoSuchProviderException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (MessagingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}.start();
+//			new Thread() {
+//				public void run() {
+//					try {
+//						ListDisplaySynchronous.getErrands();
+//					} catch (NoSuchProviderException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					} catch (MessagingException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					} catch (IOException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			}.start();
 
 			System.out.println("2");
 			System.out.println("3");
@@ -353,8 +353,9 @@ public class NotNow {
 		static void postpone(String itemNumber, String daysToPostponeString)
 				throws IOException, NoSuchProviderException, MessagingException,
 				GeneralSecurityException {
-			System.out.println("Will postpone by " + daysToPostponeString
+			System.out.println("Will postpone event "+itemNumber+" by " + daysToPostponeString
 					+ " days.");
+			System.out.println("FYI - file contents at time of postpone are: " + FileUtils.readFileToString(mTasksFileLatest));
 			JSONObject eventJson = getEventJson(itemNumber, mTasksFileLatest);
 			String title = eventJson.getString("title");
 			System.out.println("Title:\n\t" + title);
@@ -487,7 +488,8 @@ public class NotNow {
 		}
 
 		private static JSONObject getEventJson(String itemToDelete, String errands) {
-			JSONObject allErrandsJson = new JSONObject(errands);
+			JSONObject jsonObject = new JSONObject(errands);
+			JSONObject allErrandsJson = jsonObject.getJSONObject("tasks");
 			JSONObject eventJson = (JSONObject) allErrandsJson.get(itemToDelete);
 			return eventJson;
 		}
