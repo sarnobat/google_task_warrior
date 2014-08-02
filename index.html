@@ -1,11 +1,16 @@
 <html>
 <head>
+<title>Not Now</title>
 <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"> -->
 
 <script src="jquery/jquery-1.9.1.js"></script>
 <script type="text/javascript" src="jquery/purl.js"></script>
 
 <script>
+setInterval(function() {
+    populateBody();
+    
+}, 120 * 1000); // every 120 seconds
 
 var defaultPostponement;
 $(document).ready(function(){
@@ -17,8 +22,13 @@ $(document).ready(function(){
 			history.pushState(null, null, '/not_now?defaultPostponement=' + defaultPostponement) // HTML5
 		}
 	}
-    $.getJSON("http://netgear.rohidekar.com:4456/not_now/items" ,function(result){
+	populateBody();
+    
+});
 
+function populateBody() {
+	$.getJSON("http://netgear.rohidekar.com:4456/not_now/items" ,function(result){
+		$("#items").empty();
 		$.each(result, function(i, field){
 			var table = "";
 			table +='<table>';
@@ -60,6 +70,7 @@ $(document).ready(function(){
 					});
 				}
 				table +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle + "</td>";
+				table += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
 				var quickPostponeAmounts = [1, 4, 7, 15, 30, 60];
 				var quickPostponeAmount;
 				for(var i in quickPostponeAmounts) {
@@ -72,11 +83,19 @@ $(document).ready(function(){
 			table +=	'</table>';
 			$("#items").append(table);
 		});
+		console.debug('finished refreshing');
     });
-});
-
+}
 function postpone(itemNumber, daysToPostpone) {
     $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone,function(result){
+    	console.log("success"); 
+    });
+    $("#event-" + itemNumber).remove();
+    
+}
+
+function deleteEvent(itemNumber) {
+    $.getJSON("http://netgear.rohidekar.com:4456/not_now/delete?itemNumber=" + itemNumber,function(result){
     	console.log("success"); 
     });
     $("#event-" + itemNumber).remove();
@@ -106,7 +125,9 @@ function capitalize(str) {
 </head>
 <body>
 
-<div id="items"></div>
+<div id="items">
+Loading...
+</div>
 
 </body>
 </html>

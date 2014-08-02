@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,24 @@ public class NotNow {
 		}
 		
 		@GET
+		@Path("delete")
+		@Produces("application/json")
+		public Response delete(@QueryParam("itemNumber") Integer iItemNumber) throws Exception {
+			
+			try {
+				JSONObject json = new JSONObject();
+				Delete.delete(iItemNumber.toString());
+				return Response.ok().header("Access-Control-Allow-Origin", "*")
+						.entity(json.toString()).type("application/json")
+						.build();
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+
+		
+		@GET
 		@Path("postpone")
 		@Produces("application/json")
 		public Response postpone(@QueryParam("itemNumber") Integer iItemNumber, @QueryParam("daysToPostpone") Integer iDaysToPostpone) throws IOException, NoSuchProviderException, MessagingException, GeneralSecurityException {
@@ -103,10 +122,161 @@ public class NotNow {
 					.build();
 		}
 	}
+	
+	private static class Delete {
+
+		private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
+
+		private static final File mTasksFileLatest = new File(DIR_PATH
+				+ "/tasks.json");
+
+		public static void delete(String itemToDelete) throws IOException,
+				NoSuchProviderException, MessagingException {
+			JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
+			String title = eventJson.getString("title");
+			System.out.println("Title:\t" + title);
+			Message[] msgs = getMessages(title);
+			for (Message msg : msgs) {
+			String messageIdToDelete = getMessageID(msg);
+				commit(itemToDelete, messageIdToDelete);
+			}
+		}
+
+		private static JSONObject getEventJson(String itemToDelete,
+				String errands) {
+			JSONObject allErrandsJson = new JSONObject(errands);
+			System.out.println(allErrandsJson);
+			JSONObject eventJson = (JSONObject) allErrandsJson.getJSONObject(
+					"tasks").get(itemToDelete);
+			return eventJson;
+		}
+
+		// Still useful
+		private static JSONObject getEventJson(String itemToDelete,
+				File tasksFileLastDisplayed) throws IOException {
+			String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
+			JSONObject eventJson = getEventJson(itemToDelete, errands);
+			return eventJson;
+		}
+
+		private static Message getMessage(String title)
+				throws NoSuchProviderException, MessagingException {
+			Message[] msgs = getMessages();
+			Message msg = null;
+			for (Message aMsg : msgs) {
+				if (aMsg.getSubject().equals(title)) {
+					msg = aMsg;
+					break;
+				}
+			}
+			if (msg == null) {
+				throw new RuntimeException();
+			}
+			return msg;
+		}
+		private static Message[] getMessages(String title)
+				throws NoSuchProviderException, MessagingException {
+			Message[] msgs = getMessages();
+			ArrayList<Message> msg = new ArrayList<Message>();
+			for (Message aMsg : msgs) {
+				if (aMsg.getSubject().equals(title)) {
+					msg.add(aMsg);
+				}
+			}
+			if (msg.size() == 0) {
+				throw new RuntimeException();
+			}
+			return msg.toArray(msgs);
+		}
+
+		private static Message[] getMessages() throws NoSuchProviderException,
+				MessagingException {
+			Store theImapClient = connect();
+			Folder folder = theImapClient
+					.getFolder("3 - Urg - time sensitive - this week");
+			folder.open(Folder.READ_WRITE);
+
+			Message[] msgs = folder.getMessages();
+
+			FetchProfile fp = new FetchProfile();
+			fp.add(FetchProfile.Item.ENVELOPE);
+			fp.add("X-mailer");
+			folder.fetch(msgs, fp);
+			return msgs;
+		}
+
+		private static String getMessageID(Message aMessage)
+				throws MessagingException {
+			Enumeration<?> allHeaders = aMessage.getAllHeaders();
+			String messageID = "<not found>";
+			while (allHeaders.hasMoreElements()) {
+				Header e = (Header) allHeaders.nextElement();
+				if (e.getName().equals("Message-ID")) {
+					messageID = e.getValue();
+				}
+			}
+			return messageID;
+		}
+
+		private static Store connect() throws NoSuchProviderException,
+				MessagingException {
+			Properties props = System.getProperties();
+			String password = System.getenv("GMAIL_PASSWORD");
+			if (password == null) {
+				throw new RuntimeException(
+						"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
+			}
+			props.setProperty("mail.store.protocol", "imap");
+			Store theImapClient = Session.getInstance(props).getStore("imaps");
+			theImapClient.connect("imap.gmail.com",
+					"sarnobat.hotmail@gmail.com", password);
+			return theImapClient;
+		}
+
+		private static void commit(String itemToDelete,
+				final String messageIdToDelete) throws NoSuchProviderException,
+				MessagingException, IOException {
+
+			// All persistent changes are done right at the end, so that any
+			// exceptions can get thrown first.
+			new Thread() {
+				@Override
+				public void run() {
+					try {
+						deleteEmail(messageIdToDelete);
+					} catch (NoSuchProviderException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (MessagingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}.start();
+
+		}
+
+		private static void deleteEmail(String messageIdToDelete)
+				throws NoSuchProviderException, MessagingException {
+			Message[] messages;
+			messages = getMessages();
+			for (Message aMessage : messages) {
+				String aMessageID = getMessageID(aMessage);
+				if (aMessageID.equals(messageIdToDelete)) {
+					aMessage.setFlag(Flags.Flag.DELETED, true);
+					System.out.println("Deleted email:\t"
+							+ aMessage.getSubject());
+					break;
+				}
+			}
+
+		}
+	}
 
 	private static class ListDisplaySynchronous {
 		static final String string = "/home/sarnobat/.gcal_task_warrior";
 		static final File file = new File(string + "/tasks.json");
+
 
 		static void writeCalendarsToFileInSeparateThread() {
 			new Thread() {
@@ -821,8 +991,13 @@ public class NotNow {
 			}
 		}.start();
 		ListDisplaySynchronous.writeCalendarsToFileInSeparateThread();
-		HttpServer server = JdkHttpServerFactory.createHttpServer(new URI(
-				"http://localhost:4456/"), new ResourceConfig(
-				HelloWorldResource.class));
+		try {
+			HttpServer server = JdkHttpServerFactory.createHttpServer(new URI(
+					"http://localhost:4456/"), new ResourceConfig(
+					HelloWorldResource.class));
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+			System.err.println("Port in use. Not starting new instance.");
+		}
 	}
 }
