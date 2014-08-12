@@ -8,107 +8,186 @@
 
 <script>
 setInterval(function() {
-    populateBody();
+	var defaultPostponement = determineDefaultPostponement();
+	var incrementAll = determineIncrementAll();
+	populateBody(incrementAll, defaultPostponement);
     
 }, 120 * 1000); // every 120 seconds
 
-var defaultPostponement;
-$(document).ready(function(){
+var messagesDeleted = 0;
+var failures = 0;
 
-	determineDefaultPostponement: {
-		defaultPostponement = $.url().param('defaultPostponement');
-		if (defaultPostponement == null || defaultPostponement == '') {
-			defaultPostponement = 31;
-			history.pushState(null, null, '/not_now?defaultPostponement=' + defaultPostponement) // HTML5
-		}
-	}
-	populateBody();
+$(document).ready(function(){	
+	var defaultPostponement = determineDefaultPostponement();
+	var incrementAll = determineIncrementAll();
+	updateUrl(defaultPostponement, incrementAll);
+	populateBody(incrementAll, defaultPostponement);
     
 });
 
-function populateBody() {
-	$.getJSON("http://netgear.rohidekar.com:4456/not_now/items" ,function(result){
-		$("#items").empty();
-		$.each(result, function(i, field){
-			var table = "";
-			table +='<table>';
-			$.each(field, function(k,v){
-				if (k == 'daysToPostpone') {
-					return;
-				}
-				var title = (v.title.split(/@/)[0]);
-				var title2 = title.replace("Reminder: ","");
-				if (v.title.match(/.*Repeating.*/)) {
-					title2 = "[Repeating] " + title2;
-				}
-				table +='<tr id=event-'+k+'>';
-				var capitalizedTitle = capitalize(title2);
-				var color = 'black';
-				if (capitalizedTitle.match(/.*Repeating.*/)) {
-					color = '#AAAAAA';
-				}
-				get_color: {
-					var projects = ['yurl', 'coagulate'];
-					$.each(projects, function(index, project) {
-						if (capitalizedTitle.indexOf(project) != -1) {
-						
-							console.debug(project);
-							console.debug(capitalizedTitle);
-							color = '#BBBBBB';
-						}
-					});
-				}
-				{
-					var projects = ['yurl', 'coagulate'];
-					$.each(projects, function(index, project) {
-						if (capitalizedTitle.indexOf(project) != -1) {
-						
-							console.debug(project);
-							console.debug(capitalizedTitle);
-							color = '#BBBBBB';
-						}
-					});
-				}
-				table +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle + "</td>";
-				table += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
-				var quickPostponeAmounts = [1, 4, 7, 15, 30, 60];
-				var quickPostponeAmount;
-				for(var i in quickPostponeAmounts) {
-					var quickPostponeAmount = quickPostponeAmounts[i];
-					table +="<td>&nbsp;&nbsp;<button type=button onclick='postpone("+k+","+quickPostponeAmount+")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
-				}
-				table +="<td>&nbsp;&nbsp;<button class=defaultpostpone type=button onclick='postponeDefault("+k+")'> " +defaultPostponement + " days</button >"+"&nbsp;&nbsp;</td>";
-				table +='</tr>';
-			});		
-			table +=	'</table>';
-			$("#items").append(table);
-		});
-		console.debug('finished refreshing');
-    });
+function determineDefaultPostponement() {
+	var defaultPostponement;
+	defaultPostponement = $.url().param('defaultPostponement');
+	if (defaultPostponement == null || defaultPostponement == '') {
+		defaultPostponement = 1;
+	}
+	return defaultPostponement;
 }
+
+function determineIncrementAll() {
+	var incrementAll;
+	incrementAll = $.url().param('incrementAll');
+	if (incrementAll == null || incrementAll == '') {
+		incrementAll = true;
+	}
+	return incrementAll;
+}
+
+function updateUrl(defaultPostponement, incrementAll) {
+	history.pushState(null, null, '/not_now?defaultPostponement=' + defaultPostponement + '&incrementAll=' + incrementAll) // HTML5
+}
+
+function populateBody(incrementAll, defaultPostponement) {
+	$.ajax("http://netgear.rohidekar.com:4456/not_now/items" )
+	 .done(function(result) {
+		console.log( "success" );
+		populateCallback(result, incrementAll, defaultPostponement);
+	  })
+	  .fail(function() {
+		console.log( "error" );
+	  })
+	  .always(function() {
+		console.log( "complete" );
+	  });
+}
+
+function populateCallback(result, incrementAll, defaultPostponement){
+	$("#items").empty();
+	$.each(result, function(i, field){
+		var table = "";
+		table +='<table>';
+		$.each(field, function(k,v){
+			if (k == 'daysToPostpone') {
+				return;
+			}
+			var title = (v.title.split(/@/)[0]);
+			var title2 = title.replace("Reminder: ","");
+			if (v.title.match(/.*Repeating.*/)) {
+				title2 = "[Repeating] " + title2;
+			}
+			table +='<tr id=event-'+k+'>';
+			var capitalizedTitle = capitalize(title2);
+			var color = 'black';
+			if (capitalizedTitle.match(/.*Repeating.*/)) {
+				color = '#AAAAAA';
+			}
+			get_color: {
+				var projects = ['yurl', 'coagulate'];
+				$.each(projects, function(index, project) {
+					if (capitalizedTitle.indexOf(project) != -1) {
+					
+						console.debug(project);
+						console.debug(capitalizedTitle);
+						color = '#BBBBBB';
+					}
+				});
+			}
+			{
+				var projects = ['yurl', 'coagulate'];
+				$.each(projects, function(index, project) {
+					if (capitalizedTitle.indexOf(project) != -1) {
+					
+						console.debug(project);
+						console.debug(capitalizedTitle);
+						color = '#BBBBBB';
+					}
+				});
+			}
+			table +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle + "</td>";
+			table += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
+			var quickPostponeAmounts = [0, 1, 2, 4, 8, 16, 32, 64];
+			for(var i in quickPostponeAmounts) {
+				var quickPostponeAmount;
+				if (incrementAll) {
+					quickPostponeAmount = parseInt(quickPostponeAmounts[i]) + parseInt(defaultPostponement);
+				 } else {
+					 quickPostponeAmount = quickPostponeAmounts[i];
+				 }
+				table +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+i+"," +defaultPostponement+")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
+			}
+			//table +="<td>&nbsp;&nbsp;<button class=defaultpostpone type=button onclick='postponeDefault("+k+")'> " +defaultPostponement + " days</button >"+"&nbsp;&nbsp;</td>";
+			table +='</tr>';
+		});		
+		table +=	'</table>';
+		$("#items").append(table);
+	});
+	console.debug('finished refreshing');
+}
+
 function postpone(itemNumber, daysToPostpone) {
+	$.ajax( "http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone)
+	  .done(function() {
+		  ++messagesDeleted;
+		  $("#status").html(messagesDeleted);
+		console.log( "success" );
+	  })
+	  .fail(function() {
+	  	++failures;
+	    $("#failures").html(failures);
+		console.log( "error" );
+	  })
+	  .always(function() {
+		console.log( "complete" );
+	  });
+	  /*
     $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone,function(result){
+
     	console.log("success"); 
-    });
+		++messagesDeleted;
+    	$("#status").html(messagesDeleted);
+    });*/
     $("#event-" + itemNumber).remove();
     
 }
 
 function deleteEvent(itemNumber) {
-    $.getJSON("http://netgear.rohidekar.com:4456/not_now/delete?itemNumber=" + itemNumber,function(result){
-    	console.log("success"); 
-    });
+    $.ajax("http://netgear.rohidekar.com:4456/not_now/delete?itemNumber=" + itemNumber)
+	  .done(function() {
+		console.log( "success" );
+		  ++messagesDeleted;
+		  $("#status").html(messagesDeleted);
+	  })
+	  .fail(function() {
+		console.log( "error" );
+	  	++failures;
+	    $("#failures").html(failures);
+	  })
+	  .always(function() {
+		console.log( "complete" );
+	  });
+
     $("#event-" + itemNumber).remove();
     
 }
 
-function postponeDefault(itemNumber) {
-    $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + defaultPostponement,function(result){
-    	console.log("success2"); 
-    });
+function postponeDefault(itemNumber, base, defaultPostponement) {
+	var total = base + parseInt(defaultPostponement);
+    $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
+      .done(function() {
+		console.log( "success" );
+		  ++messagesDeleted;
+		  $("#status").html(messagesDeleted);
+	  })
+	  .fail(function() {
+		console.log( "error" );
+	  })
+	  .always(function() {
+		console.log( "complete" );
+	  });
+
     $("#event-" + itemNumber).remove();
     defaultPostponement++;
-	history.pushState(null, null, '/not_now?defaultPostponement=' + defaultPostponement) // HTML5
+    updateUrl(defaultPostponement, $.url().param('incrementAll'));
 	$(".defaultpostpone").text( defaultPostponement +  " days");
 }
 
@@ -124,10 +203,11 @@ function capitalize(str) {
 </script>
 </head>
 <body>
-
 <div id="items">
 Loading...
 </div>
+<br>
+<span id="status">0</span> successes, <span id="failures">0</span> failures
 
 </body>
 </html>

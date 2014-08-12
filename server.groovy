@@ -1,3 +1,5 @@
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -58,6 +61,7 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.sun.net.httpserver.HttpServer;
 
@@ -117,8 +121,9 @@ public class NotNow {
 			}
 			System.out.println("2");
 			System.out.println("3");
+			JSONObject json = new JSONObject();
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
-					.entity("").type("application/json")
+					.entity(json.toString()).type("application/json")
 					.build();
 		}
 	}
@@ -135,9 +140,12 @@ public class NotNow {
 			JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 			String title = eventJson.getString("title");
 			System.out.println("Title:\t" + title);
-			Message[] msgs = getMessages(title);
+			Set<Message> msgs = getMessages(title);
 			for (Message msg : msgs) {
-			String messageIdToDelete = getMessageID(msg);
+				if (msg == null) {
+					throw new RuntimeException("msg is null");
+				}
+				String messageIdToDelete = getMessageID(msg);
 				commit(itemToDelete, messageIdToDelete);
 			}
 		}
@@ -174,19 +182,19 @@ public class NotNow {
 			}
 			return msg;
 		}
-		private static Message[] getMessages(String title)
+		private static Set<Message> getMessages(String title)
 				throws NoSuchProviderException, MessagingException {
 			Message[] msgs = getMessages();
-			ArrayList<Message> msg = new ArrayList<Message>();
+			ArrayList<Message> theMsgList = new ArrayList<Message>();
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
-					msg.add(aMsg);
+					theMsgList.add(checkNotNull(aMsg));
 				}
 			}
-			if (msg.size() == 0) {
+			if (theMsgList.size() == 0) {
 				throw new RuntimeException();
 			}
-			return msg.toArray(msgs);
+			return ImmutableSet.copyOf(theMsgList);
 		}
 
 		private static Message[] getMessages() throws NoSuchProviderException,
@@ -207,6 +215,9 @@ public class NotNow {
 
 		private static String getMessageID(Message aMessage)
 				throws MessagingException {
+			if (aMessage == null) {
+				System.out.println("aMessage is null");
+			}
 			Enumeration<?> allHeaders = aMessage.getAllHeaders();
 			String messageID = "<not found>";
 			while (allHeaders.hasMoreElements()) {
@@ -549,6 +560,9 @@ public class NotNow {
 				s = FileUtils.readFileToString(file, "UTF-8");
 				JSONObject j = new JSONObject(s);
 				System.out.println("Calendar count: " + j.length());
+				if ("Sridhar Sarnobat".equals(calendarName)) {
+					calendarName = "ss401533@gmail.com";
+				}
 				JSONObject jsonObject = (JSONObject) j.get(calendarName);
 				String id = jsonObject.getString("calendar_id");
 				return id;
@@ -569,7 +583,7 @@ public class NotNow {
 				}
 			}
 			if (msg == null) {
-				throw new RuntimeException();
+				throw new RuntimeException("Can't find email with subject title: " + title);
 			}
 			return msg;
 		}
