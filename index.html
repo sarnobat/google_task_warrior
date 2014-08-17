@@ -63,14 +63,15 @@ function populateBody(incrementAll, defaultPostponement) {
 	  });
 }
 
+var tasks;
+
 function populateCallback(result, incrementAll, defaultPostponement){
 	$("#items").empty();
 	$.each(result, function(i, field){
 		var table = "";
-		table +='<table>';
-		table += getTaskRows(field, incrementAll, defaultPostponement);
-		
-		
+		tasks = field;
+		table +='<table id="taskRows">';
+		table += getTaskRows(tasks, incrementAll, defaultPostponement);
 		table +=	'</table>';
 		$("#items").append(table);
 	});
@@ -126,7 +127,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			 } else {
 				 quickPostponeAmount = quickPostponeAmounts[i];
 			 }
-			rows +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+i+"," +defaultPostponement+")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
+			rows +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+i+"," +defaultPostponement+ ","+ incrementAll + ")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
 		}
 		//table +="<td>&nbsp;&nbsp;<button class=defaultpostpone type=button onclick='postponeDefault("+k+")'> " +defaultPostponement + " days</button >"+"&nbsp;&nbsp;</td>";
 		rows +='</tr>';
@@ -141,6 +142,9 @@ function postpone(itemNumber, daysToPostpone) {
 	  .done(function() {
 		  ++messagesDeleted;
 		  $("#status").html(messagesDeleted);
+		  delete tasks[itemNumber];
+		  var table = getTaskRows(tasks, incrementAll, defaultPostponement);
+		  $("#taskRows").html(table);
 		console.log( "success" );
 	  })
 	  .fail(function() {
@@ -182,7 +186,7 @@ function deleteEvent(itemNumber) {
     
 }
 
-function postponeDefault(itemNumber, base, defaultPostponement) {
+function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 	var total = base + parseInt(defaultPostponement);
     $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
       .done(function() {
@@ -202,6 +206,10 @@ function postponeDefault(itemNumber, base, defaultPostponement) {
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
 	//$(".defaultpostpone").text( defaultPostponement +  " days");
 	//updateButtons();
+	
+	delete tasks[itemNumber];
+	var table = getTaskRows(tasks, incrementAll, defaultPostponement);
+	$("#taskRows").html(table);
 }
 
 function capitalize(str) {
