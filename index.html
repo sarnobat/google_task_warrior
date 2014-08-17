@@ -9,7 +9,9 @@
 <script>
 setInterval(function() {
 	var defaultPostponement = determineDefaultPostponement();
+	console.log("Default postponement is " + defaultPostponement);
 	var incrementAll = determineIncrementAll();
+	console.log("Increment all: " + incrementAll);
 	populateBody(incrementAll, defaultPostponement);
     
 }, 120 * 1000); // every 120 seconds
@@ -124,6 +126,8 @@ function populateCallback(result, incrementAll, defaultPostponement){
 	console.debug('finished refreshing');
 }
 
+
+// Unused. Delete this
 function postpone(itemNumber, daysToPostpone) {
 	$.ajax( "http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone)
 	  .done(function() {
@@ -188,7 +192,8 @@ function postponeDefault(itemNumber, base, defaultPostponement) {
     $("#event-" + itemNumber).remove();
     defaultPostponement++;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
-	$(".defaultpostpone").text( defaultPostponement +  " days");
+	//$(".defaultpostpone").text( defaultPostponement +  " days");
+	//updateButtons();
 }
 
 function capitalize(str) {

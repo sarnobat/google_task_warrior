@@ -186,9 +186,13 @@ public class NotNow {
 				throws NoSuchProviderException, MessagingException {
 			Message[] msgs = getMessages();
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
+			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
 					theMsgList.add(checkNotNull(aMsg));
+					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
+				} else {
+					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
 				}
 			}
 			if (theMsgList.size() == 0) {
@@ -197,9 +201,15 @@ public class NotNow {
 			return ImmutableSet.copyOf(theMsgList);
 		}
 
+		@Deprecated
 		private static Message[] getMessages() throws NoSuchProviderException,
 				MessagingException {
 			Store theImapClient = connect();
+			return getMessages(theImapClient);
+		}
+
+		private static Message[] getMessages(Store theImapClient)
+				throws MessagingException {
 			Folder folder = theImapClient
 					.getFolder("3 - Urg - time sensitive - this week");
 			folder.open(Folder.READ_WRITE);
@@ -516,26 +526,99 @@ public class NotNow {
 			String title = eventJson.getString("title");
 			System.out.println("Title:\n\t" + title);
 			Store theImapClient = connect();
-			Message msg = getMessage(theImapClient ,title);
-			String messageIdToDelete = getMessageID(msg);
-			String eventId = getEventID(msg);
-			System.out.println("Event ID\n\t" + eventId);
-			String calendarName = getCalendarName(msg);
-			System.out.println("Calendar name\n\t" + calendarName);
-			String calendarId = getCalendarId(calendarName);
-			System.out.println("Calendar ID:\n\t" + calendarId);
-			CalendarRequest<Event> calendarAction;
-			try {
-				calendarAction = createUpdateTask(calendarName, calendarId,
-						eventId, daysToPostponeString);
-			} catch (IsRecurringEventException e) {
-
-				calendarAction = createInsertTask(daysToPostponeString, title);
+			_1:{
+				Set<Message> msgs = getMessages(theImapClient, title);
+				for (Message msg : msgs) {
+					System.out.println("Event ID\n\t" + getEventID(msg));
+					System.out.println("Calendar name\n\t"
+							+ getCalendarName(msg));
+					System.out.println("Calendar ID:\n\t"
+							+ getCalendarId(getCalendarName(msg)));
+					CalendarRequest<Event> calendarAction = createPostponeTask(
+							daysToPostponeString, title, msg);
+					commitPostpone(theImapClient, calendarAction, getMessageID(msg));
+				}
 			}
-			commit(theImapClient,calendarAction, messageIdToDelete);
 			if (theImapClient.isConnected()) {
 				theImapClient.close();
 			}
+		}
+
+		private static Set<Message> getMessages(Store theImapClient, String title)
+				throws NoSuchProviderException, MessagingException {
+			Message[] msgs = getMessages();
+			ArrayList<Message> theMsgList = new ArrayList<Message>();
+			System.out.println("Delete.getMessages() - looking for " + title);
+			for (Message aMsg : msgs) {
+				if (aMsg.getSubject().equals(title)) {
+					theMsgList.add(checkNotNull(aMsg));
+					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
+				} else {
+					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
+				}
+			}
+			if (theMsgList.size() == 0) {
+				throw new RuntimeException();
+			}
+			return ImmutableSet.copyOf(theMsgList);
+		}
+
+		
+		@Deprecated
+		private static Set<Message> getMessages(String title)
+				throws NoSuchProviderException, MessagingException {
+			Message[] msgs = getMessages();
+			ArrayList<Message> theMsgList = new ArrayList<Message>();
+			System.out.println("Delete.getMessages() - looking for " + title);
+			for (Message aMsg : msgs) {
+				if (aMsg.getSubject().equals(title)) {
+					theMsgList.add(checkNotNull(aMsg));
+					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
+				} else {
+					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
+				}
+			}
+			if (theMsgList.size() == 0) {
+				throw new RuntimeException();
+			}
+			return ImmutableSet.copyOf(theMsgList);
+		}
+
+		
+		@Deprecated
+		private static Message[] getMessages() throws NoSuchProviderException,
+				MessagingException {
+			Store theImapClient = connect();
+			Folder folder = theImapClient
+					.getFolder("3 - Urg - time sensitive - this week");
+			folder.open(Folder.READ_WRITE);
+
+			Message[] msgs = folder.getMessages();
+
+			FetchProfile fp = new FetchProfile();
+			fp.add(FetchProfile.Item.ENVELOPE);
+			fp.add("X-mailer");
+			folder.fetch(msgs, fp);
+			return msgs;
+		}
+		
+		
+
+		private static CalendarRequest<Event> createPostponeTask(
+				String daysToPostponeString, String title, Message msg)
+				throws GeneralSecurityException, IOException,
+				MessagingException {
+			CalendarRequest<Event> calendarAction;
+			try {
+				calendarAction = createUpdateTask(getCalendarName(msg),
+						getCalendarId(getCalendarName(msg)),
+						getEventID(msg), daysToPostponeString);
+			} catch (IsRecurringEventException e) {
+
+				calendarAction = createInsertTask(daysToPostponeString,
+						title);
+			}
+			return calendarAction;
 		}
 
 		private static CalendarRequest<Event> createInsertTask(
@@ -588,7 +671,7 @@ public class NotNow {
 			return msg;
 		}
 
-		private static void commit(Store theImapClient,final CalendarRequest<Event> update,
+		private static void commitPostpone(Store theImapClient,final CalendarRequest<Event> update,
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
 
