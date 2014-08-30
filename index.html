@@ -129,7 +129,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			 } else {
 				 quickPostponeAmount = quickPostponeAmounts[i];
 			 }
-			rows +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+i+"," +defaultPostponement+ ","+ incrementAll + ")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
+			rows +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+quickPostponeAmounts[i]+"," +defaultPostponement+ ","+ incrementAll + ")'> " +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
 		}
 		//table +="<td>&nbsp;&nbsp;<button class=defaultpostpone type=button onclick='postponeDefault("+k+")'> " +defaultPostponement + " days</button >"+"&nbsp;&nbsp;</td>";
 		rows +='</tr>';

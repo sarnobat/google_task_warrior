@@ -811,7 +811,7 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 			int daysToPostpone = Integer.parseInt(daysToPostponeString);
 			// Get event's current time
 
-			thisDoesNothing(calendarName);
+			//thisDoesNothing(calendarName);
 			return createUpdateTask(calendarId, eventID, daysToPostpone);
 		}
 
