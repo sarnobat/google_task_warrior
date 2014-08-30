@@ -516,6 +516,31 @@ public class NotNow {
 				+ "/tasks.json");
 		private static final Calendar _service = getCalendarService();
 
+		static void postponeTest(String itemNumber, String daysToPostponeString)
+				throws IOException, NoSuchProviderException, MessagingException,
+				GeneralSecurityException {
+			System.out.println("Will postpone event "+itemNumber+" by " + daysToPostponeString
+					+ " days.");
+			System.out.println("FYI - file contents at time of postpone are: " + FileUtils.readFileToString(mTasksFileLatest));
+			JSONObject eventJson = getEventJsonFromResponse(itemNumber, mTasksFileLatest);
+			String title = eventJson.getString("title");
+			System.out.println("Title:\n\t" + title);
+			Store theImapClient = connect();
+			_1:{
+				Set<Message> msgs = getMessages(theImapClient, title);
+				for (Message msg : msgs) {
+					System.out.println("Event ID\n\t" + getEventID(msg));
+					System.out.println("Calendar name\n\t"
+							+ getCalendarName(msg));
+					System.out.println("Calendar ID:\n\t"
+							+ getCalendarId(getCalendarName(msg)));
+				}
+			}
+			if (theImapClient.isConnected()) {
+				theImapClient.close();
+			}
+		}
+		
 		static void postpone(String itemNumber, String daysToPostponeString)
 				throws IOException, NoSuchProviderException, MessagingException,
 				GeneralSecurityException {
@@ -675,11 +700,13 @@ public class NotNow {
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
 
+System.out.println("commitPostpone() - begin" + messageIdToDelete);
 			// All persistent changes are done right at the end, so that any
 			// exceptions can get thrown first.
-			deleteEmailInSeparateThread(messageIdToDelete);
+			deleteEmail(messageIdToDelete, theImapClient);
 
 			executeCalendarRequest(update);
+System.out.println("commitPostpone() - end " + messageIdToDelete);
 		}
 
 		private static void executeCalendarRequest(
@@ -702,6 +729,21 @@ public class NotNow {
 			}.start();
 		}
 
+		private static void deleteEmail(
+				final String messageIdToDelete, Store theImapClient ) {
+				try {
+						
+						deleteEmail(theImapClient ,messageIdToDelete);
+					} catch (NoSuchProviderException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (MessagingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				
+		}
+		
 		private static void deleteEmailInSeparateThread(
 				final String messageIdToDelete) {
 			new Thread() {
@@ -784,15 +826,19 @@ public class NotNow {
 			com.google.api.services.calendar.model.Events s = events.list(
 					calendar.getId()).execute();
 		}
-
+		
 		private static CalendarListEntry getCalendar(String calendarName)
 				throws IOException, GeneralSecurityException {
+			if ("Sridhar Sarnobat".equals(calendarName)) {
+				calendarName = "ss401533@gmail.com";
+			}
 			com.google.api.services.calendar.model.CalendarList theCalendarList = _service
 					.calendarList().list().execute();
 			CalendarListEntry calendar = null;
 			System.out.println("Number of calendars (not needed):\n\t"
 					+ theCalendarList.getItems().size());
 			for (CalendarListEntry aCalendar : theCalendarList.getItems()) {
+				
 				if (calendarName.equals(aCalendar.getSummary())) {
 					calendar = aCalendar;
 				}
@@ -1070,7 +1116,6 @@ public class NotNow {
 
 
 	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException, MessagingException, IOException {
-		
 		new Thread() {
 			public void run() {
 				try {
