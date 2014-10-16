@@ -16,7 +16,7 @@
 
 var readline = require('readline');
 
-var google = require('../lib/googleapis.js');
+var google = require('googleapis');
 var OAuth2Client = google.auth.OAuth2;
 var plus = google.plus('v1');
 
