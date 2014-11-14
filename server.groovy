@@ -119,8 +119,8 @@ public class NotNow {
 				e.printStackTrace();
 				System.out.println(e);
 			}
-			System.out.println("2");
-			System.out.println("3");
+//			System.out.println("2");
+//			System.out.println("3");
 			JSONObject json = new JSONObject();
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
 					.entity(json.toString()).type("application/json")
@@ -140,14 +140,16 @@ public class NotNow {
 			JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 			String title = eventJson.getString("title");
 			System.out.println("Title:\t" + title);
-			Set<Message> msgs = getMessages(title);
+			Store theImapClient = connect();
+			Set<Message> msgs = getMessages(title, theImapClient);
 			for (Message msg : msgs) {
 				if (msg == null) {
 					throw new RuntimeException("msg is null");
 				}
 				String messageIdToDelete = getMessageID(msg);
-				commit(itemToDelete, messageIdToDelete);
+				commit(itemToDelete, messageIdToDelete, theImapClient);
 			}
+			theImapClient.close();
 		}
 
 		private static JSONObject getEventJson(String itemToDelete,
@@ -167,9 +169,9 @@ public class NotNow {
 			return eventJson;
 		}
 
-		private static Message getMessage(String title)
+		private static Message getMessage(String title, Store theImapClient)
 				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages();
+			Message[] msgs = getMessages(theImapClient);
 			Message msg = null;
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
@@ -182,9 +184,9 @@ public class NotNow {
 			}
 			return msg;
 		}
-		private static Set<Message> getMessages(String title)
+		private static Set<Message> getMessages(String title, Store theImapClient)
 				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages();
+			Message[] msgs = getMessages(theImapClient);
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
 			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
@@ -201,12 +203,12 @@ public class NotNow {
 			return ImmutableSet.copyOf(theMsgList);
 		}
 
-		@Deprecated
-		private static Message[] getMessages() throws NoSuchProviderException,
-				MessagingException {
-			Store theImapClient = connect();
-			return getMessages(theImapClient);
-		}
+//		@Deprecated
+//		private static Message[] getMessages() throws NoSuchProviderException,
+//				MessagingException {
+//			Store theImapClient = connect();
+//			return getMessages(theImapClient);
+//		}
 
 		private static Message[] getMessages(Store theImapClient)
 				throws MessagingException {
@@ -255,16 +257,16 @@ public class NotNow {
 		}
 
 		private static void commit(String itemToDelete,
-				final String messageIdToDelete) throws NoSuchProviderException,
+				final String messageIdToDelete, final Store theImapClient) throws NoSuchProviderException,
 				MessagingException, IOException {
 
 			// All persistent changes are done right at the end, so that any
 			// exceptions can get thrown first.
-			new Thread() {
-				@Override
-				public void run() {
+//			new Thread() {
+//				@Override
+//				public void run() {
 					try {
-						deleteEmail(messageIdToDelete);
+						deleteEmail(messageIdToDelete, theImapClient);
 					} catch (NoSuchProviderException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -272,15 +274,15 @@ public class NotNow {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}
-			}.start();
+//				}
+//			}.start();
 
 		}
 
-		private static void deleteEmail(String messageIdToDelete)
+		private static void deleteEmail(String messageIdToDelete, Store theImapClient)
 				throws NoSuchProviderException, MessagingException {
 			Message[] messages;
-			messages = getMessages();
+			messages = getMessages(theImapClient);
 			for (Message aMessage : messages) {
 				String aMessageID = getMessageID(aMessage);
 				if (aMessageID.equals(messageIdToDelete)) {
@@ -571,7 +573,7 @@ public class NotNow {
 
 		private static Set<Message> getMessages(Store theImapClient, String title)
 				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages();
+			Message[] msgs = getMessages(theImapClient);
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
 			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
@@ -589,46 +591,27 @@ public class NotNow {
 		}
 
 		
-		@Deprecated
-		private static Set<Message> getMessages(String title)
-				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages();
-			ArrayList<Message> theMsgList = new ArrayList<Message>();
-			System.out.println("Delete.getMessages() - looking for " + title);
-			for (Message aMsg : msgs) {
-				if (aMsg.getSubject().equals(title)) {
-					theMsgList.add(checkNotNull(aMsg));
-					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
-				} else {
-					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
-				}
-			}
-			if (theMsgList.size() == 0) {
-				throw new RuntimeException();
-			}
-			return ImmutableSet.copyOf(theMsgList);
-		}
+//		@Deprecated
+//		private static Set<Message> getMessages(String title)
+//				throws NoSuchProviderException, MessagingException {
+//			Message[] msgs = getMessages();
+//			ArrayList<Message> theMsgList = new ArrayList<Message>();
+//			System.out.println("Delete.getMessages() - looking for " + title);
+//			for (Message aMsg : msgs) {
+//				if (aMsg.getSubject().equals(title)) {
+//					theMsgList.add(checkNotNull(aMsg));
+//					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
+//				} else {
+//					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
+//				}
+//			}
+//			if (theMsgList.size() == 0) {
+//				throw new RuntimeException();
+//			}
+//			return ImmutableSet.copyOf(theMsgList);
+//		}
 
 		
-		@Deprecated
-		private static Message[] getMessages() throws NoSuchProviderException,
-				MessagingException {
-			Store theImapClient = connect();
-			Folder folder = theImapClient
-					.getFolder("3 - Urg - time sensitive - this week");
-			folder.open(Folder.READ_WRITE);
-
-			Message[] msgs = folder.getMessages();
-
-			FetchProfile fp = new FetchProfile();
-			fp.add(FetchProfile.Item.ENVELOPE);
-			fp.add("X-mailer");
-			folder.fetch(msgs, fp);
-			return msgs;
-		}
-		
-		
-
 		private static CalendarRequest<Event> createPostponeTask(
 				String daysToPostponeString, String title, Message msg)
 				throws GeneralSecurityException, IOException,

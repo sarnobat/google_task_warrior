@@ -85,7 +85,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			return;
 		}
 		var title = (v.title.split(/@/)[0]);
-		var title2 = title.replace("Reminder: ","");
+		var title2 = title.replace("Reminder: ","").replace("Notification: ", "");
 		if (v.title.match(/.*Repeating.*/)) {
 			title2 = "[Repeating] " + title2;
 		}
