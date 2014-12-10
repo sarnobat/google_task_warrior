@@ -72,9 +72,8 @@ public class NotNow {
 		@Produces("application/json")
 		public Response listItems(@QueryParam("rootId") Integer iRootId) throws Exception {
 			try {
-				JSONObject json2 = ListDisplaySynchronous.getErrandsJson();
 				JSONObject json = new JSONObject();
-				json.put("tasks", json2);
+				json.put("tasks", ListDisplaySynchronous.getErrandsJsonFromEmail());
 				FileUtils.writeStringToFile(file, json.toString(2));
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(json.toString()).type("application/json")
@@ -342,21 +341,16 @@ public class NotNow {
 
 		@Deprecated static void getErrands() throws NoSuchProviderException,
 				MessagingException, IOException {
-			JSONObject json2 = getErrandsJson();
 			JSONObject json = new JSONObject();
-			json.put("tasks",json2);
-			
+			json.put("tasks",getErrandsJsonFromEmail());
 			FileUtils.writeStringToFile(file, json.toString(2));
 		}
 
-		static JSONObject getErrandsJson()
+		static JSONObject getErrandsJsonFromEmail()
 				throws NoSuchProviderException, MessagingException, IOException {
-			Message[] msgs = getMessages();
 			System.out.println("Messages obtained");
-
-			int postponeCount = getPostponeCount();
-			JSONObject json = createJsonListOfEvents(msgs);
-			json.put("daysToPostpone", postponeCount);
+			JSONObject json = createJsonListOfEvents(getMessages());
+			json.put("daysToPostpone", getPostponeCount());
 			return json;
 		}
 
