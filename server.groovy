@@ -130,6 +130,25 @@ public class NotNow {
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
 					.entity(json.toString()).type("application/json").build();
 		}
+		
+		@GET
+		@Path("postponeToNextFree")
+		@Produces("application/json")
+		public Response postponeToNextFree(@QueryParam("itemNumber") Integer iItemNumber)
+				throws IOException, NoSuchProviderException,
+				MessagingException, GeneralSecurityException {
+			System.out.println("1");
+			try {
+				GetCalendarEvents.postponeEventToNextFreeDate(iItemNumber.toString());
+			} catch (Exception e) {
+				System.out.println("!");
+				e.printStackTrace();
+				System.out.println(e);
+			}
+			JSONObject json = new JSONObject();
+			return Response.ok().header("Access-Control-Allow-Origin", "*")
+					.entity(json.toString()).type("application/json").build();
+		}
 	}
 
 	private static class Delete {
@@ -986,7 +1005,7 @@ public class NotNow {
 			return checkNotNull(client);
 		}
 
-		public static List<Long> getEventDates() {
+		private static List<Long> getEventDates() {
 			List<Long> oEventDates = new TreeList();
 			for (Long eventTimeUntruncated : getEventTimes()) {
 				java.util.Calendar c = java.util.Calendar.getInstance();
@@ -1000,7 +1019,7 @@ public class NotNow {
 			return oEventDates;
 		}
 
-		public static List<Long> getEventTimes() {
+		private static List<Long> getEventTimes() {
 			List<Long> oEventTimes = new TreeList();
 			try {
 				for (Event event : getEventsList()) {
@@ -1020,7 +1039,7 @@ public class NotNow {
 			return oEventTimes;
 		}
 
-		public static void getEvents() {
+		private static void getEvents() {
 			try {
 				for (Event event : getEventsList()) {
 					if (event.getStart() != null) {
@@ -1069,7 +1088,7 @@ public class NotNow {
 			return null;
 		}
 
-		public static long findNextFreeDate() {
+		private  static long findNextFreeDate() {
 			List<Long> freeDates = GetCalendarEvents.getEventDates();
 			long currentDate = -1;
 			_1:{
@@ -1088,7 +1107,7 @@ public class NotNow {
 			return nextFreeDate;
 		}
 
-		public void postponeEventToNextFreeDate(String itemNumber) {
+		public static void postponeEventToNextFreeDate(String itemNumber) {
 			int daysToNextFreeDate = getDaysToNextFreeDate();
 			try {
 				Postpone.postpone(itemNumber,
