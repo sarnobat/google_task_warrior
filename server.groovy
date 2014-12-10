@@ -1,6 +1,7 @@
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -901,8 +902,6 @@ public class NotNow {
 	}
 
 	private static class GetCalendarEvents {
-		
-
 			private static final String MESSAGE_ID = "Message-ID";
 
 			private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
@@ -914,40 +913,44 @@ public class NotNow {
 			 * Boilerplate
 			 ************************************************************************/
 
-			private static Calendar getCalendarService()
-					throws GeneralSecurityException, IOException {
+			private static Calendar getCalendarService() {
 				System.out.println("Authenticating...");
 
-				HttpTransport httpTransport = GoogleNetHttpTransport
-						.newTrustedTransport();
-				Calendar client = new Calendar.Builder(
-						httpTransport,
-						JacksonFactory.getDefaultInstance(),
-						new AuthorizationCodeInstalledApp(
-								new GoogleAuthorizationCodeFlow.Builder(
-										httpTransport,
-										JacksonFactory.getDefaultInstance(),
-										GoogleClientSecrets.load(
-												JacksonFactory.getDefaultInstance(),
-												// Only works if you launch the app from the same dir as the json file for some stupid reason
-												new FileReader("/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
-										ImmutableSet.of(CalendarScopes.CALENDAR,
-												CalendarScopes.CALENDAR_READONLY))
-										.setDataStoreFactory(
-												new FileDataStoreFactory(
-														new java.io.File(
-																System.getProperty("user.home"),
-																".store/calendar_sample")))
-										.build(), new LocalServerReceiver())
-								.authorize("user")).setApplicationName(
-						"gcal-task-warrior").build();
+				Calendar client = null;
+				try {
+					HttpTransport httpTransport = GoogleNetHttpTransport
+							.newTrustedTransport();
+					client = new Calendar.Builder(
+							httpTransport,
+							JacksonFactory.getDefaultInstance(),
+							new AuthorizationCodeInstalledApp(
+									new GoogleAuthorizationCodeFlow.Builder(
+											httpTransport,
+											JacksonFactory.getDefaultInstance(),
+											GoogleClientSecrets.load(
+													JacksonFactory.getDefaultInstance(),
+													// Only works if you launch the app from the same dir as the json file for some stupid reason
+													new FileReader("/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
+											ImmutableSet.of(CalendarScopes.CALENDAR,
+													CalendarScopes.CALENDAR_READONLY))
+											.setDataStoreFactory(
+													new FileDataStoreFactory(
+															new java.io.File(
+																	System.getProperty("user.home"),
+																	".store/calendar_sample")))
+											.build(), new LocalServerReceiver())
+									.authorize("user")).setApplicationName(
+							"gcal-task-warrior").build();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (GeneralSecurityException e) {
+					e.printStackTrace();
+				}
 				return client;
-
 			}
 
 			public static void getEvents() {
-				// TODO Auto-generated method stub
-				
+				System.out.println("Events obtained");				
 			}
 
 	}
