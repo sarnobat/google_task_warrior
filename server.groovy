@@ -1067,11 +1067,24 @@ public class NotNow {
 			return null;
 		}
 
+		public static long findNextFreeDate() {
+			List<Long> freeDates = GetCalendarEvents.getEventDates();
+			long currentDate;
+			{
+				java.util.Date now = java.util.Calendar.getInstance().getTime();
+				java.util.Date today = DateUtils.truncate(now, java.util.Calendar.DAY_OF_MONTH);
+				System.out.println("today: " + today.toString());
+			}
+			// TODO
+			return 0;
+		}
+
 	}
 
 	public static void main(String[] args) throws URISyntaxException,
 			NoSuchProviderException, MessagingException, IOException {
-		GetCalendarEvents.getEventDates();
+//		GetCalendarEvents.getEventDates();
+		GetCalendarEvents.findNextFreeDate();
 		System.exit(0);
 		new Thread() {
 			public void run() {
