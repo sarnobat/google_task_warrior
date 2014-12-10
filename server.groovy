@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -58,6 +59,7 @@ import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.sun.net.httpserver.HttpServer;
@@ -946,17 +948,61 @@ public class NotNow {
 				} catch (GeneralSecurityException e) {
 					e.printStackTrace();
 				}
-				return client;
+				return checkNotNull(client);
 			}
 
 			public static void getEvents() {
-				System.out.println("Events obtained");				
+				try {
+
+				Events allEventsMap;
+
+				allEventsMap = _service.events()
+						.list(getCalendarId("ss401533@gmail.com")).execute();
+				System.out.println("Size: " + allEventsMap.size());
+				for (Event event : allEventsMap.getItems()) {
+//					Object event = allEventsMap.get(eventID);
+					System.out.println(event.getSummary());
+				}
+//					com.google.api.services.calendar.model.Calendar calendar = _service.calendars().get(getCalendarId("ss401533@gmail.com")).execute();
+//					Set<Entry<String,Object>> events = calendar.entrySet();
+//					for (Entry<String, Object> entry :events) {
+//						System.out.println(entry.getKey());
+//						System.out.println(entry.getValue());
+//						System.out.println(entry.getValue().getClass().getName());
+//					}
+					System.out.println("Events obtained");				
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
+			
+			private static String getCalendarId(String calendarName) {
+
+				final String string = "/home/sarnobat/.gcal_task_warrior";
+				final File file = new File(string + "/calendars.json");
+				String s;
+				try {
+					s = FileUtils.readFileToString(file, "UTF-8");
+					JSONObject j = new JSONObject(s);
+					System.out.println("Calendar count: " + j.length());
+					if ("Sridhar Sarnobat".equals(calendarName)) {
+						calendarName = "ss401533@gmail.com";
+					}
+					JSONObject jsonObject = (JSONObject) j.get(calendarName);
+					String id = jsonObject.getString("calendar_id");
+					return id;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return null;
+			}
+
 
 	}
 
 	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException, MessagingException, IOException {
 		GetCalendarEvents.getEvents();
+		System.exit(0);
 		new Thread() {
 			public void run() {
 				try {
