@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.collections.list.TreeList;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.json.JSONObject;
@@ -69,14 +72,16 @@ public class NotNow {
 	public static class HelloWorldResource { // Must be public
 		private static final String string = "/home/sarnobat/.gcal_task_warrior";
 		private static final File file = new File(string + "/tasks.json");
-		
+
 		@GET
 		@Path("items")
 		@Produces("application/json")
-		public Response listItems(@QueryParam("rootId") Integer iRootId) throws Exception {
+		public Response listItems(@QueryParam("rootId") Integer iRootId)
+				throws Exception {
 			try {
 				JSONObject json = new JSONObject();
-				json.put("tasks", ListDisplaySynchronous.getErrandsJsonFromEmail());
+				json.put("tasks",
+						ListDisplaySynchronous.getErrandsJsonFromEmail());
 				FileUtils.writeStringToFile(file, json.toString(2));
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(json.toString()).type("application/json")
@@ -86,12 +91,13 @@ public class NotNow {
 				throw e;
 			}
 		}
-		
+
 		@GET
 		@Path("delete")
 		@Produces("application/json")
-		public Response delete(@QueryParam("itemNumber") Integer iItemNumber) throws Exception {
-			
+		public Response delete(@QueryParam("itemNumber") Integer iItemNumber)
+				throws Exception {
+
 			try {
 				JSONObject json = new JSONObject();
 				Delete.delete(iItemNumber.toString());
@@ -107,10 +113,14 @@ public class NotNow {
 		@GET
 		@Path("postpone")
 		@Produces("application/json")
-		public Response postpone(@QueryParam("itemNumber") Integer iItemNumber, @QueryParam("daysToPostpone") Integer iDaysToPostpone) throws IOException, NoSuchProviderException, MessagingException, GeneralSecurityException {
+		public Response postpone(@QueryParam("itemNumber") Integer iItemNumber,
+				@QueryParam("daysToPostpone") Integer iDaysToPostpone)
+				throws IOException, NoSuchProviderException,
+				MessagingException, GeneralSecurityException {
 			System.out.println("1");
-			try { 
-				Postpone.postpone(iItemNumber.toString(), iDaysToPostpone.toString());
+			try {
+				Postpone.postpone(iItemNumber.toString(),
+						iDaysToPostpone.toString());
 			} catch (Exception e) {
 				System.out.println("!");
 				e.printStackTrace();
@@ -118,11 +128,10 @@ public class NotNow {
 			}
 			JSONObject json = new JSONObject();
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
-					.entity(json.toString()).type("application/json")
-					.build();
+					.entity(json.toString()).type("application/json").build();
 		}
 	}
-	
+
 	private static class Delete {
 
 		private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
@@ -164,17 +173,20 @@ public class NotNow {
 			return eventJson;
 		}
 
-		private static Set<Message> getMessages(String title, Store theImapClient)
-				throws NoSuchProviderException, MessagingException {
+		private static Set<Message> getMessages(String title,
+				Store theImapClient) throws NoSuchProviderException,
+				MessagingException {
 			Message[] msgs = getMessages(theImapClient);
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
 			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
 					theMsgList.add(checkNotNull(aMsg));
-					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
+					System.out.println("Delete.getMessages() - matched: "
+							+ aMsg.getSubject());
 				} else {
-					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
+					System.out.println("Delete.getMessages() - No match: "
+							+ aMsg.getSubject());
 				}
 			}
 			if (theMsgList.size() == 0) {
@@ -243,8 +255,9 @@ public class NotNow {
 			}
 		}
 
-		private static void deleteEmail(String messageIdToDelete, Store theImapClient)
-				throws NoSuchProviderException, MessagingException {
+		private static void deleteEmail(String messageIdToDelete,
+				Store theImapClient) throws NoSuchProviderException,
+				MessagingException {
 			Message[] messages;
 			messages = getMessages(theImapClient);
 			for (Message aMessage : messages) {
@@ -262,7 +275,6 @@ public class NotNow {
 	private static class ListDisplaySynchronous {
 		static final String string = "/home/sarnobat/.gcal_task_warrior";
 		static final File file = new File(string + "/tasks.json");
-
 
 		static void writeCalendarsToFileInSeparateThread() {
 			new Thread() {
@@ -290,8 +302,9 @@ public class NotNow {
 			}
 		}
 
-		private static JSONObject getCalendars() throws GeneralSecurityException,
-				IOException, UnsupportedEncodingException {
+		private static JSONObject getCalendars()
+				throws GeneralSecurityException, IOException,
+				UnsupportedEncodingException {
 			Calendar client = getCalendarService();
 
 			System.out.println("Getting calendars...");
@@ -324,10 +337,13 @@ public class NotNow {
 							new GoogleAuthorizationCodeFlow.Builder(
 									httpTransport,
 									JacksonFactory.getDefaultInstance(),
-									GoogleClientSecrets.load(
-											JacksonFactory.getDefaultInstance(),
-											// Only works if you launch the app from the same dir as the json file for some stupid reason
-											new FileReader("/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
+									GoogleClientSecrets.load(JacksonFactory
+											.getDefaultInstance(),
+									// Only works if you launch the app
+									// from the same dir as the json
+									// file for some stupid reason
+											new FileReader(
+													"/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
 									ImmutableSet.of(CalendarScopes.CALENDAR,
 											CalendarScopes.CALENDAR_READONLY))
 									.setDataStoreFactory(
@@ -342,10 +358,11 @@ public class NotNow {
 
 		}
 
-		@Deprecated static void getErrands() throws NoSuchProviderException,
+		@Deprecated
+		static void getErrands() throws NoSuchProviderException,
 				MessagingException, IOException {
 			JSONObject json = new JSONObject();
-			json.put("tasks",getErrandsJsonFromEmail());
+			json.put("tasks", getErrandsJsonFromEmail());
 			FileUtils.writeStringToFile(file, json.toString(2));
 		}
 
@@ -452,12 +469,12 @@ public class NotNow {
 			}
 			props.setProperty("mail.store.protocol", "imap");
 			Store theImapClient = Session.getInstance(props).getStore("imaps");
-			theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com",
-					password);
+			theImapClient.connect("imap.gmail.com",
+					"sarnobat.hotmail@gmail.com", password);
 			return theImapClient;
 		}
 	}
-	
+
 	private static class Postpone {
 
 		private static final String MESSAGE_ID = "Message-ID";
@@ -466,18 +483,20 @@ public class NotNow {
 		private static final File mTasksFileLatest = new File(DIR_PATH
 				+ "/tasks.json");
 		private static final Calendar _service = getCalendarService();
-		
+
 		static void postpone(String itemNumber, String daysToPostponeString)
-				throws IOException, NoSuchProviderException, MessagingException,
-				GeneralSecurityException {
-			System.out.println("Will postpone event "+itemNumber+" by " + daysToPostponeString
-					+ " days.");
-			System.out.println("FYI - file contents at time of postpone are: " + FileUtils.readFileToString(mTasksFileLatest));
-			JSONObject eventJson = getEventJsonFromResponse(itemNumber, mTasksFileLatest);
+				throws IOException, NoSuchProviderException,
+				MessagingException, GeneralSecurityException {
+			System.out.println("Will postpone event " + itemNumber + " by "
+					+ daysToPostponeString + " days.");
+			System.out.println("FYI - file contents at time of postpone are: "
+					+ FileUtils.readFileToString(mTasksFileLatest));
+			JSONObject eventJson = getEventJsonFromResponse(itemNumber,
+					mTasksFileLatest);
 			String title = eventJson.getString("title");
 			System.out.println("Title:\n\t" + title);
 			Store theImapClient = connect();
-			_1:{
+			_1: {
 				Set<Message> msgs = getMessages(theImapClient, title);
 				for (Message msg : msgs) {
 					System.out.println("Event ID\n\t" + getEventID(msg));
@@ -487,7 +506,8 @@ public class NotNow {
 							+ getCalendarId(getCalendarName(msg)));
 					CalendarRequest<Event> calendarAction = createPostponeTask(
 							daysToPostponeString, title, msg);
-					commitPostpone(theImapClient, calendarAction, getMessageID(msg));
+					commitPostpone(theImapClient, calendarAction,
+							getMessageID(msg));
 				}
 			}
 			if (theImapClient.isConnected()) {
@@ -495,17 +515,20 @@ public class NotNow {
 			}
 		}
 
-		private static Set<Message> getMessages(Store theImapClient, String title)
-				throws NoSuchProviderException, MessagingException {
+		private static Set<Message> getMessages(Store theImapClient,
+				String title) throws NoSuchProviderException,
+				MessagingException {
 			Message[] msgs = getMessages(theImapClient);
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
 			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
 					theMsgList.add(checkNotNull(aMsg));
-					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
+					System.out.println("Delete.getMessages() - matched: "
+							+ aMsg.getSubject());
 				} else {
-					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
+					System.out.println("Delete.getMessages() - No match: "
+							+ aMsg.getSubject());
 				}
 			}
 			if (theMsgList.size() == 0) {
@@ -513,7 +536,7 @@ public class NotNow {
 			}
 			return ImmutableSet.copyOf(theMsgList);
 		}
-		
+
 		private static CalendarRequest<Event> createPostponeTask(
 				String daysToPostponeString, String title, Message msg)
 				throws GeneralSecurityException, IOException,
@@ -521,12 +544,11 @@ public class NotNow {
 			CalendarRequest<Event> calendarAction;
 			try {
 				calendarAction = createUpdateTask(getCalendarName(msg),
-						getCalendarId(getCalendarName(msg)),
-						getEventID(msg), daysToPostponeString);
+						getCalendarId(getCalendarName(msg)), getEventID(msg),
+						daysToPostponeString);
 			} catch (IsRecurringEventException e) {
 
-				calendarAction = createInsertTask(daysToPostponeString,
-						title);
+				calendarAction = createInsertTask(daysToPostponeString, title);
 			}
 			return calendarAction;
 		}
@@ -565,7 +587,8 @@ public class NotNow {
 			return null;
 		}
 
-		private static void commitPostpone(Store theImapClient,final CalendarRequest<Event> update,
+		private static void commitPostpone(Store theImapClient,
+				final CalendarRequest<Event> update,
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
 			System.out.println("commitPostpone() - begin" + messageIdToDelete);
@@ -606,16 +629,18 @@ public class NotNow {
 				e.printStackTrace();
 			}
 		}
-		
+
 		// Still useful
 		private static JSONObject getEventJsonFromResponse(String itemToDelete,
 				File tasksFileLastDisplayed) throws IOException {
 			String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
-			JSONObject eventJson = getEventJsonFromResponseHelper(itemToDelete, errands);
+			JSONObject eventJson = getEventJsonFromResponseHelper(itemToDelete,
+					errands);
 			return eventJson;
 		}
 
-		private static JSONObject getEventJsonFromResponseHelper(String itemToDelete, String errands) {
+		private static JSONObject getEventJsonFromResponseHelper(
+				String itemToDelete, String errands) {
 			JSONObject jsonObject = new JSONObject(errands);
 			JSONObject allErrandsJson = jsonObject.getJSONObject("tasks");
 			String allErrands = allErrandsJson.toString();
@@ -623,7 +648,7 @@ public class NotNow {
 		}
 
 		/** Inline this into {@link NotNow#getEventJsonFromResponseHelper} */
-		@Deprecated 
+		@Deprecated
 		private static JSONObject getEventJsonFromFile(String itemToDelete,
 				String allErrands) {
 			JSONObject eventJson = (new JSONObject(allErrands))
@@ -631,15 +656,17 @@ public class NotNow {
 			return eventJson;
 		}
 
-		private static void deleteEmail(Store theImapClient ,String messageIdToDelete)
-				throws NoSuchProviderException, MessagingException {
+		private static void deleteEmail(Store theImapClient,
+				String messageIdToDelete) throws NoSuchProviderException,
+				MessagingException {
 			Message[] messages;
 			messages = getMessages(theImapClient);
 			for (Message aMessage : messages) {
 				String aMessageID = getMessageID(aMessage);
 				if (aMessageID.equals(messageIdToDelete)) {
 					aMessage.setFlag(Flags.Flag.DELETED, true);
-					System.out.println("Deleted email:\t" + aMessage.getSubject());
+					System.out.println("Deleted email:\t"
+							+ aMessage.getSubject());
 					break;
 				}
 			}
@@ -655,7 +682,7 @@ public class NotNow {
 			// Get event's current time
 			return createUpdateTask(calendarId, eventID, daysToPostpone);
 		}
-		
+
 		private static String getEventID(Message aMessage) throws IOException,
 				MessagingException {
 			String eventID = "<none>";
@@ -675,9 +702,9 @@ public class NotNow {
 			return eventID;
 		}
 
-		private static Update createUpdateTask(String calendarId, String eventID,
-				int daysToPostpone) throws IOException, GeneralSecurityException,
-				IsRecurringEventException {
+		private static Update createUpdateTask(String calendarId,
+				String eventID, int daysToPostpone) throws IOException,
+				GeneralSecurityException, IsRecurringEventException {
 			Event originalEvent = getEvent(eventID, calendarId);
 			if (originalEvent.getRecurrence() != null) {
 				throw new RuntimeException(
@@ -689,8 +716,8 @@ public class NotNow {
 					.execute();
 			postponeEvent(daysToPostpone, event);
 			System.out.println("Internal Event ID:\t" + internalEventId);
-			Update update = _service.events().update(calendarId, internalEventId,
-					event);
+			Update update = _service.events().update(calendarId,
+					internalEventId, event);
 			return update;
 		}
 
@@ -754,7 +781,8 @@ public class NotNow {
 				while (true) {
 					allEventsList = _service.events().list("primary")
 							.setPageToken(aNextPageToken).execute();
-					java.util.List<Event> allEventItems = allEventsList.getItems();
+					java.util.List<Event> allEventItems = allEventsList
+							.getItems();
 					for (Event anEvent : allEventItems) {
 						String anHtmlLink = anEvent.getHtmlLink();
 						if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
@@ -803,12 +831,14 @@ public class NotNow {
 										httpTransport,
 										JacksonFactory.getDefaultInstance(),
 										GoogleClientSecrets.load(
-												JacksonFactory.getDefaultInstance(),
+												JacksonFactory
+														.getDefaultInstance(),
 												new InputStreamReader(
 														Postpone.class
 																.getResourceAsStream("/client_secrets.json"))),
-										ImmutableSet.of(CalendarScopes.CALENDAR,
-												CalendarScopes.CALENDAR_READONLY))
+										ImmutableSet
+												.of(CalendarScopes.CALENDAR,
+														CalendarScopes.CALENDAR_READONLY))
 										.setDataStoreFactory(
 												new FileDataStoreFactory(
 														new java.io.File(
@@ -827,8 +857,8 @@ public class NotNow {
 
 		}
 
-		private static Message[] getMessages(Store theImapClient) throws NoSuchProviderException,
-				MessagingException {
+		private static Message[] getMessages(Store theImapClient)
+				throws NoSuchProviderException, MessagingException {
 			Folder folder = openUrgentFolder(theImapClient);
 			Message[] msgs = folder.getMessages();
 			FetchProfile fp = new FetchProfile();
@@ -856,8 +886,8 @@ public class NotNow {
 			}
 			props.setProperty("mail.store.protocol", "imap");
 			Store theImapClient = Session.getInstance(props).getStore("imaps");
-			theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com",
-					password);
+			theImapClient.connect("imap.gmail.com",
+					"sarnobat.hotmail@gmail.com", password);
 			return theImapClient;
 		}
 
@@ -876,8 +906,8 @@ public class NotNow {
 			return messageID;
 		}
 
-		private static String getCalendarName(Message aMessage) throws IOException,
-				MessagingException {
+		private static String getCalendarName(Message aMessage)
+				throws IOException, MessagingException {
 			String calendarName;
 			_2: {
 				MimeMultipart s = (MimeMultipart) aMessage.getContent();
@@ -904,104 +934,144 @@ public class NotNow {
 	}
 
 	private static class GetCalendarEvents {
-			private static final String MESSAGE_ID = "Message-ID";
+		private static final String MESSAGE_ID = "Message-ID";
 
-			private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
-			private static final File mTasksFileLatest = new File(DIR_PATH
-					+ "/tasks.json");
-			private static final Calendar _service = getCalendarService();
-			
-			/************************************************************************
-			 * Boilerplate
-			 ************************************************************************/
+		private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
+		private static final File mTasksFileLatest = new File(DIR_PATH
+				+ "/tasks.json");
+		private static final Calendar _service = getCalendarService();
 
-			private static Calendar getCalendarService() {
-				System.out.println("Authenticating...");
+		/************************************************************************
+		 * Boilerplate
+		 ************************************************************************/
 
-				Calendar client = null;
-				try {
-					HttpTransport httpTransport = GoogleNetHttpTransport
-							.newTrustedTransport();
-					client = new Calendar.Builder(
-							httpTransport,
-							JacksonFactory.getDefaultInstance(),
-							new AuthorizationCodeInstalledApp(
-									new GoogleAuthorizationCodeFlow.Builder(
-											httpTransport,
-											JacksonFactory.getDefaultInstance(),
-											GoogleClientSecrets.load(
-													JacksonFactory.getDefaultInstance(),
-													// Only works if you launch the app from the same dir as the json file for some stupid reason
-													new FileReader("/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
-											ImmutableSet.of(CalendarScopes.CALENDAR,
-													CalendarScopes.CALENDAR_READONLY))
-											.setDataStoreFactory(
-													new FileDataStoreFactory(
-															new java.io.File(
-																	System.getProperty("user.home"),
-																	".store/calendar_sample")))
-											.build(), new LocalServerReceiver())
-									.authorize("user")).setApplicationName(
-							"gcal-task-warrior").build();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (GeneralSecurityException e) {
-					e.printStackTrace();
-				}
-				return checkNotNull(client);
+		private static Calendar getCalendarService() {
+			System.out.println("Authenticating...");
+
+			Calendar client = null;
+			try {
+				HttpTransport httpTransport = GoogleNetHttpTransport
+						.newTrustedTransport();
+				client = new Calendar.Builder(
+						httpTransport,
+						JacksonFactory.getDefaultInstance(),
+						new AuthorizationCodeInstalledApp(
+								new GoogleAuthorizationCodeFlow.Builder(
+										httpTransport,
+										JacksonFactory.getDefaultInstance(),
+										GoogleClientSecrets.load(JacksonFactory
+												.getDefaultInstance(),
+										// Only works if you launch the
+										// app from the same dir as the
+										// json file for some stupid
+										// reason
+												new FileReader(
+														"/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
+										ImmutableSet
+												.of(CalendarScopes.CALENDAR,
+														CalendarScopes.CALENDAR_READONLY))
+										.setDataStoreFactory(
+												new FileDataStoreFactory(
+														new java.io.File(
+																System.getProperty("user.home"),
+																".store/calendar_sample")))
+										.build(), new LocalServerReceiver())
+								.authorize("user")).setApplicationName(
+						"gcal-task-warrior").build();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (GeneralSecurityException e) {
+				e.printStackTrace();
 			}
+			return checkNotNull(client);
+		}
 
-			public static void getEvents() {
-				try {
-
-				Events allEventsMap;
-
-				allEventsMap = _service.events()
-						.list(getCalendarId("ss401533@gmail.com")).execute();
-				System.out.println("Size: " + allEventsMap.size());
-				for (Event event : allEventsMap.getItems()) {
-//					Object event = allEventsMap.get(eventID);
-					System.out.println(event.getSummary());
-				}
-//					com.google.api.services.calendar.model.Calendar calendar = _service.calendars().get(getCalendarId("ss401533@gmail.com")).execute();
-//					Set<Entry<String,Object>> events = calendar.entrySet();
-//					for (Entry<String, Object> entry :events) {
-//						System.out.println(entry.getKey());
-//						System.out.println(entry.getValue());
-//						System.out.println(entry.getValue().getClass().getName());
-//					}
-					System.out.println("Events obtained");				
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		public static List<Long> getEventDates() {
+			List<Long> oEventDates = new TreeList();
+			for (Long eventTimeUntruncated : getEventTimes()) {
+				java.util.Calendar c = java.util.Calendar.getInstance();
+				c.setTimeInMillis(eventTimeUntruncated);
+				java.util.Calendar cTruncated = DateUtils.truncate(c,
+						java.util.Calendar.DAY_OF_MONTH);
+				System.out.println(cTruncated.getTime().toString());
 			}
-			
-			private static String getCalendarId(String calendarName) {
+			return oEventDates;
+		}
 
-				final String string = "/home/sarnobat/.gcal_task_warrior";
-				final File file = new File(string + "/calendars.json");
-				String s;
-				try {
-					s = FileUtils.readFileToString(file, "UTF-8");
-					JSONObject j = new JSONObject(s);
-					System.out.println("Calendar count: " + j.length());
-					if ("Sridhar Sarnobat".equals(calendarName)) {
-						calendarName = "ss401533@gmail.com";
+		public static List<Long> getEventTimes() {
+			List<Long> oEventTimes = new TreeList();
+			try {
+				for (Event event : getEventsList()) {
+					if (event.getStart() != null) {
+						DateTime dateTime = event.getStart().getDateTime();
+						long eventTimeMillis = dateTime.getValue();
+						System.out.println(dateTime.toString() + "\t"
+								+ event.getSummary());
+						oEventTimes.add(eventTimeMillis);
 					}
-					JSONObject jsonObject = (JSONObject) j.get(calendarName);
-					String id = jsonObject.getString("calendar_id");
-					return id;
-				} catch (IOException e) {
-					e.printStackTrace();
 				}
-				return null;
+				System.out.println("Events obtained");
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
+			Collections.sort(oEventTimes);
+			return oEventTimes;
+		}
 
+		public static void getEvents() {
+			try {
+				for (Event event : getEventsList()) {
+					if (event.getStart() != null) {
+						DateTime dateTime = event.getStart().getDateTime();
+						long eventTimeMillis = dateTime.getValue();
+						System.out.println(dateTime.toString() + "\t"
+								+ event.getSummary());
+					}
+				}
+				System.out.println("Events obtained");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private static List<Event> getEventsList() throws IOException {
+			Events allEventsMap;
+
+			allEventsMap = _service.events()
+					.list(getCalendarId("ss401533@gmail.com"))
+					.setTimeMin(new DateTime(System.currentTimeMillis()))
+					.execute();
+			System.out.println("Size: " + allEventsMap.size());
+			List<Event> items = allEventsMap.getItems();
+			return items;
+		}
+
+		private static String getCalendarId(String calendarName) {
+
+			final String string = "/home/sarnobat/.gcal_task_warrior";
+			final File file = new File(string + "/calendars.json");
+			String s;
+			try {
+				s = FileUtils.readFileToString(file, "UTF-8");
+				JSONObject j = new JSONObject(s);
+				System.out.println("Calendar count: " + j.length());
+				if ("Sridhar Sarnobat".equals(calendarName)) {
+					calendarName = "ss401533@gmail.com";
+				}
+				JSONObject jsonObject = (JSONObject) j.get(calendarName);
+				String id = jsonObject.getString("calendar_id");
+				return id;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 
 	}
 
-	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException, MessagingException, IOException {
-		GetCalendarEvents.getEvents();
+	public static void main(String[] args) throws URISyntaxException,
+			NoSuchProviderException, MessagingException, IOException {
+		GetCalendarEvents.getEventDates();
 		System.exit(0);
 		new Thread() {
 			public void run() {
