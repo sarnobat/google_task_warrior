@@ -102,7 +102,6 @@ public class NotNow {
 			}
 		}
 
-		
 		@GET
 		@Path("postpone")
 		@Produces("application/json")
