@@ -900,8 +900,60 @@ public class NotNow {
 		}
 	}
 
+	private static class GetCalendarEvents {
+		
+
+			private static final String MESSAGE_ID = "Message-ID";
+
+			private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
+			private static final File mTasksFileLatest = new File(DIR_PATH
+					+ "/tasks.json");
+			private static final Calendar _service = getCalendarService();
+			
+			/************************************************************************
+			 * Boilerplate
+			 ************************************************************************/
+
+			private static Calendar getCalendarService()
+					throws GeneralSecurityException, IOException {
+				System.out.println("Authenticating...");
+
+				HttpTransport httpTransport = GoogleNetHttpTransport
+						.newTrustedTransport();
+				Calendar client = new Calendar.Builder(
+						httpTransport,
+						JacksonFactory.getDefaultInstance(),
+						new AuthorizationCodeInstalledApp(
+								new GoogleAuthorizationCodeFlow.Builder(
+										httpTransport,
+										JacksonFactory.getDefaultInstance(),
+										GoogleClientSecrets.load(
+												JacksonFactory.getDefaultInstance(),
+												// Only works if you launch the app from the same dir as the json file for some stupid reason
+												new FileReader("/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
+										ImmutableSet.of(CalendarScopes.CALENDAR,
+												CalendarScopes.CALENDAR_READONLY))
+										.setDataStoreFactory(
+												new FileDataStoreFactory(
+														new java.io.File(
+																System.getProperty("user.home"),
+																".store/calendar_sample")))
+										.build(), new LocalServerReceiver())
+								.authorize("user")).setApplicationName(
+						"gcal-task-warrior").build();
+				return client;
+
+			}
+
+			public static void getEvents() {
+				// TODO Auto-generated method stub
+				
+			}
+
+	}
 
 	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException, MessagingException, IOException {
+		GetCalendarEvents.getEvents();
 		new Thread() {
 			public void run() {
 				try {
