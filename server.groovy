@@ -993,7 +993,9 @@ public class NotNow {
 				c.setTimeInMillis(eventTimeUntruncated);
 				java.util.Calendar cTruncated = DateUtils.truncate(c,
 						java.util.Calendar.DAY_OF_MONTH);
-				System.out.println(cTruncated.getTime().toString());
+				System.out.println(cTruncated.getTime().toString() + " ("
+						+ cTruncated.getTimeInMillis() + ")");
+				oEventDates.add(cTruncated.getTimeInMillis());
 			}
 			return oEventDates;
 		}
@@ -1005,8 +1007,8 @@ public class NotNow {
 					if (event.getStart() != null) {
 						DateTime dateTime = event.getStart().getDateTime();
 						long eventTimeMillis = dateTime.getValue();
-						System.out.println(dateTime.toString() + "\t"
-								+ event.getSummary());
+//						System.out.println(dateTime.toString() + "\t"
+//								+ event.getSummary());
 						oEventTimes.add(eventTimeMillis);
 					}
 				}
@@ -1024,8 +1026,8 @@ public class NotNow {
 					if (event.getStart() != null) {
 						DateTime dateTime = event.getStart().getDateTime();
 						long eventTimeMillis = dateTime.getValue();
-						System.out.println(dateTime.toString() + "\t"
-								+ event.getSummary());
+//						System.out.println(dateTime.toString() + "\t"
+//								+ event.getSummary());
 					}
 				}
 				System.out.println("Events obtained");
@@ -1069,22 +1071,52 @@ public class NotNow {
 
 		public static long findNextFreeDate() {
 			List<Long> freeDates = GetCalendarEvents.getEventDates();
-			long currentDate;
-			{
+			long currentDate = -1;
+			_1:{
 				java.util.Date now = java.util.Calendar.getInstance().getTime();
 				java.util.Date today = DateUtils.truncate(now, java.util.Calendar.DAY_OF_MONTH);
-				System.out.println("today: " + today.toString());
+				java.util.Date tomorrow = DateUtils.addDays(today, 1);
+//				System.out.println("today: " + today.toString());
+				System.out.println("Tomorrow: " + tomorrow.toString());
+				System.out.println("Tomorrow: " + tomorrow.getTime());
+				currentDate = tomorrow.getTime();
 			}
-			// TODO
-			return 0;
+			long nextFreeDate = currentDate;
+			while (freeDates.contains(nextFreeDate)) {
+				nextFreeDate += 86400000;
+			}
+			return nextFreeDate;
+		}
+
+		public void postponeEventToNextFreeDate(String itemNumber) {
+			int daysToNextFreeDate = getDaysToNextFreeDate();
+			try {
+				Postpone.postpone(itemNumber,
+						Integer.toString(daysToNextFreeDate));
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (MessagingException e) {
+				e.printStackTrace();
+			} catch (GeneralSecurityException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private static int getDaysToNextFreeDate() {
+			long todayMidnight = DateUtils.truncate(
+					java.util.Calendar.getInstance().getTime(),
+					java.util.Calendar.DAY_OF_MONTH).getTime();
+			long nextFreeDate = findNextFreeDate();
+			long daysToNextFreeDate = (nextFreeDate - todayMidnight)/86400000;
+			return (int)daysToNextFreeDate;
 		}
 
 	}
 
 	public static void main(String[] args) throws URISyntaxException,
 			NoSuchProviderException, MessagingException, IOException {
-//		GetCalendarEvents.getEventDates();
-		GetCalendarEvents.findNextFreeDate();
+		int nextFreeDateMidnight = GetCalendarEvents.getDaysToNextFreeDate();
+		System.out.println("Days to next free date: " + nextFreeDateMidnight);
 		System.exit(0);
 		new Thread() {
 			public void run() {
