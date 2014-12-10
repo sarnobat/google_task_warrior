@@ -19,8 +19,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -61,7 +59,6 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.sun.net.httpserver.HttpServer;
 
@@ -169,21 +166,6 @@ public class NotNow {
 			return eventJson;
 		}
 
-		private static Message getMessage(String title, Store theImapClient)
-				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages(theImapClient);
-			Message msg = null;
-			for (Message aMsg : msgs) {
-				if (aMsg.getSubject().equals(title)) {
-					msg = aMsg;
-					break;
-				}
-			}
-			if (msg == null) {
-				throw new RuntimeException();
-			}
-			return msg;
-		}
 		private static Set<Message> getMessages(String title, Store theImapClient)
 				throws NoSuchProviderException, MessagingException {
 			Message[] msgs = getMessages(theImapClient);
@@ -202,13 +184,6 @@ public class NotNow {
 			}
 			return ImmutableSet.copyOf(theMsgList);
 		}
-
-//		@Deprecated
-//		private static Message[] getMessages() throws NoSuchProviderException,
-//				MessagingException {
-//			Store theImapClient = connect();
-//			return getMessages(theImapClient);
-//		}
 
 		private static Message[] getMessages(Store theImapClient)
 				throws MessagingException {
@@ -517,31 +492,6 @@ public class NotNow {
 		private static final File mTasksFileLatest = new File(DIR_PATH
 				+ "/tasks.json");
 		private static final Calendar _service = getCalendarService();
-
-		static void postponeTest(String itemNumber, String daysToPostponeString)
-				throws IOException, NoSuchProviderException, MessagingException,
-				GeneralSecurityException {
-			System.out.println("Will postpone event "+itemNumber+" by " + daysToPostponeString
-					+ " days.");
-			System.out.println("FYI - file contents at time of postpone are: " + FileUtils.readFileToString(mTasksFileLatest));
-			JSONObject eventJson = getEventJsonFromResponse(itemNumber, mTasksFileLatest);
-			String title = eventJson.getString("title");
-			System.out.println("Title:\n\t" + title);
-			Store theImapClient = connect();
-			_1:{
-				Set<Message> msgs = getMessages(theImapClient, title);
-				for (Message msg : msgs) {
-					System.out.println("Event ID\n\t" + getEventID(msg));
-					System.out.println("Calendar name\n\t"
-							+ getCalendarName(msg));
-					System.out.println("Calendar ID:\n\t"
-							+ getCalendarId(getCalendarName(msg)));
-				}
-			}
-			if (theImapClient.isConnected()) {
-				theImapClient.close();
-			}
-		}
 		
 		static void postpone(String itemNumber, String daysToPostponeString)
 				throws IOException, NoSuchProviderException, MessagingException,
@@ -663,22 +613,6 @@ public class NotNow {
 			return null;
 		}
 
-		private static Message getMessage(Store theImapClient ,String title)
-				throws NoSuchProviderException, MessagingException {
-			Message[] msgs = getMessages(theImapClient );
-			Message msg = null;
-			for (Message aMsg : msgs) {
-				if (aMsg.getSubject().equals(title)) {
-					msg = aMsg;
-					break;
-				}
-			}
-			if (msg == null) {
-				throw new RuntimeException("Can't find email with subject title: " + title);
-			}
-			return msg;
-		}
-
 		private static void commitPostpone(Store theImapClient,final CalendarRequest<Event> update,
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
@@ -727,26 +661,6 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 				
 		}
 		
-		private static void deleteEmailInSeparateThread(
-				final String messageIdToDelete) {
-			new Thread() {
-				@Override
-				public void run() {
-					try {
-						Store theImapClient = connect();
-						deleteEmail(theImapClient ,messageIdToDelete);
-						theImapClient.close();
-					} catch (NoSuchProviderException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (MessagingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}.start();
-		}
-
 		// Still useful
 		private static JSONObject getEventJsonFromResponse(String itemToDelete,
 				File tasksFileLastDisplayed) throws IOException {
@@ -797,41 +711,7 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 			//thisDoesNothing(calendarName);
 			return createUpdateTask(calendarId, eventID, daysToPostpone);
 		}
-
-		// TODO: delete this?
-		@Deprecated
-		private static void thisDoesNothing(String calendarName)
-				throws GeneralSecurityException, IOException {
-
-			Events events = _service.events();
-			CalendarListEntry calendar = getCalendar(calendarName);
-
-			com.google.api.services.calendar.model.Events s = events.list(
-					calendar.getId()).execute();
-		}
 		
-		private static CalendarListEntry getCalendar(String calendarName)
-				throws IOException, GeneralSecurityException {
-			if ("Sridhar Sarnobat".equals(calendarName)) {
-				calendarName = "ss401533@gmail.com";
-			}
-			com.google.api.services.calendar.model.CalendarList theCalendarList = _service
-					.calendarList().list().execute();
-			CalendarListEntry calendar = null;
-			System.out.println("Number of calendars (not needed):\n\t"
-					+ theCalendarList.getItems().size());
-			for (CalendarListEntry aCalendar : theCalendarList.getItems()) {
-				
-				if (calendarName.equals(aCalendar.getSummary())) {
-					calendar = aCalendar;
-				}
-			}
-			if (calendar == null) {
-				throw new RuntimeException("couldn't find calendar");
-			}
-			return calendar;
-		}
-
 		private static String getEventID(Message aMessage) throws IOException,
 				MessagingException {
 			String eventID = "<none>";
@@ -877,17 +757,14 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 		}
 
 		private static void postponeEvent(int daysToPostpone, Event event) {
-			_1: {
-				EventDateTime eventStartTime = event.getStart();
-				System.out.println("Event original start time:\t" + eventStartTime);
-				long newStartTime = getNewStartTime(daysToPostpone);
-				eventStartTime.setDateTime(new DateTime(newStartTime));
+			EventDateTime eventStartTime = event.getStart();
+			System.out.println("Event original start time:\t" + eventStartTime);
+			long newStartTime = getNewStartTime(daysToPostpone);
+			eventStartTime.setDateTime(new DateTime(newStartTime));
 
-				EventDateTime endTime = event.getEnd();
-				long endTimeMillis = getNewEndDateTime(daysToPostpone);
-				endTime.setDateTime(new DateTime(endTimeMillis));
-
-			}
+			EventDateTime endTime = event.getEnd();
+			long endTimeMillis = getNewEndDateTime(daysToPostpone);
+			endTime.setDateTime(new DateTime(endTimeMillis));
 		}
 
 		private static Event getEvent(String iEventId, String iCalendarId)
@@ -1104,13 +981,10 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 				try {
 					ListDisplaySynchronous.getErrands();
 				} catch (NoSuchProviderException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (MessagingException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
