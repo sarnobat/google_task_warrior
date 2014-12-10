@@ -51,7 +51,6 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.Calendar.Events;
 import com.google.api.services.calendar.Calendar.Events.Update;
 import com.google.api.services.calendar.CalendarRequest;
 import com.google.api.services.calendar.CalendarScopes;
@@ -116,8 +115,6 @@ public class NotNow {
 				e.printStackTrace();
 				System.out.println(e);
 			}
-//			System.out.println("2");
-//			System.out.println("3");
 			JSONObject json = new JSONObject();
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
 					.entity(json.toString()).type("application/json")
@@ -232,26 +229,17 @@ public class NotNow {
 		}
 
 		private static void commit(String itemToDelete,
-				final String messageIdToDelete, final Store theImapClient) throws NoSuchProviderException,
-				MessagingException, IOException {
-
+				final String messageIdToDelete, final Store theImapClient)
+				throws NoSuchProviderException, MessagingException, IOException {
 			// All persistent changes are done right at the end, so that any
 			// exceptions can get thrown first.
-//			new Thread() {
-//				@Override
-//				public void run() {
-					try {
-						deleteEmail(messageIdToDelete, theImapClient);
-					} catch (NoSuchProviderException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (MessagingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-//				}
-//			}.start();
-
+			try {
+				deleteEmail(messageIdToDelete, theImapClient);
+			} catch (NoSuchProviderException e) {
+				e.printStackTrace();
+			} catch (MessagingException e) {
+				e.printStackTrace();
+			}
 		}
 
 		private static void deleteEmail(String messageIdToDelete, Store theImapClient)
@@ -267,7 +255,6 @@ public class NotNow {
 					break;
 				}
 			}
-
 		}
 	}
 
@@ -313,8 +300,6 @@ public class NotNow {
 			JSONObject json = new JSONObject();
 
 			for (CalendarListEntry aCalendar : allCalendars) {
-				// System.out.println(aCalendar.getSummary() + "::"
-				// + URLDecoder.decode(aCalendar.getId(), "UTF-8"));
 				json.put(aCalendar.getSummary(),
 						new JSONObject().put("calendar_id", aCalendar.getId()));
 			}
@@ -383,9 +368,7 @@ public class NotNow {
 				daysToPostponeSaved = DAYS_TO_POSTPONE;
 			} else {
 				String errands = FileUtils.readFileToString(file);
-
 				JSONObject allErrandsJsonOriginal = new JSONObject(errands);
-
 				if (allErrandsJsonOriginal.has("daysToPostpone")) {
 					daysToPostponeSaved = allErrandsJsonOriginal
 							.getInt("daysToPostpone");
@@ -398,12 +381,9 @@ public class NotNow {
 
 		private static JSONObject createJsonListOfEvents(Message[] msgs)
 				throws MessagingException {
-
-			// JSONObject jsonToBeSaved = new JSONObject();
 			Map<String, JSONObject> messages = new TreeMap<String, JSONObject>();
 			// int i = 0;
 			for (Message aMessage : msgs) {
-				// i++;
 				JSONObject messageMetadata = Preconditions
 						.checkNotNull(getMessageMetadata(aMessage));
 				String[] aTitle = messageMetadata.getString("title").split("@");
@@ -416,7 +396,6 @@ public class NotNow {
 
 				messages.put(StringUtils.capitalize(printedTitle),
 						messageMetadata);
-				// jsonToBeSaved.put(Integer.toString(i), messageMetadata);
 			}
 			int i = 0;
 			JSONObject jsonToBeSaved = new JSONObject();
@@ -439,7 +418,6 @@ public class NotNow {
 				title = aMessage.getSubject();
 
 				errandJsonObject.put("title", title);
-				// getBodyMetadataSlow(aMessage);
 				return errandJsonObject;
 			} catch (MessagingException e) {
 				e.printStackTrace();
@@ -539,28 +517,6 @@ public class NotNow {
 			}
 			return ImmutableSet.copyOf(theMsgList);
 		}
-
-		
-//		@Deprecated
-//		private static Set<Message> getMessages(String title)
-//				throws NoSuchProviderException, MessagingException {
-//			Message[] msgs = getMessages();
-//			ArrayList<Message> theMsgList = new ArrayList<Message>();
-//			System.out.println("Delete.getMessages() - looking for " + title);
-//			for (Message aMsg : msgs) {
-//				if (aMsg.getSubject().equals(title)) {
-//					theMsgList.add(checkNotNull(aMsg));
-//					System.out.println("Delete.getMessages() - matched: " + aMsg.getSubject());
-//				} else {
-//					System.out.println("Delete.getMessages() - No match: " + aMsg.getSubject());
-//				}
-//			}
-//			if (theMsgList.size() == 0) {
-//				throw new RuntimeException();
-//			}
-//			return ImmutableSet.copyOf(theMsgList);
-//		}
-
 		
 		private static CalendarRequest<Event> createPostponeTask(
 				String daysToPostponeString, String title, Message msg)
@@ -616,14 +572,13 @@ public class NotNow {
 		private static void commitPostpone(Store theImapClient,final CalendarRequest<Event> update,
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
-
-System.out.println("commitPostpone() - begin" + messageIdToDelete);
+			System.out.println("commitPostpone() - begin" + messageIdToDelete);
 			// All persistent changes are done right at the end, so that any
 			// exceptions can get thrown first.
 			deleteEmail(messageIdToDelete, theImapClient);
 
 			executeCalendarRequest(update);
-System.out.println("commitPostpone() - end " + messageIdToDelete);
+			System.out.println("commitPostpone() - end " + messageIdToDelete);
 		}
 
 		private static void executeCalendarRequest(
@@ -639,26 +594,21 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 						System.out.println(updatedEvent.getHtmlLink());
 						System.out.println("Calendar updated");
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
 			}.start();
 		}
 
-		private static void deleteEmail(
-				final String messageIdToDelete, Store theImapClient ) {
-				try {
-						
-						deleteEmail(theImapClient ,messageIdToDelete);
-					} catch (NoSuchProviderException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (MessagingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				
+		private static void deleteEmail(final String messageIdToDelete,
+				Store theImapClient) {
+			try {
+				deleteEmail(theImapClient, messageIdToDelete);
+			} catch (NoSuchProviderException e) {
+				e.printStackTrace();
+			} catch (MessagingException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		// Still useful
@@ -707,8 +657,6 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 				IsRecurringEventException {
 			int daysToPostpone = Integer.parseInt(daysToPostponeString);
 			// Get event's current time
-
-			//thisDoesNothing(calendarName);
 			return createUpdateTask(calendarId, eventID, daysToPostpone);
 		}
 		
@@ -717,11 +665,9 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 			String eventID = "<none>";
 			MimeMultipart s = (MimeMultipart) aMessage.getContent();
 			String body = (String) s.getBodyPart(0).getContent();
-
 			if (body.trim().length() < 1) {
 				System.out.println("body is empty");
 			}
-
 			if (body.contains("eid")) {
 				Pattern pattern = Pattern.compile("eid=([^&" + '$' + "\\s]*)");
 				Matcher m = pattern.matcher(body);
@@ -730,7 +676,6 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 				}
 				eventID = m.group(1);
 			}
-
 			return eventID;
 		}
 
@@ -738,12 +683,10 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 				int daysToPostpone) throws IOException, GeneralSecurityException,
 				IsRecurringEventException {
 			Event originalEvent = getEvent(eventID, calendarId);
-
 			if (originalEvent.getRecurrence() != null) {
 				throw new RuntimeException(
 						"Use optional param 'singleEvents' to break recurring events into single ones");
 			}
-
 			// I don't know why the service uses a different ID
 			String internalEventId = originalEvent.getId();
 			Event event = _service.events().get(calendarId, internalEventId)
@@ -752,7 +695,6 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 			System.out.println("Internal Event ID:\t" + internalEventId);
 			Update update = _service.events().update(calendarId, internalEventId,
 					event);
-
 			return update;
 		}
 
@@ -781,11 +723,10 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 				while (true) {
 					allEventsList = _service.events().list(iCalendarId)
 							.setPageToken(aNextPageToken).execute();
-					java.util.List<Event> allEventItems = allEventsList.getItems();
+					java.util.List<Event> allEventItems = allEventsList
+							.getItems();
 					for (Event anEvent : allEventItems) {
 						String anHtmlLink = anEvent.getHtmlLink();
-						// System.out.println(anHtmlLink);
-						// System.out.println("\t"+anEvent.getSummary());
 						if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
 							theTargetEvent = anEvent;
 						}
@@ -803,9 +744,6 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 									+ " . Perhaps it is a repeated event? The event ID in the email is the latest one; the html link from the service is the first in the series. I can't get instances() to return all instances in the series because I think you need to pass the first event Id, not the latest. ");
 				}
 			}
-
-			//System.out.println("Event:\n\t" + theTargetEvent);
-
 			return theTargetEvent;
 		}
 
@@ -822,7 +760,6 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 							.setPageToken(aNextPageToken).execute();
 					java.util.List<Event> allEventItems = allEventsList.getItems();
 					for (Event anEvent : allEventItems) {
-						// System.out.println(anEvent.getSummary());
 						String anHtmlLink = anEvent.getHtmlLink();
 						if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
 							theTargetEvent = anEvent;
@@ -896,16 +833,12 @@ System.out.println("commitPostpone() - end " + messageIdToDelete);
 
 		private static Message[] getMessages(Store theImapClient) throws NoSuchProviderException,
 				MessagingException {
-//			Store theImapClient = connect();
 			Folder folder = openUrgentFolder(theImapClient);
-
 			Message[] msgs = folder.getMessages();
-
 			FetchProfile fp = new FetchProfile();
 			fp.add(FetchProfile.Item.ENVELOPE);
 			fp.add("X-mailer");
 			folder.fetch(msgs, fp);
-//			theImapClient.close();
 			return msgs;
 		}
 
