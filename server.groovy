@@ -1,7 +1,6 @@
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,11 +9,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -64,7 +63,9 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 import com.sun.net.httpserver.HttpServer;
 
 public class NotNow {
@@ -953,11 +954,7 @@ public class NotNow {
 	}
 
 	private static class GetCalendarEvents {
-		private static final String MESSAGE_ID = "Message-ID";
 
-		private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
-		private static final File mTasksFileLatest = new File(DIR_PATH
-				+ "/tasks.json");
 		private static final Calendar _service = getCalendarService();
 
 		/************************************************************************
@@ -985,7 +982,7 @@ public class NotNow {
 										// json file for some stupid
 										// reason
 												new FileReader(
-														"/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
+														System.getProperty("user.home")+ "/not_now/client_secrets.json")),
 										ImmutableSet
 												.of(CalendarScopes.CALENDAR,
 														CalendarScopes.CALENDAR_READONLY))
@@ -1008,59 +1005,62 @@ public class NotNow {
 		private static List<Long> getEventDates() {
 			List<Long> oEventDates = new TreeList();
 			for (Long eventTimeUntruncated : getEventTimes()) {
-				java.util.Calendar c = java.util.Calendar.getInstance();
-				c.setTimeInMillis(eventTimeUntruncated);
-				java.util.Calendar cTruncated = DateUtils.truncate(c,
-						java.util.Calendar.DAY_OF_MONTH);
-				System.out.println(cTruncated.getTime().toString() + " ("
-						+ cTruncated.getTimeInMillis() + ")");
+				java.util.Calendar cTruncated = truncate(eventTimeUntruncated);
+//				System.out.println(cTruncated.getTime().toString() + " ("
+//						+ cTruncated.getTimeInMillis() + ")");
 				oEventDates.add(cTruncated.getTimeInMillis());
 			}
 			return oEventDates;
 		}
 
-		private static List<Long> getEventTimes() {
-			List<Long> oEventTimes = new TreeList();
-			try {
-				for (Event event : getEventsList()) {
-					if (event.getStart() != null) {
-						DateTime dateTime = event.getStart().getDateTime();
-						long eventTimeMillis = dateTime.getValue();
-//						System.out.println(dateTime.toString() + "\t"
-//								+ event.getSummary());
-						oEventTimes.add(eventTimeMillis);
-					}
-				}
-				System.out.println("Events obtained");
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			Collections.sort(oEventTimes);
-			return oEventTimes;
+		private static java.util.Calendar truncate(Long eventTimeUntruncated) {
+			java.util.Calendar c = java.util.Calendar.getInstance();
+			c.setTimeInMillis(eventTimeUntruncated);
+			java.util.Calendar cTruncated = DateUtils.truncate(c,
+					java.util.Calendar.DAY_OF_MONTH);
+			return cTruncated;
 		}
 
-		private static void getEvents() {
+		private static List<Long> getEventTimes() {
+			Set<Long> orderedTimes = new TreeSet<Long>();
+			Multimap<Long,Event> m = ArrayListMultimap.create();
 			try {
 				for (Event event : getEventsList()) {
 					if (event.getStart() != null) {
 						DateTime dateTime = event.getStart().getDateTime();
 						long eventTimeMillis = dateTime.getValue();
-//						System.out.println(dateTime.toString() + "\t"
-//								+ event.getSummary());
+
+						m.put(eventTimeMillis, event);
+						orderedTimes.add(eventTimeMillis);
+					} else {
+						System.out.println("Excluded: " + event.getSummary());
 					}
 				}
 				System.out.println("Events obtained");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			for (long l : orderedTimes) {
+				Collection<Event> es = m.get(l);
+				for (Event event : es) {
+					System.out.println(truncate(l).getTime().toString() + "\t"
+							+ event.getSummary());
+				}
+			}
+//			List<Long> oEventTimes = new TreeList();
+//			oEventTimes.addAll(orderedTimes);
+			return new LinkedList(orderedTimes);
 		}
 
 		private static List<Event> getEventsList() throws IOException {
 			Events allEventsMap;
 
 			allEventsMap = _service.events()
-					.list(getCalendarId("ss401533@gmail.com"))
+					.list("primary")
+//					.list(getCalendarId("ss401533@gmail.com"))
 					.setTimeMin(new DateTime(System.currentTimeMillis()))
+					.setMaxResults(2500)
+//					.setOrderBy("startTime")
 					.execute();
 			System.out.println("Size: " + allEventsMap.size());
 			List<Event> items = allEventsMap.getItems();
@@ -1069,7 +1069,7 @@ public class NotNow {
 
 		private static String getCalendarId(String calendarName) {
 
-			final String string = "/home/sarnobat/.gcal_task_warrior";
+			final String string = System.getProperty("user.home") + "/.gcal_task_warrior";
 			final File file = new File(string + "/calendars.json");
 			String s;
 			try {
@@ -1126,7 +1126,11 @@ public class NotNow {
 					java.util.Calendar.getInstance().getTime(),
 					java.util.Calendar.DAY_OF_MONTH).getTime();
 			long nextFreeDate = findNextFreeDate();
+			java.util.Calendar nextFree = java.util.Calendar.getInstance();
+			nextFree.setTimeInMillis(nextFreeDate);
+			System.out.println("Next free date " + nextFree.getTime().toString());
 			long daysToNextFreeDate = (nextFreeDate - todayMidnight)/86400000;
+			System.out.println("Calendar ID: " + getCalendarId("ss401533@gmail.com"));
 			return (int)daysToNextFreeDate;
 		}
 
@@ -1134,9 +1138,9 @@ public class NotNow {
 
 	public static void main(String[] args) throws URISyntaxException,
 			NoSuchProviderException, MessagingException, IOException {
-		int nextFreeDateMidnight = GetCalendarEvents.getDaysToNextFreeDate();
-		System.out.println("Days to next free date: " + nextFreeDateMidnight);
-		System.exit(0);
+//		int nextFreeDateMidnight = GetCalendarEvents.getDaysToNextFreeDate();
+//		System.out.println("Days to next free date: " + nextFreeDateMidnight);
+//		System.exit(0);
 		new Thread() {
 			public void run() {
 				try {
