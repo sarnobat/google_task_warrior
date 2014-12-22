@@ -117,7 +117,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 				}
 			});
 		}
-		rows +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle + "</td>";
+		rows +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(1, 48) + "</td>";
 		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
                 rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'> 1 day</button>&nbsp;&nbsp;</td>";
@@ -245,7 +245,7 @@ function capitalize(str) {
 
 </script>
 </head>
-<body>
+<body style="background-color : #99CCFF">
 <div id="items">
 Loading...
 </div>
