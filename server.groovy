@@ -138,9 +138,10 @@ public class NotNow {
 		public Response postponeToNextFree(@QueryParam("itemNumber") Integer iItemNumber)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-			System.out.println("1");
+			System.out.println("postponeToNextFree() - begin");
 			try {
 				GetCalendarEvents.postponeEventToNextFreeDate(iItemNumber.toString());
+				System.out.println("postponeToNextFree() done");
 			} catch (Exception e) {
 				System.out.println("!");
 				e.printStackTrace();
@@ -363,7 +364,7 @@ public class NotNow {
 									// from the same dir as the json
 									// file for some stupid reason
 											new FileReader(
-													"/home/sarnobat/Desktop/new/github/not_now/client_secrets.json")),
+													"/home/sarnobat/github/not_now/client_secrets.json")),
 									ImmutableSet.of(CalendarScopes.CALENDAR,
 											CalendarScopes.CALENDAR_READONLY))
 									.setDataStoreFactory(
@@ -1108,6 +1109,7 @@ public class NotNow {
 		}
 
 		public static void postponeEventToNextFreeDate(String itemNumber) {
+			System.out.println("postponeEventToNextFreeDate() - begin");
 			int daysToNextFreeDate = getDaysToNextFreeDate();
 			try {
 				Postpone.postpone(itemNumber,
