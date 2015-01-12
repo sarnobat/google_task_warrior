@@ -213,7 +213,7 @@ public class NotNow {
 		private static JSONObject getEventJson(String itemToDelete,
 				String errands) {
 			JSONObject allErrandsJson = new JSONObject(errands);
-			System.out.println(allErrandsJson);
+			//System.out.println(allErrandsJson);
 			JSONObject eventJson = (JSONObject) allErrandsJson.getJSONObject(
 					"tasks").get(itemToDelete);
 			return eventJson;
@@ -1015,7 +1015,7 @@ public class NotNow {
 										// json file for some stupid
 										// reason
 												new FileReader(
-														System.getProperty("user.home")+ "/not_now/client_secrets.json")),
+														System.getProperty("user.home")+ "/github/not_now/client_secrets.json")),
 										ImmutableSet
 												.of(CalendarScopes.CALENDAR,
 														CalendarScopes.CALENDAR_READONLY))
