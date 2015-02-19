@@ -501,12 +501,12 @@ public class NotNow {
 //			System.out.println("Opening");
 			folder.open(Folder.READ_ONLY);
 
-			System.out.println("Getting Message list");
+			//System.out.println("Getting Message list");
 			Message[] msgs = folder.getMessages();
 
 			FetchProfile fp = new FetchProfile();
 			fp.add(FetchProfile.Item.ENVELOPE);
-			System.out.print("Fetching attributes...");
+			System.out.print("Fetching message attributes...");
 			folder.fetch(msgs, fp);
 			System.out.println("done");
 			theImapClient.close();
