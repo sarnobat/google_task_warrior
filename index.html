@@ -143,6 +143,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 function postpone(itemNumber, daysToPostpone) {
 	$.ajax( "http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone)
 	  .done(function() {
+    $("#event-" + itemNumber).remove();
 		  ++messagesDeleted;
 		  $("#status").html(messagesDeleted);
 		  delete tasks[itemNumber];
@@ -165,7 +166,8 @@ function postpone(itemNumber, daysToPostpone) {
 		++messagesDeleted;
     	$("#status").html(messagesDeleted);
     });*/
-    $("#event-" + itemNumber).remove();
+                $("#event-" + itemNumber).fadeOut(10000, function() {});
+    $("#event-" + itemNumber).css("background-color", "orange");
     
 }
 
@@ -173,6 +175,7 @@ function deleteEvent(itemNumber) {
     $.ajax("http://netgear.rohidekar.com:4456/not_now/delete?itemNumber=" + itemNumber)
 	  .done(function() {
 		console.log( "success" );
+    $("#event-" + itemNumber).remove();
 		  ++messagesDeleted;
 		  $("#status").html(messagesDeleted);
 	  })
@@ -184,8 +187,8 @@ function deleteEvent(itemNumber) {
 	  .always(function() {
 		console.log( "complete" );
 	  });
-
-    $("#event-" + itemNumber).remove();
+                $("#event-" + itemNumber).fadeOut(10000, function() {});
+    $("#event-" + itemNumber).css("background-color", "orange");
     
 }
 
@@ -194,8 +197,9 @@ function postponeToNextFree(itemNumber, base, defaultPostponement, incrementAll)
 $.ajax("http://netgear.rohidekar.com:4456/not_now/postponeToNextFree?itemNumber=" + itemNumber)
       .done(function() {
                 console.log( "success" );
-                  ++messagesDeleted;
-                  $("#status").html(messagesDeleted);
+	   	$("#event-" + itemNumber).remove();
+                ++messagesDeleted;
+                $("#status").html(messagesDeleted);
           })
           .fail(function() {
                 console.log( "error" );
@@ -204,7 +208,8 @@ $.ajax("http://netgear.rohidekar.com:4456/not_now/postponeToNextFree?itemNumber=
                 console.log( "complete" );
           });
 
-    $("#event-" + itemNumber).remove();
+                $("#event-" + itemNumber).fadeOut(10000, function() {});
+    $("#event-" + itemNumber).css("background-color", "orange");
 }
 
 function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
@@ -213,6 +218,14 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
     $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
       .done(function() {
 		console.log( "success" );
+		$("#event-" + itemNumber).remove();
+		//$(".defaultpostpone").text( defaultPostponement +  " days");
+		//updateButtons();
+
+		delete tasks[itemNumber];
+		var table = getTaskRows(tasks, incrementAll, defaultPostponement);
+		$("#taskRows").html(table);
+
 		  ++messagesDeleted;
 		  $("#status").html(messagesDeleted);
 	  })
@@ -223,15 +236,10 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 		console.log( "complete" );
 	  });
 
-    $("#event-" + itemNumber).remove();
+	$("#event-" + itemNumber).fadeOut(30000, function() {});
+    $("#event-" + itemNumber).css("background-color", "orange");
     defaultPostponement++;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
-	//$(".defaultpostpone").text( defaultPostponement +  " days");
-	//updateButtons();
-	
-	delete tasks[itemNumber];
-	var table = getTaskRows(tasks, incrementAll, defaultPostponement);
-	$("#taskRows").html(table);
 }
 
 function capitalize(str) {
