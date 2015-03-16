@@ -221,14 +221,15 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
     $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
       .done(function() {
 		console.log( "success" );
-		$("#event-" + itemNumber).css("background-color", "lightgreen");
+		
 		//$("#event-" + itemNumber).remove();
 		//$(".defaultpostpone").text( defaultPostponement +  " days");
 		//updateButtons();
 
+//		refreshTable(tasks, incrementAll, defaultPostponement);
+		$("#event-" + itemNumber).css("background-color", "lightgreen");
+		
 		delete tasks[itemNumber];
-		var table = getTaskRows(tasks, incrementAll, defaultPostponement);
-		$("#taskRows").html(table);
 
 		  ++messagesDeleted;
 		  $("#status").html(messagesDeleted);
@@ -244,6 +245,11 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
     $("#event-" + itemNumber).css("background-color", "orange");
     defaultPostponement++;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
+}
+
+function refreshTable(tasks, incrementAll, defaultPostponement) {
+		var table = getTaskRows(tasks, incrementAll, defaultPostponement);
+		$("#taskRows").html(table);
 }
 
 function capitalize(str) {
@@ -271,7 +277,7 @@ function capitalize(str) {
 Loading...
 </div>
 <br>
-<span id="status">0</span> successes, <span id="failures">0</span> failures
-
+<span id="status">0</span> successes, <span id="failures">0</span> failures<br>
+<span id="refresh_time"></span>seconds until refresh<br>
 </body>
 </html>

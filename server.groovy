@@ -1,7 +1,6 @@
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -90,6 +89,7 @@ public class NotNow {
 				}
 			}
 		}.start();
+		// Make sure ~/client_secrets.json exists
 		ListDisplaySynchronous.writeCalendarsToFileInSeparateThread();
 		try {
 			HttpServer server = JdkHttpServerFactory.createHttpServer(new URI(
@@ -143,6 +143,129 @@ public class NotNow {
 			}
 		}
 
+		/************************************************************************
+		 * Boilerplate
+		 ************************************************************************/
+
+//		private static Calendar getCalendarService()
+//				throws GeneralSecurityException, IOException {
+//			System.out.println("Authenticating...");
+//
+//			HttpTransport httpTransport = GoogleNetHttpTransport
+//					.newTrustedTransport();
+//			Calendar client = new Calendar.Builder(
+//					httpTransport,
+//					JacksonFactory.getDefaultInstance(),
+//					new AuthorizationCodeInstalledApp(
+//							new GoogleAuthorizationCodeFlow.Builder(
+//									httpTransport,
+//									JacksonFactory.getDefaultInstance(),
+//									GoogleClientSecrets.load(JacksonFactory
+//											.getDefaultInstance(),
+//									// Only works if you launch the app
+//									// from the same dir as the json
+//									// file for some stupid reason
+//											new FileReader(
+//													"/home/sarnobat/github/not_now/client_secrets.json")),
+//									ImmutableSet.of(CalendarScopes.CALENDAR,
+//											CalendarScopes.CALENDAR_READONLY))
+//									.setDataStoreFactory(
+//											new FileDataStoreFactory(
+//													new java.io.File(
+//															System.getProperty("user.home"),
+//															".store/calendar_sample")))
+//									.build(), new LocalServerReceiver())
+//							.authorize("user")).setApplicationName(
+//					"gcal-task-warrior").build();
+//			return client;
+//
+//		}
+		
+		private static Calendar getCalendarService() {
+			HttpTransport httpTransport;
+			try {
+				httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+				System.out.println("getCalendarService() - Getting client secrets...");
+				// ln -s ~/github/not_now/client_secrets.json $HOME/
+				InputStreamReader clientSecrets = new InputStreamReader(
+						Postpone.class
+								.getResourceAsStream("/client_secrets.json"));
+				System.out.println("getCalendarService() - Getting home dir...");
+				java.io.File homeDir = new java.io.File(
+						System.getProperty("user.home"),
+						".store/calendar_sample");
+				System.out.print("getCalendarService() - Authenticating...");
+				Calendar client = new Calendar.Builder(
+						httpTransport,
+						JacksonFactory.getDefaultInstance(),
+						new AuthorizationCodeInstalledApp(
+								new GoogleAuthorizationCodeFlow.Builder(
+										httpTransport,
+										JacksonFactory.getDefaultInstance(),
+										GoogleClientSecrets.load(
+												JacksonFactory
+														.getDefaultInstance(),
+												clientSecrets),
+										ImmutableSet
+												.of(CalendarScopes.CALENDAR,
+														CalendarScopes.CALENDAR_READONLY))
+										.setDataStoreFactory(
+												new FileDataStoreFactory(
+														homeDir))
+										.build(), new LocalServerReceiver())
+								.authorize("user")).setApplicationName(
+						"gcal-task-warrior").build();
+				System.out.println("getCalendarService() - success");
+				return client;
+			} catch (GeneralSecurityException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+
+		}
+//		private static Calendar getCalendarService() {
+//			System.out.println("Authenticating...");
+//
+//			Calendar client = null;
+//			try {
+//				HttpTransport httpTransport = GoogleNetHttpTransport
+//						.newTrustedTransport();
+//				client = new Calendar.Builder(
+//						httpTransport,
+//						JacksonFactory.getDefaultInstance(),
+//						new AuthorizationCodeInstalledApp(
+//								new GoogleAuthorizationCodeFlow.Builder(
+//										httpTransport,
+//										JacksonFactory.getDefaultInstance(),
+//										GoogleClientSecrets.load(JacksonFactory
+//												.getDefaultInstance(),
+//										// Only works if you launch the
+//										// app from the same dir as the
+//										// json file for some stupid
+//										// reason
+//												new FileReader(
+//														System.getProperty("user.home")+ "/github/not_now/client_secrets.json")),
+//										ImmutableSet
+//												.of(CalendarScopes.CALENDAR,
+//														CalendarScopes.CALENDAR_READONLY))
+//										.setDataStoreFactory(
+//												new FileDataStoreFactory(
+//														new java.io.File(
+//																System.getProperty("user.home"),
+//																".store/calendar_sample")))
+//										.build(), new LocalServerReceiver())
+//								.authorize("user")).setApplicationName(
+//						"gcal-task-warrior").build();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			} catch (GeneralSecurityException e) {
+//				e.printStackTrace();
+//			}
+//			return checkNotNull(client);
+//		}
+
 		@GET
 		@Path("postpone")
 		@Produces("application/json")
@@ -150,7 +273,7 @@ public class NotNow {
 				@QueryParam("daysToPostpone") Integer iDaysToPostpone)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-			System.out.println("Postponing item " + iItemNumber + " by " + iDaysToPostpone + " days.");
+			System.out.println("postpone() - item " + iItemNumber + " by " + iDaysToPostpone + " days.");
 			try {
 				Postpone.postpone(iItemNumber.toString(),
 						iDaysToPostpone.toString());
@@ -359,7 +482,7 @@ public class NotNow {
 		private static JSONObject getCalendars()
 				throws GeneralSecurityException, IOException,
 				UnsupportedEncodingException {
-			Calendar client = getCalendarService();
+			Calendar client = HelloWorldResource.getCalendarService();
 
 			System.out.println("Getting calendars...");
 			@SuppressWarnings("unchecked")
@@ -378,39 +501,7 @@ public class NotNow {
 		 * Boilerplate
 		 ************************************************************************/
 
-		private static Calendar getCalendarService()
-				throws GeneralSecurityException, IOException {
-			System.out.println("Authenticating...");
-
-			HttpTransport httpTransport = GoogleNetHttpTransport
-					.newTrustedTransport();
-			Calendar client = new Calendar.Builder(
-					httpTransport,
-					JacksonFactory.getDefaultInstance(),
-					new AuthorizationCodeInstalledApp(
-							new GoogleAuthorizationCodeFlow.Builder(
-									httpTransport,
-									JacksonFactory.getDefaultInstance(),
-									GoogleClientSecrets.load(JacksonFactory
-											.getDefaultInstance(),
-									// Only works if you launch the app
-									// from the same dir as the json
-									// file for some stupid reason
-											new FileReader(
-													"/home/sarnobat/github/not_now/client_secrets.json")),
-									ImmutableSet.of(CalendarScopes.CALENDAR,
-											CalendarScopes.CALENDAR_READONLY))
-									.setDataStoreFactory(
-											new FileDataStoreFactory(
-													new java.io.File(
-															System.getProperty("user.home"),
-															".store/calendar_sample")))
-									.build(), new LocalServerReceiver())
-							.authorize("user")).setApplicationName(
-					"gcal-task-warrior").build();
-			return client;
-
-		}
+		
 
 		@Deprecated
 		static void getErrands() throws NoSuchProviderException,
@@ -506,7 +597,7 @@ public class NotNow {
 
 			FetchProfile fp = new FetchProfile();
 			fp.add(FetchProfile.Item.ENVELOPE);
-			System.out.print("Fetching message attributes...");
+			System.out.print("getMessages() - Fetching message attributes...");
 			folder.fetch(msgs, fp);
 			System.out.println("done");
 			theImapClient.close();
@@ -536,12 +627,12 @@ public class NotNow {
 		private static final String DIR_PATH = "/home/sarnobat/.gcal_task_warrior";
 		private static final File mTasksFileLatest = new File(DIR_PATH
 				+ "/tasks.json");
-		private static final Calendar _service = getCalendarService();
+		private static final Calendar _service = HelloWorldResource.getCalendarService();
 
 		static void postpone(String itemNumber, String daysToPostponeString)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-			System.out.println("Will postpone event " + itemNumber + " by "
+			System.out.println("Postpone.postpone() - Will postpone event " + itemNumber + " by "
 					+ daysToPostponeString + " days.");
 //			System.out.println("FYI - file contents at time of postpone are: "
 //					+ FileUtils.readFileToString(mTasksFileLatest));
@@ -869,46 +960,7 @@ public class NotNow {
 			return newStartDateTimeMillis;
 		}
 
-		private static Calendar getCalendarService() {
-			System.out.println("Authenticating...");
-
-			HttpTransport httpTransport;
-			try {
-				httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-
-				Calendar client = new Calendar.Builder(
-						httpTransport,
-						JacksonFactory.getDefaultInstance(),
-						new AuthorizationCodeInstalledApp(
-								new GoogleAuthorizationCodeFlow.Builder(
-										httpTransport,
-										JacksonFactory.getDefaultInstance(),
-										GoogleClientSecrets.load(
-												JacksonFactory
-														.getDefaultInstance(),
-												new InputStreamReader(
-														Postpone.class
-																.getResourceAsStream("/client_secrets.json"))),
-										ImmutableSet
-												.of(CalendarScopes.CALENDAR,
-														CalendarScopes.CALENDAR_READONLY))
-										.setDataStoreFactory(
-												new FileDataStoreFactory(
-														new java.io.File(
-																System.getProperty("user.home"),
-																".store/calendar_sample")))
-										.build(), new LocalServerReceiver())
-								.authorize("user")).setApplicationName(
-						"gcal-task-warrior").build();
-				return client;
-			} catch (GeneralSecurityException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return null;
-
-		}
+		
 
 		private static Message[] getMessages(Store theImapClient)
 				throws NoSuchProviderException, MessagingException {
@@ -988,61 +1040,19 @@ public class NotNow {
 
 	private static class GetCalendarEvents {
 
-		private static final Calendar _service = getCalendarService();
+		private static final Calendar _service = HelloWorldResource.getCalendarService();
 
-		/************************************************************************
-		 * Boilerplate
-		 ************************************************************************/
-
-		private static Calendar getCalendarService() {
-			System.out.println("Authenticating...");
-
-			Calendar client = null;
-			try {
-				HttpTransport httpTransport = GoogleNetHttpTransport
-						.newTrustedTransport();
-				client = new Calendar.Builder(
-						httpTransport,
-						JacksonFactory.getDefaultInstance(),
-						new AuthorizationCodeInstalledApp(
-								new GoogleAuthorizationCodeFlow.Builder(
-										httpTransport,
-										JacksonFactory.getDefaultInstance(),
-										GoogleClientSecrets.load(JacksonFactory
-												.getDefaultInstance(),
-										// Only works if you launch the
-										// app from the same dir as the
-										// json file for some stupid
-										// reason
-												new FileReader(
-														System.getProperty("user.home")+ "/github/not_now/client_secrets.json")),
-										ImmutableSet
-												.of(CalendarScopes.CALENDAR,
-														CalendarScopes.CALENDAR_READONLY))
-										.setDataStoreFactory(
-												new FileDataStoreFactory(
-														new java.io.File(
-																System.getProperty("user.home"),
-																".store/calendar_sample")))
-										.build(), new LocalServerReceiver())
-								.authorize("user")).setApplicationName(
-						"gcal-task-warrior").build();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (GeneralSecurityException e) {
-				e.printStackTrace();
-			}
-			return checkNotNull(client);
-		}
-
+		
 		private static List<Long> getEventDates() {
+			System.out.println("getEventDates() - begin");
 			List<Long> oEventDates = new TreeList();
 			for (Long eventTimeUntruncated : getEventTimes()) {
 				java.util.Calendar cTruncated = truncate(eventTimeUntruncated);
-//				System.out.println(cTruncated.getTime().toString() + " ("
-//						+ cTruncated.getTimeInMillis() + ")");
+				System.out.println("getEventDates() - " + cTruncated.getTime().toString() + " ("
+						+ cTruncated.getTimeInMillis() + ")");
 				oEventDates.add(cTruncated.getTimeInMillis());
 			}
+			System.out.println("getEventDates() - number of events: " + oEventDates.size());
 			return oEventDates;
 		}
 
@@ -1055,14 +1065,15 @@ public class NotNow {
 		}
 
 		private static List<Long> getEventTimes() {
+			System.out.println("getEventTimes()  - begin");
 			Set<Long> orderedTimes = new TreeSet<Long>();
 			Multimap<Long,Event> m = ArrayListMultimap.create();
 			try {
 				for (Event event : getEventsList()) {
 					if (event.getStart() != null) {
-//						System.out.println("Event: " + event);
-//						System.out.println("Event recurring ID: " + event.getRecurringEventId());
-//						System.out.println("Event start: " + event.getStart());
+						System.out.println("getEventTimes() - Event: " + event.getStart() + "\t" + event.getSummary());
+//						System.out.println("getEventTimes() - Event recurring ID: " + event.getRecurringEventId());
+//						System.out.println("getEventTimes() - Event start: " + event.getStart());
 						DateTime dateTime = event.getStart().getDateTime();
 						long eventTimeMillis;
 						if (dateTime == null) {
@@ -1093,11 +1104,12 @@ public class NotNow {
 			}
 //			List<Long> oEventTimes = new TreeList();
 //			oEventTimes.addAll(orderedTimes);
+			System.out.println("getEventTimes()  - size: " + orderedTimes.size());
 			return new LinkedList(orderedTimes);
 		}
 
 		private static List<Event> getEventsList() throws IOException {
-			int pages = 10;
+			int pages = 20;
 			List<Event> allItems = new LinkedList<Event>();
 			_1:{
 				boolean getMoreItems = true;
@@ -1106,16 +1118,17 @@ public class NotNow {
 				while (getMoreItems) {
 					Events eventsMap = _service
 							.events()
-							.list("primary")
-							// .list(getCalendarId("ss401533@gmail.com"))
+							//.list("primary")
+							//.list("Sridhar Sarnobat")
+							.list(getCalendarId("ss401533@gmail.com"))
 							.setTimeMin(
-									new DateTime(System.currentTimeMillis()))
+									new DateTime(System.currentTimeMillis())) // e.g. 2016-10-02T15:00:00Z
 							.setMaxResults(2500)
 							.setPageToken(nextPageToken)
 							// .setOrderBy("startTime")
 							.execute();
 					nextPageToken = eventsMap.getNextPageToken();
-					System.out.println("Size: " + eventsMap.size());
+					System.out.println("getEventsList() - Size: " + eventsMap.size());
 					List<Event> items = eventsMap.getItems();
 					if (items.size() < 1) {
 						throw new RuntimeException("No items returned in page " + curPage);
@@ -1159,6 +1172,7 @@ public class NotNow {
 
 		private  static long findNextFreeDate() {
 			List<Long> takenDates = GetCalendarEvents.getEventDates();
+			System.out.println("findNextFreeDate() - size: " + takenDates.size());
 			long currentDate = -1;
 			_1:{
 				java.util.Date now = java.util.Calendar.getInstance().getTime();
@@ -1171,7 +1185,7 @@ public class NotNow {
 			}
 			long nextFreeDate = currentDate;
 			while (takenDates.contains(nextFreeDate)) {
-				//System.out.println("Taken: " + nextFreeDate + "(" + new Date(nextFreeDate) + ")");
+				System.out.println("findNextFreeDate() - Taken: " + new Date(nextFreeDate) + " (" + nextFreeDate + ")");
 				nextFreeDate +=  
 						86400000;// 24 hours
 //						90000000;// 25 hours
@@ -1182,7 +1196,7 @@ public class NotNow {
 				nextDayTruncated.set(java.util.Calendar.HOUR_OF_DAY, 0);
 				nextFreeDate = nextDayTruncated.getTimeInMillis();
 			}
-			//System.out.println("Not taken: " + nextFreeDate);
+			System.out.println("Not taken: " + nextFreeDate);
 			if (takenDates.contains(nextFreeDate)) {
 				throw new RuntimeException("We should have kept looking for a free date.");
 			}
@@ -1222,6 +1236,6 @@ public class NotNow {
 			System.out.println("Calendar ID: " + getCalendarId("ss401533@gmail.com"));
 			return (int)daysToNextFreeDate;
 		}
-
+		
 	}
 }
