@@ -117,7 +117,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 				}
 			});
 		}
-		rows +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(0, 48) + "</td>";
+		rows +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(0, 48) + "</td><td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
 		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
                 rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'> 1 day</button>&nbsp;&nbsp;</td>";
@@ -136,40 +136,6 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 		rows +='</tr>';
 	});	
 	return rows;	
-}
-
-
-// Unused. Delete this
-function postpone(itemNumber, daysToPostpone) {
-	$.ajax( "http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone)
-	  .done(function() {
-			//$("#event-" + itemNumber).remove();
-			$("#event-" + itemNumber).css("background-color", "lightgreen");
-			++messagesDeleted;
-			$("#status").html(messagesDeleted);
-			delete tasks[itemNumber];
-			var table = getTaskRows(tasks, incrementAll, defaultPostponement);
-			$("#taskRows").html(table);
-			console.log( "success" );
-	  })
-	  .fail(function() {
-	  	++failures;
-	    $("#failures").html(failures);
-		console.log( "error" );
-	  })
-	  .always(function() {
-		console.log( "complete" );
-	  });
-	  /*
-    $.getJSON("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + daysToPostpone,function(result){
-
-    	console.log("success"); 
-		++messagesDeleted;
-    	$("#status").html(messagesDeleted);
-    });*/
-	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "orange");
-    
 }
 
 function deleteEvent(itemNumber) {
@@ -221,12 +187,12 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
     $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
       .done(function() {
 		console.log( "success" );
-		
-		//$("#event-" + itemNumber).remove();
-		//$(".defaultpostpone").text( defaultPostponement +  " days");
-		//updateButtons();
-
-//		refreshTable(tasks, incrementAll, defaultPostponement);
+	
+		// TODO: Unfortunately, you'll need to reimplement the logic that increments the days on each button
+		// 	 Currently it's mixed in with the logic to show the remaining tasks. Or maybe it will still work
+		//	 as-is because the callback will remove the old tasks. But it would be even better to extract
+		//	 the iteration logic into a reducer function
+		//		refreshTable(tasks, incrementAll, defaultPostponement);
 		$("#event-" + itemNumber).css("background-color", "lightgreen");
 		
 		delete tasks[itemNumber];

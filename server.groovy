@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,26 +72,49 @@ import com.sun.net.httpserver.HttpServer;
 
 public class NotNow {
 
+	private static final String CONFIG_FOLDER = "/home/sarnobat/.gcal_task_warrior";
+	private static final String TASKS_FILE = CONFIG_FOLDER + "/tasks.json";
+
 	public static void main(String[] args) throws URISyntaxException,
 			NoSuchProviderException, MessagingException, IOException {
+		if (!Paths.get(System.getProperty("user.home")+"/client_secrets.json").toFile().exists()) {
+			throw new RuntimeException("Make sure ~/client_secrets.json exists");
+		}
+		String message = System.getProperty("user.home") + 
+							"/.store/calendar_sample";
+		File file = Paths.get(message).toFile();
+//		if (!file.exists()) {
+//			throw new RuntimeException("Make sure ~/.store/calendar_sample exists");
+//		}
+//		if (FileUtils.sizeOf(file) == 0) {
+//			throw new RuntimeException("Corrupted: " + message);
+//		}
+		
 //		int nextFreeDateMidnight = GetCalendarEvents.getDaysToNextFreeDate();
 //		System.out.println("Days to next free date: " + nextFreeDateMidnight);
 //		System.exit(0);
-		new Thread() {
-			public void run() {
-				try {
-					ListDisplaySynchronous.getErrands();
-				} catch (NoSuchProviderException e) {
-					e.printStackTrace();
-				} catch (MessagingException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
+
+		_1: {
+			new Thread() {
+				public void run() {
+					try {
+						ListDisplaySynchronous.getErrands(TASKS_FILE);
+					} catch (NoSuchProviderException e) {
+						e.printStackTrace();
+					} catch (MessagingException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
-			}
-		}.start();
-		// Make sure ~/client_secrets.json exists
-		ListDisplaySynchronous.writeCalendarsToFileInSeparateThread();
+			}.start();
+		}
+		_2:{
+			String configFolder = "/home/sarnobat/.gcal_task_warrior";
+			String calendarCacheFile = configFolder + "/calendars.json";
+			ListDisplaySynchronous.writeCalendarsToFileInSeparateThread(
+					configFolder, calendarCacheFile);
+		}
 		try {
 			HttpServer server = JdkHttpServerFactory.createHttpServer(new URI(
 					"http://localhost:4456/"), new ResourceConfig(
@@ -114,7 +138,7 @@ public class NotNow {
 			try {
 				JSONObject json = new JSONObject();
 				json.put("tasks",
-						ListDisplaySynchronous.getErrandsJsonFromEmail());
+						ListDisplaySynchronous.getErrandsJsonFromEmail(TASKS_FILE));
 				FileUtils.writeStringToFile(file, json.toString(2));
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(json.toString()).type("application/json")
@@ -216,13 +240,14 @@ public class NotNow {
 								.authorize("user")).setApplicationName(
 						"gcal-task-warrior").build();
 				System.out.println("getCalendarService() - success");
-				return client;
+				return checkNotNull(client);
 			} catch (GeneralSecurityException e) {
 				e.printStackTrace();
+				throw new RuntimeException(e);
 			} catch (IOException e) {
 				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
-			return null;
 
 		}
 //		private static Calendar getCalendarService() {
@@ -450,25 +475,26 @@ public class NotNow {
 	}
 
 	private static class ListDisplaySynchronous {
-		static final String string = "/home/sarnobat/.gcal_task_warrior";
-		static final File file = new File(string + "/tasks.json");
-
-		static void writeCalendarsToFileInSeparateThread() {
+		@Deprecated
+		private static final String configFolder = "/home/sarnobat/.gcal_task_warrior";
+		@Deprecated
+		private static final String tasksFilePath = configFolder + "/tasks.json";
+		
+		static void writeCalendarsToFileInSeparateThread(final String configFolder, final String calendarCacheFile) {
 			new Thread() {
 				public void run() {
-					writeCalendars();
+					writeCalendars(configFolder, calendarCacheFile);
 				}
 			}.start();
 		}
 
-		private static void writeCalendars() {
+		private static void writeCalendars(String configFolder, String calendarCacheFile) {
 
 			JSONObject json;
 			try {
 				json = getCalendars();
 
-				final String string = "/home/sarnobat/.gcal_task_warrior";
-				final File file = new File(string + "/calendars.json");
+				final File file = new File(calendarCacheFile);
 				FileUtils.writeStringToFile(file, json.toString(2), "UTF-8");
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
@@ -503,29 +529,29 @@ public class NotNow {
 
 		
 
-		@Deprecated
-		static void getErrands() throws NoSuchProviderException,
+		@Deprecated // Why?
+		static void getErrands(String tasksFilePath) throws NoSuchProviderException,
 				MessagingException, IOException {
 			JSONObject json = new JSONObject();
-			json.put("tasks", getErrandsJsonFromEmail());
-			FileUtils.writeStringToFile(file, json.toString(2));
+			json.put("tasks", getErrandsJsonFromEmail(tasksFilePath));
+			FileUtils.writeStringToFile(new File(tasksFilePath), json.toString(2));
 		}
 
-		static JSONObject getErrandsJsonFromEmail()
+		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
 				throws NoSuchProviderException, MessagingException, IOException {
 			System.out.println("Messages obtained");
 			JSONObject json = createJsonListOfEvents(getMessages());
-			json.put("daysToPostpone", getPostponeCount());
+			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
 			return json;
 		}
 
-		private static int getPostponeCount() throws IOException {
+		private static int getPostponeCount(String tasksFilePath) throws IOException {
 			int DAYS_TO_POSTPONE = 30;
 			int daysToPostponeSaved = DAYS_TO_POSTPONE;
-			if (!file.exists()) {
+			if (!new File(tasksFilePath).exists()) {
 				daysToPostponeSaved = DAYS_TO_POSTPONE;
 			} else {
-				String errands = FileUtils.readFileToString(file);
+				String errands = FileUtils.readFileToString(new File(tasksFilePath));
 				JSONObject allErrandsJsonOriginal = new JSONObject(errands);
 				if (allErrandsJsonOriginal.has("daysToPostpone")) {
 					daysToPostponeSaved = allErrandsJsonOriginal
