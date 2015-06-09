@@ -162,6 +162,7 @@ public class NotNow {
 				throws Exception {
 
 			try {
+				writeToFile(iItemNumber, DONE_FILE);
 				JSONObject json = new JSONObject();
 				Delete.delete(iItemNumber.toString());
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
@@ -173,7 +174,8 @@ public class NotNow {
 			}
 		}
 
-		private static final String ARCHIVE_FILE = "/home/sarnobat/sarnobat.git/mwk/not_now_archive.mwk";
+		private static final String DONE_FILE = "/home/sarnobat/sarnobat.git/mwk/errands_done.mwk";
+		private static final String ARCHIVE_FILE = "/home/sarnobat/sarnobat.git/mwk/errands.mwk";
 		
 		@GET
 		@Path("archive")
@@ -182,7 +184,7 @@ public class NotNow {
 				@QueryParam("itemNumber") Integer iItemNumber) throws Exception {
 			System.out.println("writeToDiskAndDelete() - begin");
 			try {
-				writeToFile(iItemNumber);
+				writeToFile(iItemNumber, ARCHIVE_FILE);
 				System.out.println("writeToDiskAndDelete() - written to file");
 				Delete.delete(iItemNumber.toString());
 				System.out.println("writeToDiskAndDelete() - deleted");
@@ -194,13 +196,26 @@ public class NotNow {
 				throw e;
 			}
 		}
+		
+		private static String formatTitleForPrinting(String string) {
+			String[] aTitle = string.split("@");
+			String repeating = "";
+			if (aTitle.length > 1 && aTitle[1].contains("Repeating")) {
+				repeating = "[Repeating] ";
+			}
+			String aTitleMain = aTitle[0].replace("Reminder: ", "").replace("Notification: ", "");
+			String printedTitle = repeating + aTitleMain;
 
-		private void writeToFile(Integer iItemNumber) throws IOException {
+			String capitalize = StringUtils.capitalize(printedTitle);
+			return capitalize;
+		}
+
+		private void writeToFile(Integer iItemNumber, String file) throws IOException {
 			JSONObject eventJson = getEventJson(iItemNumber.toString(),
 					Paths.get(TASKS_FILE).toFile());
 			String title = eventJson.getString("title");
 			System.out.println("Title:\t" + title);
-			FileUtils.writeStringToFile(Paths.get(ARCHIVE_FILE).toFile(), title + "\n", true);
+			FileUtils.writeStringToFile(Paths.get(file).toFile(), formatTitleForPrinting(title) + "\n", true);
 		}
 
 		private static JSONObject getEventJson(String itemToDelete,
@@ -629,15 +644,9 @@ public class NotNow {
 			for (Message aMessage : msgs) {
 				JSONObject messageMetadata = Preconditions
 						.checkNotNull(getMessageMetadata(aMessage));
-				String[] aTitle = messageMetadata.getString("title").split("@");
-				String repeating = "";
-				if (aTitle.length > 1 && aTitle[1].contains("Repeating")) {
-					repeating = "[Repeating] ";
-				}
-				String aTitleMain = aTitle[0].replace("Reminder: ", "");
-				String printedTitle = repeating + aTitleMain;
-
-				messages.put(StringUtils.capitalize(printedTitle),
+				String string = messageMetadata.getString("title");
+				String capitalize = HelloWorldResource.formatTitleForPrinting(string);
+				messages.put(capitalize,
 						messageMetadata);
 			}
 			int i = 0;
@@ -1245,8 +1254,7 @@ public class NotNow {
 
 		private static String getCalendarId(String calendarName) {
 
-			final String string = System.getProperty("user.home")
-					+ "/.gcal_task_warrior";
+			final String string = System.getProperty("user.home") + "/.gcal_task_warrior";
 			final File file = new File(string + "/calendars.json");
 			String s;
 			try {
