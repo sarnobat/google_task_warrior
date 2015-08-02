@@ -7,6 +7,8 @@
 <script type="text/javascript" src="jquery/purl.js"></script>
 
 <script>
+var quickPostponeAmounts = [4, 8, 16, 32, 90];
+
 setInterval(function() {
 	var defaultPostponement = determineDefaultPostponement();
 	console.log("Default postponement is " + defaultPostponement);
@@ -85,7 +87,8 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			return;
 		}
 		var title = (v.title.split(/@/)[0]);
-		var title2 = title.replace("Reminder: ","").replace("Notification: ", "");
+		// Notification sometimes appears twice
+		var title2 = title.replace("Reminder: ","").replace("Notification: ", "").replace("Notification: ", "");
 		if (v.title.match(/.*Repeating.*/)) {
 			title2 = "[Repeating] " + title2;
 		}
@@ -117,13 +120,17 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 				}
 			});
 		}
-		rows +='<td>' + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(0, 48) + "</td><td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
+		rows += "<td>" + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(0, 48) + "</td>";
+		//rows += "<td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
 		rows += "<td>&nbsp;<button type=button onclick='archiveEvent(" +k+")'>Archive</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
                 rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>1 day</button>&nbsp;&nbsp;</td>";
+                rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 2 + "," + 0 + "," + incrementAll + ")'>2 day</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 3 + "," + 0 + "," + incrementAll + ")'>3 days</button>&nbsp;&nbsp;</td>";
-		var quickPostponeAmounts = [4, 8, 16, 32, 90];
+                rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 4 + "," + 0 + "," + incrementAll + ")'>4 day</button>&nbsp;&nbsp;</td>";
+                rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 5 + "," + 0 + "," + incrementAll + ")'>5 day</button>&nbsp;&nbsp;</td>";
+		//var quickPostponeAmounts = [4, 8, 16, 32, 90];
 		for(var i in quickPostponeAmounts) {
 			var quickPostponeAmount;
 			if (incrementAll) {
@@ -202,7 +209,7 @@ $.ajax("http://netgear.rohidekar.com:4456/not_now/postponeToNextFree?itemNumber=
 }
 
 function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
-                rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + itemNumber + "," + base + "," + defaultPostponement + "," + incrementAll + ")'> 1 day</button>&nbsp;&nbsp;</td>";
+	//rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + itemNumber + "," + base + "," + defaultPostponement + "," + incrementAll + ")'> 1 day</button>&nbsp;&nbsp;</td>";
 	var total = base + parseInt(defaultPostponement);
     $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
       .done(function() {
@@ -231,6 +238,33 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
     $("#event-" + itemNumber).css("background-color", "orange");
     defaultPostponement++;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
+    updateButtons(parseInt(defaultPostponement), $("#taskRows").find('tbody').find('tr'));
+}
+
+
+function updateButtons(amountToIncrement, trRows) {
+//	var amountToIncrement = 1;	
+	var numberOfRows = trRows.length;
+	for (var i = 0; i < numberOfRows; i++) {
+		//var trRow = trRows[i];
+		updateAllDaysForRow($("#taskRows").find('tbody').find('tr').get(i).children, amountToIncrement);
+	}
+	//trRows.map(increaseRowButtonsByOne);
+}
+
+function updateAllDaysForRow(tdCells, amountToIncrement) {
+
+	var itemNumber = parseInt(tdCells[0].innerHTML);
+	var numberOfRows = tdCells.length;
+	var j = 0;
+	for (var i = 9; i < numberOfRows; i++) {
+		var td = tdCells[i];
+		var button = td.children[0];
+		var base = quickPostponeAmounts[j++];
+		button.setAttribute('onclick', 'postponeDefault('+itemNumber+','+base+','+amountToIncrement+',true)');
+		var total = base + amountToIncrement;
+		button.innerHTML = total + " days";
+	}
 }
 
 function refreshTable(tasks, incrementAll, defaultPostponement) {
