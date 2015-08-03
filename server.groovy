@@ -182,7 +182,7 @@ public class NotNow {
 
 			private static JSONObject getFilteredTaggedTasks(JSONObject taggedTasks, java.nio.file.Path tasksFile) {
 				Set<String> currentTaskTitles = getCurrentTasks(tasksFile);
-				System.out.println("NotNow.HelloWorldResource.Tags.getFilteredTaggedTasks() - " + currentTaskTitles);
+//				System.out.println("NotNow.HelloWorldResource.Tags.getFilteredTaggedTasks() - " + currentTaskTitles);
 				return filterTaggedTasks(taggedTasks, currentTaskTitles);
 			}
 
@@ -228,7 +228,56 @@ public class NotNow {
 				public boolean apply(String input) {
 					return !input.equals("daysToPostpone");
 				}};
+
+			public static void addTag(Integer iItemNumber, String iTagName, String tasksFile, String tagsFile) {
+				String taskTitle = getTaskTitle(iItemNumber, tasksFile);
+				JSONObject taggedTasks = readFileToJson(Paths.get(tagsFile));
+				JSONArray a = taggedTasks.getJSONArray(iTagName);
+				Set<String> taskTitles = toSet(a);
+				if (!taskTitles.contains(taskTitle)) {
+					a.put(taskTitle);
+				}
+				taggedTasks.put(iTagName, a);
+				try {
+					FileUtils.write(Paths.get(tagsFile).toFile(), taggedTasks.toString(2));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			private static Set<String> toSet(JSONArray iArray) {
+				ImmutableSet.Builder<String> ret = ImmutableSet.builder();
+				for (int i = 0; i < iArray.length(); i++) {
+					ret.add(iArray.getString(i));
+				}
+				return ret.build();
+			}
+
+			private static String getTaskTitle(Integer iItemNumber, String tasksFile) {
+				JSONObject tasks = readFileToJson(Paths.get(tasksFile)).getJSONObject("tasks");
+//				System.out.println("NotNow.HelloWorldResource.Tags.getTaskTitle() - item number " + iItemNumber);
+//				System.out.println("NotNow.HelloWorldResource.Tags.getTaskTitle() - " + tasks.toString());
+				return tasks.getJSONObject(iItemNumber.toString()).getString("title");
+			}
 		}
+		
+		@GET
+		@Path("tag")
+		@Produces("application/json")
+		public Response tag(@QueryParam("itemNumber") Integer iItemNumber, @QueryParam("tag") String iTagName)
+				throws Exception {
+
+			try {
+				Tags.addTag(iItemNumber, iTagName, TASKS_FILE, TAGS_FILE);
+				return Response.ok().header("Access-Control-Allow-Origin", "*")
+						.entity(new JSONObject()).type("application/json")
+						.build();
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+
 		
 		@GET
 		@Path("delete")

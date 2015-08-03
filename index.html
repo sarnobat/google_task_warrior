@@ -69,14 +69,14 @@ var tasks;
 
 function populateCallback(result, incrementAll, defaultPostponement){
 	$("#items").empty();
-	$.each(result, function(i, field){
+//	$.each(result.tasks, function(i, field){
 		var table = "";
-		tasks = field;
+		tasks = result.tasks;
 		table +='<table id="taskRows">';
-		table += getTaskRows(tasks, incrementAll, defaultPostponement);
+		table += getTaskRows(result.tasks, incrementAll, defaultPostponement);
 		table +=	'</table>';
 		$("#items").append(table);
-	});
+//	});
 	console.debug('finished refreshing');
 }
 var rows;
@@ -140,10 +140,33 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			 }
 			rows +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+quickPostponeAmounts[i]+"," +defaultPostponement+ ","+ incrementAll + ")'>" +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
 		}
+		rows += "<td>&nbsp;<button type=button onclick='tag(" + k + ", this)'>important</button>&nbsp;&nbsp;</td>";
+		rows += "<td>&nbsp;<button type=button onclick='tag(" + k + ", this)'>urgent</button>&nbsp;&nbsp;</td>";
 		rows +='</tr>';
 	});	
 	return rows;	
 }
+
+function tag(itemNumber, element) {
+	//alert(element.textContent);
+	
+	 $.ajax("http://netgear.rohidekar.com:4456/not_now/tag?itemNumber=" + itemNumber + "&tag=" + element.textContent)
+	  .done(function() {
+			console.log( "success" );
+			$("#event-" + itemNumber).css("background-color", "purple");
+	  })
+	  .fail(function() {
+		console.log( "error" );
+	  	++failures;
+	    $("#failures").html(failures);
+	  })
+	  .always(function() {
+		console.log( "complete" );
+	  });
+	//$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
+    $("#event-" + itemNumber).css("background-color", "pink");
+}
+
 function archiveEvent(itemNumber) {
  $.ajax("http://netgear.rohidekar.com:4456/not_now/archive?itemNumber=" + itemNumber)
 	  .done(function() {
@@ -255,7 +278,7 @@ function updateButtons(amountToIncrement, trRows) {
 function updateAllDaysForRow(tdCells, amountToIncrement) {
 
 	var itemNumber = parseInt(tdCells[0].innerHTML);
-	var numberOfRows = tdCells.length;
+	var numberOfRows = tdCells.length - 2;
 	var j = 0;
 	// i = 11 is the starting column in the table. The buttons before that should not be changed.
 	for (var i = 11; i < numberOfRows; i++) {
