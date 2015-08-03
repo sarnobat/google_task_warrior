@@ -83,14 +83,7 @@ public class NotNow {
 
 	public static void main(String[] args) throws URISyntaxException,
 			NoSuchProviderException, MessagingException, IOException {
-		_1: {
-			
-			System.out.println(HelloWorldResource.Tags.getTasksWithTags(Paths.get(TAGS_FILE), Paths.get(TASKS_FILE)));
-			System.exit(-1);
-		}
-		if (!Paths
-				.get(CLIENT_SECRETS)
-				.toFile().exists()) {
+		if (!Paths.get(CLIENT_SECRETS).toFile().exists()) {
 			throw new RuntimeException("Make sure ~/client_secrets.json exists");
 		}
 		//String message = System.getProperty("user.home") + "/.store/calendar_sample";
