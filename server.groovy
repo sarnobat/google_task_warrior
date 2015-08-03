@@ -24,7 +24,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -1396,6 +1395,7 @@ public class NotNow {
 			return nextFreeDate;
 		}
 
+		@SuppressWarnings("unused")
 		private static String formatDate(long nextFreeDate) {
 			return new Date(nextFreeDate).toString() + " (" + nextFreeDate + ")";
 		}
