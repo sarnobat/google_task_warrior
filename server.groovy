@@ -24,6 +24,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -46,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -66,7 +68,9 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
@@ -74,10 +78,16 @@ public class NotNow {
 
 	private static final String CONFIG_FOLDER = "/home/sarnobat/.gcal_task_warrior";
 	private static final String TASKS_FILE = CONFIG_FOLDER + "/tasks.json";
+	private static final String TAGS_FILE = CONFIG_FOLDER + "/tags.json";
 	private static final String CLIENT_SECRETS = System.getProperty("user.home") + "/client_secrets.json";
 
 	public static void main(String[] args) throws URISyntaxException,
 			NoSuchProviderException, MessagingException, IOException {
+		_1: {
+			
+			System.out.println(HelloWorldResource.Tags.getTasksWithTags(Paths.get(TAGS_FILE), Paths.get(TASKS_FILE)));
+			System.exit(-1);
+		}
 		if (!Paths
 				.get(CLIENT_SECRETS)
 				.toFile().exists()) {
@@ -142,6 +152,7 @@ public class NotNow {
 				JSONObject json = new JSONObject();
 				json.put("tasks", ListDisplaySynchronous
 						.getErrandsJsonFromEmail(TASKS_FILE));
+				json.put("tags", Tags.getTasksWithTags(Paths.get(TAGS_FILE), Paths.get(TASKS_FILE)));
 				FileUtils.writeStringToFile(file, json.toString(2));
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(json.toString()).type("application/json")
@@ -152,6 +163,81 @@ public class NotNow {
 			}
 		}
 
+		private static class Tags {
+
+			public static JSONObject getTasksWithTags(java.nio.file.Path tagsFile, java.nio.file.Path tasksFile) {
+				JSONObject syncWithLatestTasksFile = getFilteredTaggedTasks(readFileToJson(tagsFile), tasksFile);
+				// I think this is a legitimate exception to the rule where you should
+				// make methods side-effect free if they return something.
+				// Write it back out to the tags file
+				try {
+					FileUtils.write(tagsFile.toFile(), syncWithLatestTasksFile.toString());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				return syncWithLatestTasksFile;
+			}
+
+			private static JSONObject readFileToJson(java.nio.file.Path tagsFile) {
+				String tagsObject;
+				try {
+					tagsObject = FileUtils.readFileToString(tagsFile.toFile());
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				return new JSONObject(tagsObject);
+			}
+
+			private static JSONObject getFilteredTaggedTasks(JSONObject taggedTasks, java.nio.file.Path tasksFile) {
+				Set<String> currentTaskTitles = getCurrentTasks(tasksFile);
+				System.out.println("NotNow.HelloWorldResource.Tags.getFilteredTaggedTasks() - " + currentTaskTitles);
+				return filterTaggedTasks(taggedTasks, currentTaskTitles);
+			}
+
+			private static JSONObject filterTaggedTasks(JSONObject taggedTasks,
+					Set<String> currentTaskTitles) {
+				JSONObject ret = new JSONObject();
+				for (String key : taggedTasks.keySet()) {
+					JSONArray arr = taggedTasks.getJSONArray(key);
+					JSONArray filteredArray = new JSONArray();
+					for (int i = 0; i < arr.length(); i++) {
+						String taskTitle = arr.getString(i);
+						if (currentTaskTitles.contains(taskTitle)) {
+							filteredArray.put(taskTitle);
+						}
+					}
+					ret.put(key, filteredArray);
+				}
+				return ret;
+			}
+
+			private static Set<String> getCurrentTasks(java.nio.file.Path tasksFile) {
+				JSONObject currentTasks = readFileToJson(tasksFile).getJSONObject("tasks");
+				Set<String> currentTaskTitles = getTaskTitlesFromTasksObject(currentTasks);
+				return currentTaskTitles;
+			}
+
+			private static Set<String> getTaskTitlesFromTasksObject(JSONObject currentTasks) {
+//				System.out.println("NotNow.HelloWorldResource.Tags.getTaskTitlesFromTasksObject() - " + currentTasks);
+				Set<String> keys = FluentIterable.from(currentTasks.keySet()).filter(TASK_KEY).toSet();
+				ImmutableSet.Builder<String> titles = ImmutableSet.builder();
+				for (String key : keys) {
+					JSONObject task = currentTasks.getJSONObject(key);
+//					System.out.println("NotNow.HelloWorldResource.Tags.getTaskTitlesFromTasksObject() - " + task);
+//					System.out.println("NotNow.HelloWorldResource.Tags.getTaskTitlesFromTasksObject() - key = " + key);
+//					System.out.println("NotNow.HelloWorldResource.Tags.getTaskTitlesFromTasksObject() - " + task.toString());
+					titles.add(task.getString("title"));
+				}
+				return titles.build();
+			}
+			
+			private static final Predicate<String> TASK_KEY = new Predicate<String>() {
+				@Override
+				public boolean apply(String input) {
+					return !input.equals("daysToPostpone");
+				}};
+		}
+		
 		@GET
 		@Path("delete")
 		@Produces("application/json")
