@@ -2,6 +2,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -10,7 +11,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
@@ -56,7 +56,6 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
-import com.google.api.client.util.IOUtils;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.Calendar.Events.Update;
@@ -70,7 +69,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import com.sun.net.httpserver.HttpServer;
 
 public class NotNow {
 
@@ -85,8 +83,8 @@ public class NotNow {
 				.toFile().exists()) {
 			throw new RuntimeException("Make sure ~/client_secrets.json exists");
 		}
-		String message = System.getProperty("user.home") + "/.store/calendar_sample";
-		File file = Paths.get(message).toFile();
+		//String message = System.getProperty("user.home") + "/.store/calendar_sample";
+		//File file = Paths.get(message).toFile();
 		// if (!file.exists()) {
 		// throw new
 		// RuntimeException("Make sure ~/.store/calendar_sample exists");
@@ -100,35 +98,34 @@ public class NotNow {
 		// nextFreeDateMidnight);
 		// System.exit(0);
 
-		_1: {
-			new Thread() {
-				public void run() {
-					try {
-						ListDisplaySynchronous.getErrands(TASKS_FILE);
-					} catch (NoSuchProviderException e) {
-						e.printStackTrace();
-					} catch (MessagingException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}.start();
-		}
-		_2: {
-			String configFolder = "/home/sarnobat/.gcal_task_warrior";
-			String calendarCacheFile = configFolder + "/calendars.json";
-			ListDisplaySynchronous.writeCalendarsToFileInSeparateThread(
-					configFolder, calendarCacheFile);
-		}
+		getErrandsInSeparateThread();
+		ListDisplaySynchronous.writeCalendarsToFileInSeparateThread(
+				"/home/sarnobat/.gcal_task_warrior", "/home/sarnobat/.gcal_task_warrior"
+						+ "/calendars.json");
 		try {
-			HttpServer server = JdkHttpServerFactory.createHttpServer(new URI(
+			JdkHttpServerFactory.createHttpServer(new URI(
 					"http://localhost:4456/"), new ResourceConfig(
 					HelloWorldResource.class));
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 			System.err.println("Port in use. Not starting new instance.");
 		}
+	}
+
+	private static void getErrandsInSeparateThread() {
+		new Thread() {
+			public void run() {
+				try {
+					ListDisplaySynchronous.getErrands(TASKS_FILE);
+				} catch (NoSuchProviderException e) {
+					e.printStackTrace();
+				} catch (MessagingException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}.start();
 	}
 
 	@Path("not_now")
@@ -214,7 +211,7 @@ public class NotNow {
 			JSONObject eventJson = getEventJson(iItemNumber.toString(),
 					Paths.get(TASKS_FILE).toFile());
 			String title = eventJson.getString("title");
-			System.out.println("Title:\t" + title);
+//			System.out.println("NotNow.HelloWorldResource.writeToFile() - Title:\t" + title);
 			FileUtils.writeStringToFile(Paths.get(file).toFile(), formatTitleForPrinting(title) + "\n", true);
 		}
 
@@ -274,46 +271,72 @@ public class NotNow {
 		// }
 
 		private static Calendar getCalendarService() {
+			return getCalendarService(FileUtils.getFile(CLIENT_SECRETS),
+					System.getProperty("user.home") + "/.store/calendar_sample");
+		}
+
+		private static Calendar getCalendarService(File file2, String pathname) {
 			HttpTransport httpTransport;
 			try {
 				httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-				System.out
-						.println("getCalendarService() - Getting client secrets...");
+				//System.out.println("getCalendarService()" + " - Getting client secrets...");
 				// ln -s ~/github/not_now/client_secrets.json $HOME/
+				//System.out.println("getCalendarService() - Getting home dir...");
+				//System.out.print("getCalendarService() - Authenticating...");
+				//System.out.println("success");
 				
-				FileInputStream clientSecrets2 = new FileInputStream(FileUtils.getFile(CLIENT_SECRETS));
-				InputStreamReader clientSecrets  = new InputStreamReader(clientSecrets2);
-				System.out.println("getCalendarService() - Getting home dir...");
-				java.io.File homeDir = new java.io.File(System.getProperty("user.home") + "/.store/calendar_sample");
-				System.out.print("getCalendarService() - Authenticating...");
-				Calendar client = new Calendar.Builder(
-						httpTransport,
-						JacksonFactory.getDefaultInstance(),
-						new AuthorizationCodeInstalledApp(
-								new GoogleAuthorizationCodeFlow.Builder(
-										httpTransport,
-										JacksonFactory.getDefaultInstance(),
-										GoogleClientSecrets.load(JacksonFactory
-												.getDefaultInstance(),
-												clientSecrets),
-										ImmutableSet
-												.of(CalendarScopes.CALENDAR,
-														CalendarScopes.CALENDAR_READONLY))
-										.setDataStoreFactory(
-												new FileDataStoreFactory(
-														homeDir)).build(),
-								new LocalServerReceiver()).authorize("user"))
-						.setApplicationName("gcal-task-warrior").build();
-				System.out.println("getCalendarService() - success");
-				return checkNotNull(client);
-			} catch (GeneralSecurityException e) {
+			} 
+			catch (GeneralSecurityException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			} 
+			catch (IOException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			}
+			try {
+				return getCalendarService(httpTransport, file2, pathname);
+			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e);
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e);
 			}
+		}
 
+		private static Calendar getCalendarService(HttpTransport httpTransport, File file2,
+				String pathname) throws IOException, FileNotFoundException {
+			return checkNotNull(getClient(httpTransport, new InputStreamReader(
+					new FileInputStream(file2)),
+					new File(pathname)));
+		}
+
+		private static Calendar getClient(HttpTransport httpTransport,
+				InputStreamReader clientSecrets, java.io.File homeDir) throws IOException {
+			return new Calendar.Builder(
+					httpTransport,
+					JacksonFactory.getDefaultInstance(),
+					getAuthCode(httpTransport, clientSecrets, homeDir)
+						.authorize("user"))
+					.setApplicationName("gcal-task-warrior").build();
+		}
+
+		private static AuthorizationCodeInstalledApp getAuthCode(HttpTransport httpTransport,
+				InputStreamReader clientSecrets, java.io.File homeDir) throws IOException {
+			return new AuthorizationCodeInstalledApp(
+					new GoogleAuthorizationCodeFlow.Builder(
+							httpTransport,
+							JacksonFactory.getDefaultInstance(),
+							GoogleClientSecrets.load(JacksonFactory.getDefaultInstance(),
+									clientSecrets),
+							ImmutableSet
+									.of(CalendarScopes.CALENDAR,
+											CalendarScopes.CALENDAR_READONLY))
+							.setDataStoreFactory(
+									new FileDataStoreFactory(
+											homeDir)).build(),
+					new LocalServerReceiver());
 		}
 
 		// private static Calendar getCalendarService() {
@@ -365,15 +388,15 @@ public class NotNow {
 				@QueryParam("daysToPostpone") Integer iDaysToPostpone)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-			System.out.println("postpone() - item " + iItemNumber + " by "
-					+ iDaysToPostpone + " days.");
+//			System.out.println("postpone() - item " + iItemNumber + " by "
+//					+ iDaysToPostpone + " days.");
 			try {
 				Postpone.postpone(iItemNumber.toString(),
 						iDaysToPostpone.toString());
 			} catch (Exception e) {
-				System.out.println("postpone() - failed");
+//				System.out.println("postpone() - failed");
 				e.printStackTrace();
-				System.out.println(e);
+//				System.out.println(e);
 			}
 			JSONObject json = new JSONObject();
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
@@ -387,16 +410,14 @@ public class NotNow {
 				@QueryParam("itemNumber") Integer iItemNumber)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-			System.out.println("postponeToNextFree() - begin");
+//			System.out.println("postponeToNextFree() - begin");
 			try {
 				GetCalendarEvents.postponeEventToNextFreeDate(iItemNumber
 						.toString());
-				System.out.println("postponeToNextFree() done");
+//				System.out.println("postponeToNextFree() - end");
 				System.out.println("------------------------------------");
 			} catch (Exception e) {
-				System.out.println("!");
 				e.printStackTrace();
-				System.out.println(e);
 			}
 			JSONObject json = new JSONObject();
 			return Response.ok().header("Access-Control-Allow-Origin", "*")
@@ -415,7 +436,7 @@ public class NotNow {
 				NoSuchProviderException, MessagingException {
 			JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
 			String title = eventJson.getString("title");
-			System.out.println("Title:\t" + title);
+//			System.out.println("NotNow.Delete.delete() - Title:\t" + title);
 			Store theImapClient = connect();
 			Set<Message> msgs = getMessages(title, theImapClient);
 			for (Message msg : msgs) {
@@ -450,12 +471,12 @@ public class NotNow {
 				MessagingException {
 			Message[] msgs = getMessages(theImapClient);
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
-			System.out.println("Delete.getMessages() - looking for " + title);
+//			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
 					theMsgList.add(checkNotNull(aMsg));
-					System.out.println("Delete.getMessages() - matched: "
-							+ aMsg.getSubject());
+//					System.out.println("Delete.getMessages() - matched: "
+//							+ aMsg.getSubject());
 				} else {
 					// System.out.println("Delete.getMessages() - No match: "
 					// + aMsg.getSubject());
@@ -520,6 +541,7 @@ public class NotNow {
 			// exceptions can get thrown first.
 			try {
 				deleteEmail(messageIdToDelete, theImapClient);
+				System.out.println("------------------------------------");
 			} catch (NoSuchProviderException e) {
 				e.printStackTrace();
 			} catch (MessagingException e) {
@@ -536,8 +558,7 @@ public class NotNow {
 				String aMessageID = getMessageID(aMessage);
 				if (aMessageID.equals(messageIdToDelete)) {
 					aMessage.setFlag(Flags.Flag.DELETED, true);
-					System.out.println("Deleted email:\t"
-							+ aMessage.getSubject());
+					System.out.println("NotNow.Delete.deleteEmail() - Deleted email:\t" + aMessage.getSubject());
 					break;
 				}
 			}
@@ -545,11 +566,6 @@ public class NotNow {
 	}
 
 	private static class ListDisplaySynchronous {
-		@Deprecated
-		private static final String configFolder = "/home/sarnobat/.gcal_task_warrior";
-		@Deprecated
-		private static final String tasksFilePath = configFolder + "/tasks.json";
-
 		static void writeCalendarsToFileInSeparateThread(
 				final String configFolder, final String calendarCacheFile) {
 			new Thread() {
@@ -581,8 +597,7 @@ public class NotNow {
 				throws GeneralSecurityException, IOException,
 				UnsupportedEncodingException {
 			Calendar client = HelloWorldResource.getCalendarService();
-
-			System.out.println("Getting calendars...");
+//			System.out.println("NotNow.ListDisplaySynchronous.getCalendars() - Getting calendars...");
 			@SuppressWarnings("unchecked")
 			List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client
 					.calendarList().list().execute().get("items");
@@ -611,7 +626,7 @@ public class NotNow {
 
 		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
 				throws NoSuchProviderException, MessagingException, IOException {
-			System.out.println("Messages obtained");
+			System.out.println("getErrandsJsonFromEmail() - " + "Messages obtained");
 			JSONObject json = createJsonListOfEvents(getMessages());
 			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
 			return json;
@@ -691,9 +706,9 @@ public class NotNow {
 
 			FetchProfile fp = new FetchProfile();
 			fp.add(FetchProfile.Item.ENVELOPE);
-			System.out.print("getMessages() - Fetching message attributes...");
+			//System.out.print("getMessages() - Fetching message attributes...");
 			folder.fetch(msgs, fp);
-			System.out.println("done");
+			//System.out.println("done");
 			theImapClient.close();
 			return msgs;
 		}
@@ -726,31 +741,32 @@ public class NotNow {
 		static void postpone(String itemNumber, String daysToPostponeString)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-			System.out.println("Postpone.postpone() - Will postpone event "
-					+ itemNumber + " by " + daysToPostponeString + " days.");
+//			System.out.println("Postpone.postpone() - Will postpone event "
+//					+ itemNumber + " by " + daysToPostponeString + " days.");
 			// System.out.println("FYI - file contents at time of postpone are: "
 			// + FileUtils.readFileToString(mTasksFileLatest));
-			JSONObject eventJson = getEventJsonFromResponse(itemNumber,
-					mTasksFileLatest);
-			String title = eventJson.getString("title");
-			System.out.println("Title:\n\t" + title);
+			//System.out.println("NotNow.Postpone.postpone() - Title:\n\t" + title);
 			Store theImapClient = connect();
-			_1: {
-				Set<Message> msgs = getMessages(theImapClient, title);
-				for (Message msg : msgs) {
-					System.out.println("Event ID\n\t" + getEventID(msg));
-					System.out.println("Calendar name\n\t"
-							+ getCalendarName(msg));
-					System.out.println("Calendar ID:\n\t"
-							+ getCalendarId(getCalendarName(msg)));
-					CalendarRequest<Event> calendarAction = createPostponeTask(
-							daysToPostponeString, title, msg);
-					commitPostpone(theImapClient, calendarAction,
-							getMessageID(msg));
-				}
-			}
+			doPostpone(daysToPostponeString, getEventJsonFromResponse(itemNumber, mTasksFileLatest)
+					.getString("title"), theImapClient);
 			if (theImapClient.isConnected()) {
 				theImapClient.close();
+			}
+		}
+
+		private static void doPostpone(String daysToPostponeString, String title,
+				Store theImapClient) throws NoSuchProviderException, MessagingException,
+				IOException, GeneralSecurityException {
+			Set<Message> msgs = getMessages(theImapClient, title);
+			for (Message msg : msgs) {
+//				System.out.println("NotNow.Postpone.doPostpone() - " + "Event ID\t"
+//						+ getEventID(msg));
+//				System.out.println("NotNow.Postpone.doPostpone() - " + "Calendar name\t"
+//						+ getCalendarName(msg));
+//				System.out.println("NotNow.Postpone.doPostpone() - " + "Calendar ID:\t"
+//						+ getCalendarId(getCalendarName(msg)));
+				commitPostpone(theImapClient, createPostponeTask(daysToPostponeString, title, msg),
+						getMessageID(msg));
 			}
 		}
 
@@ -759,12 +775,12 @@ public class NotNow {
 				MessagingException {
 			Message[] msgs = getMessages(theImapClient);
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
-			System.out.println("Delete.getMessages() - looking for " + title);
+//			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
 				if (aMsg.getSubject().equals(title)) {
 					theMsgList.add(checkNotNull(aMsg));
-					System.out.println("Delete.getMessages() - matched: "
-							+ aMsg.getSubject());
+//					System.out.println("Delete.getMessages() - matched: "
+//							+ aMsg.getSubject());
 				} else {
 					// System.out.println("Delete.getMessages() - No match: "
 					// + aMsg.getSubject());
@@ -830,13 +846,13 @@ public class NotNow {
 				final CalendarRequest<Event> update,
 				final String messageIdToDelete) throws NoSuchProviderException,
 				MessagingException, IOException {
-			System.out.println("commitPostpone() - begin" + messageIdToDelete);
+//			System.out.println("commitPostpone() - begin " + messageIdToDelete);
 			// All persistent changes are done right at the end, so that any
 			// exceptions can get thrown first.
 			deleteEmail(messageIdToDelete, theImapClient);
 
 			executeCalendarRequest(update);
-			System.out.println("commitPostpone() - end " + messageIdToDelete);
+//			System.out.println("commitPostpone() - end " + messageIdToDelete);
 		}
 
 		private static void executeCalendarRequest(
@@ -844,13 +860,14 @@ public class NotNow {
 			new Thread() {
 				@Override
 				public void run() {
+					@SuppressWarnings("unused")
 					Event updatedEvent;
 					try {
 						updatedEvent = update.execute();
 						// Print the updated date.
-						System.out.println(updatedEvent.getUpdated());
-						System.out.println(updatedEvent.getHtmlLink());
-						System.out.println("Calendar updated");
+//						System.out.println("executeCalendarRequest()" + updatedEvent.getUpdated());
+//						System.out.println("executeCalendarRequest()" + updatedEvent.getHtmlLink());
+//						System.out.println("executeCalendarRequest()" + " - Calendar updated");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -903,8 +920,9 @@ public class NotNow {
 			for (Message aMessage : messages) {
 				String aMessageID = getMessageID(aMessage);
 				if (aMessageID.equals(messageIdToDelete)) {
+					// TODO: it would be better to actually move the email to the trash
 					aMessage.setFlag(Flags.Flag.DELETED, true);
-					System.out.println("Deleted email:\t"
+					System.out.println("deleteEmail()" + " - Deleted email:\t"
 							+ aMessage.getSubject());
 					break;
 				}
@@ -953,7 +971,7 @@ public class NotNow {
 			Event event = _service.events().get(calendarId, internalEventId)
 					.execute();
 			postponeEvent(daysToPostpone, event);
-			System.out.println("Internal Event ID:\t" + internalEventId);
+//			System.out.println("NotNow.Postpone.createUpdateTask()" + " - Internal Event ID:\t" + internalEventId);
 			Update update = _service.events().update(calendarId,
 					internalEventId, event);
 			return update;
@@ -961,7 +979,7 @@ public class NotNow {
 
 		private static void postponeEvent(int daysToPostpone, Event event) {
 			EventDateTime eventStartTime = event.getStart();
-			System.out.println("Event original start time:\t" + eventStartTime);
+//			System.out.println("NotNow.Postpone.postponeEvent() - Event original start time:\t" + eventStartTime);
 			long newStartTime = getNewStartTime(daysToPostpone);
 			eventStartTime.setDateTime(new DateTime(newStartTime));
 
@@ -1011,26 +1029,23 @@ public class NotNow {
 		private static Event getNonRecurringEvent(String iEventId)
 				throws IOException {
 			Event theTargetEvent = null;
-			findCalendarEvent: {
-				com.google.api.services.calendar.model.Events allEventsList;
+			com.google.api.services.calendar.model.Events allEventsList;
 
-				String aNextPageToken = null;
+			String aNextPageToken = null;
 
-				while (true) {
-					allEventsList = _service.events().list("primary")
-							.setPageToken(aNextPageToken).execute();
-					java.util.List<Event> allEventItems = allEventsList
-							.getItems();
-					for (Event anEvent : allEventItems) {
-						String anHtmlLink = anEvent.getHtmlLink();
-						if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
-							theTargetEvent = anEvent;
-						}
+			while (true) {
+				allEventsList = _service.events().list("primary").setPageToken(aNextPageToken)
+						.execute();
+				java.util.List<Event> allEventItems = allEventsList.getItems();
+				for (Event anEvent : allEventItems) {
+					String anHtmlLink = anEvent.getHtmlLink();
+					if (anHtmlLink != null && anHtmlLink.contains(iEventId)) {
+						theTargetEvent = anEvent;
 					}
-					aNextPageToken = allEventsList.getNextPageToken();
-					if (aNextPageToken == null) {
-						break;
-					}
+				}
+				aNextPageToken = allEventsList.getNextPageToken();
+				if (aNextPageToken == null) {
+					break;
 				}
 			}
 			return theTargetEvent;
@@ -1050,7 +1065,7 @@ public class NotNow {
 			java.util.Calendar c = java.util.Calendar.getInstance();
 			c.add(java.util.Calendar.DATE, daysToPostpone);
 			long newStartDateTimeMillis = c.getTimeInMillis();
-			System.out.println("New start time:\t" + c.getTime());
+			System.out.println("getNewStartTime()" + " - New start time:\t" + c.getTime());
 			return newStartDateTimeMillis;
 		}
 
@@ -1106,23 +1121,22 @@ public class NotNow {
 		private static String getCalendarName(Message aMessage)
 				throws IOException, MessagingException {
 			String calendarName;
-			_2: {
-				MimeMultipart s = (MimeMultipart) aMessage.getContent();
-				String body1 = (String) s.getBodyPart(0).getContent();
-				if (body1.contains("Calendar:")) {
-					Pattern pattern = Pattern.compile("Calendar: (.*)");
-					Matcher m = pattern.matcher(body1);
-					if (!m.find()) {
-						throw new RuntimeException("eid not in string 2");
-					}
-					calendarName = m.group(1);
-				} else {
-					throw new RuntimeException(aMessage.getSubject());
+			MimeMultipart s = (MimeMultipart) aMessage.getContent();
+			String body1 = (String) s.getBodyPart(0).getContent();
+			if (body1.contains("Calendar:")) {
+				Pattern pattern = Pattern.compile("Calendar: (.*)");
+				Matcher m = pattern.matcher(body1);
+				if (!m.find()) {
+					throw new RuntimeException("eid not in string 2");
 				}
+				calendarName = m.group(1);
+			} else {
+				throw new RuntimeException(aMessage.getSubject());
 			}
 			return calendarName;
 		}
 
+		@SuppressWarnings("serial")
 		private static class IsRecurringEventException extends Exception {
 			IsRecurringEventException(String message) {
 				super(message);
@@ -1136,17 +1150,18 @@ public class NotNow {
 				.getCalendarService();
 
 		private static List<Long> getEventDates() {
-			System.out.println("getEventDates() - begin");
+//			System.out.println("getEventDates() - begin");
+			@SuppressWarnings("unchecked")
 			List<Long> oEventDates = new TreeList();
 			for (Long eventTimeUntruncated : getEventTimes()) {
 				java.util.Calendar cTruncated = truncate(eventTimeUntruncated);
-				System.out.println("getEventDates() - "
-						+ cTruncated.getTime().toString() + " ("
-						+ cTruncated.getTimeInMillis() + ")");
+//				System.out.println("getEventDates() - "
+//						+ cTruncated.getTime().toString() + " ("
+//						+ cTruncated.getTimeInMillis() + ")");
 				oEventDates.add(cTruncated.getTimeInMillis());
 			}
-			System.out.println("getEventDates() - number of events: "
-					+ oEventDates.size());
+//			System.out.println("getEventDates() - number of events: "
+//					+ oEventDates.size());
 			return oEventDates;
 		}
 
@@ -1159,14 +1174,14 @@ public class NotNow {
 		}
 
 		private static List<Long> getEventTimes() {
-			System.out.println("getEventTimes()  - begin");
+//			System.out.println("getEventTimes()  - begin");
 			Set<Long> orderedTimes = new TreeSet<Long>();
 			Multimap<Long, Event> m = ArrayListMultimap.create();
 			try {
 				for (Event event : getEventsList()) {
 					if (event.getStart() != null) {
-						System.out.println("getEventTimes() - Event: "
-								+ event.getStart() + "\t" + event.getSummary());
+//						System.out.println("getEventTimes() - Event: "
+//								+ event.getStart() + "\t" + event.getSummary());
 						// System.out.println("getEventTimes() - Event recurring ID: "
 						// + event.getRecurringEventId());
 						// System.out.println("getEventTimes() - Event start: "
@@ -1187,68 +1202,66 @@ public class NotNow {
 						m.put(eventTimeMillis, event);
 						orderedTimes.add(eventTimeMillis);
 					} else {
-						System.out.println("Excluded: " + event.getSummary());
+//						System.out.println("Excluded: " + event.getSummary());
 					}
 				}
-				System.out.println("Events obtained");
+//				System.out.println("NotNow.GetCalendarEvents.getEventTimes() - Events obtained");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			for (long l : orderedTimes) {
-				Collection<Event> es = m.get(l);
-				for (Event event : es) {
+			//for (long l : orderedTimes) {
+				//Collection<Event> es = m.get(l);
+				//for (Event event : es) {
 					// System.out.println(truncate(l).getTime().toString() +
 					// "\t"
 					// + event.getSummary());
-				}
-			}
+				//}
+			//}
 			// List<Long> oEventTimes = new TreeList();
 			// oEventTimes.addAll(orderedTimes);
-			System.out.println("getEventTimes()  - size: "
-					+ orderedTimes.size());
-			return new LinkedList(orderedTimes);
+//			System.out.println("getEventTimes()  - size: "
+//					+ orderedTimes.size());
+			return new LinkedList<Long>(orderedTimes);
 		}
 
 		private static List<Event> getEventsList() throws IOException {
 			int pages = 20;
 			List<Event> allItems = new LinkedList<Event>();
-			_1: {
-				boolean getMoreItems = true;
-				String nextPageToken = null;
-				int curPage = 0;
-				while (getMoreItems) {
-					Events eventsMap = _service
-							.events()
-							// .list("primary")
-							// .list("Sridhar Sarnobat")
-							.list(getCalendarId("ss401533@gmail.com"))
-							.setTimeMin(
-									new DateTime(System.currentTimeMillis())) // e.g.
-																				// 2016-10-02T15:00:00Z
-							.setMaxResults(2500).setPageToken(nextPageToken)
-							// .setOrderBy("startTime")
-							.execute();
-					nextPageToken = eventsMap.getNextPageToken();
-					System.out.println("getEventsList() - Size: "
-							+ eventsMap.size());
-					List<Event> items = eventsMap.getItems();
-					if (items.size() < 1) {
-						throw new RuntimeException("No items returned in page "
-								+ curPage);
-					}
-					allItems.addAll(items);
-					if (nextPageToken == null) {
-						getMoreItems = false;
-						break;
-					}
-					curPage++;
-					if (curPage > pages) {
-						getMoreItems = false;
-						break;
-					}
+			boolean getMoreItems = true;
+			String nextPageToken = null;
+			int curPage = 0;
+			while (getMoreItems) {
+				Events eventsMap = _service
+						.events()
+						// .list("primary")
+						// .list("Sridhar Sarnobat")
+						.list(getCalendarId("ss401533@gmail.com"))
+						.setTimeMin(
+								new DateTime(System.currentTimeMillis())) // e.g.
+																			// 2016-10-02T15:00:00Z
+						.setMaxResults(2500).setPageToken(nextPageToken)
+						// .setOrderBy("startTime")
+						.execute();
+				nextPageToken = eventsMap.getNextPageToken();
+//				System.out.println("getEventsList() - Size: "
+//						+ eventsMap.size());
+				List<Event> items = eventsMap.getItems();
+				if (items.size() < 1) {
+					throw new RuntimeException("No items returned in page "
+							+ curPage);
+				}
+				allItems.addAll(items);
+				if (nextPageToken == null) {
+					getMoreItems = false;
+					break;
+				}
+				curPage++;
+				if (curPage > pages) {
+					getMoreItems = false;
+					break;
 				}
 			}
-			System.out.println("Total items: " + allItems.size());
+//			System.out.println("Total items: " + allItems.size());
 			return allItems;
 		}
 
@@ -1275,35 +1288,21 @@ public class NotNow {
 
 		private static long findNextFreeDate() {
 			List<Long> takenDates = GetCalendarEvents.getEventDates();
-			System.out.println("findNextFreeDate() - size: "
-					+ takenDates.size());
-			long currentDate = -1;
-			_1: {
-				java.util.Date now = java.util.Calendar.getInstance().getTime();
-				java.util.Date today = DateUtils.truncate(now,
-						java.util.Calendar.DAY_OF_MONTH);
-				java.util.Date tomorrow = DateUtils.addDays(today, 1);
-				// System.out.println("today: " + today.toString());
-				System.out.println("Tomorrow: " + tomorrow.toString());
-				System.out.println("Tomorrow: " + tomorrow.getTime());
-				currentDate = tomorrow.getTime();
-			}
-			long nextFreeDate = currentDate;
+//			System.out.println("findNextFreeDate() - size: "
+//					+ takenDates.size());
+			long currentDate = getCurrentDate();
+			long twentyFourHours = 86400000L;
+			long nextFreeDate = currentDate + twentyFourHours;
 			while (takenDates.contains(nextFreeDate)) {
-				System.out.println("findNextFreeDate() - Taken: "
-						+ new Date(nextFreeDate) + " (" + nextFreeDate + ")");
+//				System.out.println("findNextFreeDate() - Taken: " + formatDate(nextFreeDate));
 				nextFreeDate += 86400000;// 24 hours
 				// 90000000;// 25 hours
 				// Bug: It's not always 24 hours. When Daylight savings begins
 				// or ends we will overshoot/undershoot the next midnight so
 				// need to truncate
-				Date twentyFourHoursAdded = new Date(nextFreeDate);
-				java.util.Calendar nextDayTruncated = new GregorianCalendar();
-				nextDayTruncated.setTime(twentyFourHoursAdded);
-				nextDayTruncated.set(java.util.Calendar.HOUR_OF_DAY, 0);
-				nextFreeDate = nextDayTruncated.getTimeInMillis();
+				nextFreeDate = truncateDateTime(nextFreeDate);
 			}
-			System.out.println("Not taken: " + nextFreeDate);
+//			System.out.println("findNextFreeDate() - Not taken: " + formatDate(nextFreeDate));
 			if (takenDates.contains(nextFreeDate)) {
 				throw new RuntimeException(
 						"We should have kept looking for a free date.");
@@ -1318,9 +1317,34 @@ public class NotNow {
 			return nextFreeDate;
 		}
 
+		private static String formatDate(long nextFreeDate) {
+			return new Date(nextFreeDate).toString() + " (" + nextFreeDate + ")";
+		}
+
+		private static long truncateDateTime(long nextFreeDate) {
+			Date twentyFourHoursAdded = new Date(nextFreeDate);
+			java.util.Calendar nextDayTruncated = new GregorianCalendar();
+			nextDayTruncated.setTime(twentyFourHoursAdded);
+			nextDayTruncated.set(java.util.Calendar.HOUR_OF_DAY, 0);
+			nextFreeDate = nextDayTruncated.getTimeInMillis();
+			return nextFreeDate;
+		}
+
+		private static long getCurrentDate() {
+			long currentDate = -1;
+			java.util.Date now = java.util.Calendar.getInstance().getTime();
+			java.util.Date today = DateUtils.truncate(now, java.util.Calendar.DAY_OF_MONTH);
+			java.util.Date tomorrow = DateUtils.addDays(today, 1);
+			// System.out.println("NotNow.GetCalendarEvents.getCurrentDate() - today: " + today.toString());
+//			System.out.println("NotNow.GetCalendarEvents.getCurrentDate() - Tomorrow: " + tomorrow.toString());
+//			System.out.println("NotNow.GetCalendarEvents.getCurrentDate() - Tomorrow: " + tomorrow.getTime());
+			currentDate = tomorrow.getTime();
+			return currentDate;
+		}
+
 		public static void postponeEventToNextFreeDate(String itemNumber) {
-			System.out.println("postponeEventToNextFreeDate() - begin");
-			int daysToNextFreeDate = getDaysToNextFreeDate();
+//			System.out.println("postponeEventToNextFreeDate() - begin");
+			int daysToNextFreeDate = getDaysToNextFreeDate() - 1;
 			try {
 				Postpone.postpone(itemNumber,
 						Integer.toString(daysToNextFreeDate));
@@ -1340,11 +1364,11 @@ public class NotNow {
 			long nextFreeDate = findNextFreeDate();
 			java.util.Calendar nextFree = java.util.Calendar.getInstance();
 			nextFree.setTimeInMillis(nextFreeDate);
-			System.out.println("Next free date "
-					+ nextFree.getTime().toString());
+//			System.out.println("NotNow.GetCalendarEvents.getDaysToNextFreeDate() - Next free date "
+//					+ nextFree.getTime().toString());
 			long daysToNextFreeDate = (nextFreeDate - todayMidnight) / 86400000 + 1;
-			System.out.println("Calendar ID: "
-					+ getCalendarId("ss401533@gmail.com"));
+//			System.out.println("NotNow.GetCalendarEvents.getDaysToNextFreeDate() - Calendar ID: "
+//					+ getCalendarId("ss401533@gmail.com"));
 			return (int) daysToNextFreeDate;
 		}
 
