@@ -7,7 +7,7 @@
 <script type="text/javascript" src="jquery/purl.js"></script>
 
 <script>
-var quickPostponeAmounts = [4, 8, 16, 32, 90];
+var quickPostponeAmounts = [8, 16, 32, 90];
 
 setInterval(function() {
 	var defaultPostponement = determineDefaultPostponement();
@@ -257,7 +257,8 @@ function updateAllDaysForRow(tdCells, amountToIncrement) {
 	var itemNumber = parseInt(tdCells[0].innerHTML);
 	var numberOfRows = tdCells.length;
 	var j = 0;
-	for (var i = 9; i < numberOfRows; i++) {
+	// i = 11 is the starting column in the table. The buttons before that should not be changed.
+	for (var i = 11; i < numberOfRows; i++) {
 		var td = tdCells[i];
 		var button = td.children[0];
 		var base = quickPostponeAmounts[j++];
