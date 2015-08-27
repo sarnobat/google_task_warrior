@@ -13,7 +13,6 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -537,7 +536,7 @@ public class NotNow {
 				@QueryParam("itemNumber") Integer iItemNumber)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-//			System.out.println("postponeToNextFree() - begin");
+			System.out.println("postponeToNextFree() - begin");
 			try {
 				GetCalendarEvents.postponeEventToNextFreeDate(iItemNumber
 						.toString());
@@ -868,8 +867,8 @@ public class NotNow {
 		static void postpone(String itemNumber, String daysToPostponeString)
 				throws IOException, NoSuchProviderException,
 				MessagingException, GeneralSecurityException {
-//			System.out.println("Postpone.postpone() - Will postpone event "
-//					+ itemNumber + " by " + daysToPostponeString + " days.");
+			System.out.println("Postpone.postpone() - Will postpone event "
+					+ itemNumber + " by " + daysToPostponeString + " days.");
 			// System.out.println("FYI - file contents at time of postpone are: "
 			// + FileUtils.readFileToString(mTasksFileLatest));
 			//System.out.println("NotNow.Postpone.postpone() - Title:\n\t" + title);
@@ -1276,28 +1275,18 @@ public class NotNow {
 		private static final Calendar _service = HelloWorldResource
 				.getCalendarService();
 
-		private static List<Long> getEventDates() {
+		private static List<Long> getEventDatesTruncated() {
 //			System.out.println("getEventDates() - begin");
 			@SuppressWarnings("unchecked")
 			List<Long> oEventDates = new TreeList();
 			for (Long eventTimeUntruncated : getEventTimes()) {
-				java.util.Calendar cTruncated = truncate(eventTimeUntruncated);
-//				System.out.println("getEventDates() - "
-//						+ cTruncated.getTime().toString() + " ("
-//						+ cTruncated.getTimeInMillis() + ")");
-				oEventDates.add(cTruncated.getTimeInMillis());
+				long truncateDateTime = truncateDateTime(eventTimeUntruncated);
+				oEventDates.add(truncateDateTime);
+				System.out.println("NotNow.GetCalendarEvents.getEventDatesTruncated() - " + formatDate(truncateDateTime));
 			}
 //			System.out.println("getEventDates() - number of events: "
 //					+ oEventDates.size());
 			return oEventDates;
-		}
-
-		private static java.util.Calendar truncate(Long eventTimeUntruncated) {
-			java.util.Calendar c = java.util.Calendar.getInstance();
-			c.setTimeInMillis(eventTimeUntruncated);
-			java.util.Calendar cTruncated = DateUtils.truncate(c,
-					java.util.Calendar.DAY_OF_MONTH);
-			return cTruncated;
 		}
 
 		private static List<Long> getEventTimes() {
@@ -1414,29 +1403,18 @@ public class NotNow {
 		}
 
 		private static long findNextFreeDate() {
-			List<Long> takenDates = GetCalendarEvents.getEventDates();
-//			System.out.println("findNextFreeDate() - size: "
-//					+ takenDates.size());
+			System.out.println("NotNow.GetCalendarEvents.findNextFreeDate() - begin");
+			List<Long> takenDates = GetCalendarEvents.getEventDatesTruncated();
 			long currentDate = getCurrentDate();
 			long twentyFourHours = 86400000L;
 			long nextFreeDate = currentDate + twentyFourHours;
 			while (takenDates.contains(nextFreeDate)) {
-//				System.out.println("findNextFreeDate() - Taken: " + formatDate(nextFreeDate));
-				nextFreeDate += 86400000;// 24 hours
-				// 90000000;// 25 hours
-				// Bug: It's not always 24 hours. When Daylight savings begins
-				// or ends we will overshoot/undershoot the next midnight so
-				// need to truncate
-				nextFreeDate = truncateDateTime(nextFreeDate);
+				System.out.println("findNextFreeDate() - Taken: " + formatDate(nextFreeDate));
+				nextFreeDate = truncateDateTime(addOneDay(nextFreeDate));
 			}
-//			System.out.println("findNextFreeDate() - Not taken: " + formatDate(nextFreeDate));
 			if (takenDates.contains(nextFreeDate)) {
 				throw new RuntimeException(
 						"We should have kept looking for a free date.");
-			}
-			if (!takenDates.contains(1425884400000L)) {
-				// throw new
-				// RuntimeException("taken dates does not contain March 9th. It should.");
 			}
 			if (nextFreeDate == currentDate) {
 				throw new RuntimeException("nextFreeDate == currentDate");
@@ -1444,18 +1422,8 @@ public class NotNow {
 			return nextFreeDate;
 		}
 
-		@SuppressWarnings("unused")
 		private static String formatDate(long nextFreeDate) {
 			return new Date(nextFreeDate).toString() + " (" + nextFreeDate + ")";
-		}
-
-		private static long truncateDateTime(long nextFreeDate) {
-			Date twentyFourHoursAdded = new Date(nextFreeDate);
-			java.util.Calendar nextDayTruncated = new GregorianCalendar();
-			nextDayTruncated.setTime(twentyFourHoursAdded);
-			nextDayTruncated.set(java.util.Calendar.HOUR_OF_DAY, 0);
-			nextFreeDate = nextDayTruncated.getTimeInMillis();
-			return nextFreeDate;
 		}
 
 		private static long getCurrentDate() {
@@ -1463,15 +1431,24 @@ public class NotNow {
 			java.util.Date now = java.util.Calendar.getInstance().getTime();
 			java.util.Date today = DateUtils.truncate(now, java.util.Calendar.DAY_OF_MONTH);
 			java.util.Date tomorrow = DateUtils.addDays(today, 1);
-			// System.out.println("NotNow.GetCalendarEvents.getCurrentDate() - today: " + today.toString());
-//			System.out.println("NotNow.GetCalendarEvents.getCurrentDate() - Tomorrow: " + tomorrow.toString());
-//			System.out.println("NotNow.GetCalendarEvents.getCurrentDate() - Tomorrow: " + tomorrow.getTime());
 			currentDate = tomorrow.getTime();
 			return currentDate;
 		}
 
+		private static long addOneDay(long inputDate) {
+			System.out.println("NotNow.GetCalendarEvents.addOneDay() - in:\t" + formatDate(inputDate));
+			Date dayAfter = DateUtils.addDays(new java.util.Date(inputDate), 1);
+			long dayAfterTrunc = DateUtils.truncate(dayAfter, java.util.Calendar.DATE).getTime();
+			System.out.println("NotNow.GetCalendarEvents.addOneDay() - out:\t" + formatDate(dayAfterTrunc));
+			return dayAfterTrunc;
+		}
+		private static long truncateDateTime(long inputDate) {
+			return DateUtils.truncate(new java.util.Date(inputDate), java.util.Calendar.DATE)
+					.getTime();
+		}
+		
 		public static void postponeEventToNextFreeDate(String itemNumber) {
-//			System.out.println("postponeEventToNextFreeDate() - begin");
+			System.out.println("postponeEventToNextFreeDate() - begin");
 			int daysToNextFreeDate = getDaysToNextFreeDate() - 1;
 			try {
 				Postpone.postpone(itemNumber,
@@ -1486,6 +1463,7 @@ public class NotNow {
 		}
 
 		private static int getDaysToNextFreeDate() {
+			System.out.println("GetCalendarEvents.getDaysToNextFreeDate() - begin");
 			long todayMidnight = DateUtils.truncate(
 					java.util.Calendar.getInstance().getTime(),
 					java.util.Calendar.DAY_OF_MONTH).getTime();
