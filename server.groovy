@@ -617,7 +617,7 @@ public class NotNow {
 		private static Message[] getMessages(Store theImapClient)
 				throws MessagingException {
 			Folder folder = theImapClient
-					.getFolder("3 - Urg - time sensitive - this week");
+					.getFolder("3 - Urg - time sensitive");
 			folder.open(Folder.READ_WRITE);
 
 			Message[] msgs = folder.getMessages();
@@ -823,7 +823,7 @@ public class NotNow {
 			// System.out.println("Connecting");
 			Store theImapClient = connect();
 			Folder folder = theImapClient
-					.getFolder("3 - Urg - time sensitive - this week");
+					.getFolder("3 - Urg - time sensitive");
 			// System.out.println("Opening");
 			folder.open(Folder.READ_ONLY);
 
@@ -1209,7 +1209,7 @@ public class NotNow {
 		private static Folder openUrgentFolder(Store theImapClient)
 				throws MessagingException {
 			Folder folder = theImapClient
-					.getFolder("3 - Urg - time sensitive - this week");
+					.getFolder("3 - Urg - time sensitive");
 			folder.open(Folder.READ_WRITE);
 			return folder;
 		}
