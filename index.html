@@ -7,6 +7,7 @@
 <script type="text/javascript" src="jquery/purl.js"></script>
 
 <script>
+var URL_BASE = "http://netgear.rohidekar.com:4456";
 var quickPostponeAmounts = [8, 16, 32, 90];
 
 setInterval(function() {
@@ -52,7 +53,7 @@ function updateUrl(defaultPostponement, incrementAll) {
 }
 
 function populateBody(incrementAll, defaultPostponement) {
-	$.ajax("http://netgear.rohidekar.com:4456/not_now/items" )
+	$.ajax(URL_BASE + "/not_now/items" )
 	 .done(function(result) {
 		console.log( "success" );
 		populateCallback(result, incrementAll, defaultPostponement);
@@ -150,7 +151,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 function tag(itemNumber, element) {
 	//alert(element.textContent);
 	
-	 $.ajax("http://netgear.rohidekar.com:4456/not_now/tag?itemNumber=" + itemNumber + "&tag=" + element.textContent)
+	 $.ajax(URL_BASE + "/not_now/tag?itemNumber=" + itemNumber + "&tag=" + element.textContent)
 	  .done(function() {
 			console.log( "success" );
 			$("#event-" + itemNumber).css("background-color", "purple");
@@ -168,7 +169,7 @@ function tag(itemNumber, element) {
 }
 
 function archiveEvent(itemNumber) {
- $.ajax("http://netgear.rohidekar.com:4456/not_now/archive?itemNumber=" + itemNumber)
+ $.ajax(URL_BASE + "/not_now/archive?itemNumber=" + itemNumber)
 	  .done(function() {
 			console.log( "success" );
     		//$("#event-" + itemNumber).remove();
@@ -189,7 +190,7 @@ function archiveEvent(itemNumber) {
 }
 
 function deleteEvent(itemNumber) {
-    $.ajax("http://netgear.rohidekar.com:4456/not_now/delete?itemNumber=" + itemNumber)
+    $.ajax(URL_BASE + "/not_now/delete?itemNumber=" + itemNumber)
 	  .done(function() {
 			console.log( "success" );
     		//$("#event-" + itemNumber).remove();
@@ -212,7 +213,7 @@ function deleteEvent(itemNumber) {
 
 function postponeToNextFree(itemNumber, base, defaultPostponement, incrementAll) {
 
-$.ajax("http://netgear.rohidekar.com:4456/not_now/postponeToNextFree?itemNumber=" + itemNumber)
+$.ajax(URL_BASE + "/not_now/postponeToNextFree?itemNumber=" + itemNumber)
       .done(function() {
 			console.log( "success" );
 			//$("#event-" + itemNumber).remove();
@@ -234,7 +235,7 @@ $.ajax("http://netgear.rohidekar.com:4456/not_now/postponeToNextFree?itemNumber=
 function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 	//rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + itemNumber + "," + base + "," + defaultPostponement + "," + incrementAll + ")'> 1 day</button>&nbsp;&nbsp;</td>";
 	var total = base + parseInt(defaultPostponement);
-    $.ajax("http://netgear.rohidekar.com:4456/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
+    $.ajax(URL_BASE + "/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
       .done(function() {
 		console.log( "success" );
 	
@@ -259,7 +260,7 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 
 	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
     $("#event-" + itemNumber).css("background-color", "orange");
-    defaultPostponement++;
+    defaultPostponement = defaultPostponement + 7;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
     updateButtons(parseInt(defaultPostponement), $("#taskRows").find('tbody').find('tr'));
 }
@@ -309,10 +310,9 @@ function capitalize(str) {
 </head>
 <body style="background-color : #D2E3FA">
 
-
 <script> 
     $(function(){
-      $("#menubar").load("http://netgear.rohidekar.com/index.html"); 
+      $("#menubar").load("http://netgear.rohidekar.com/menu.html"); 
     });
 </script>
 <div id="menubar"></div>
