@@ -129,7 +129,7 @@ public class ListUpdate {
 			MessagingException {
 		Store theImapClient = connect();
 		Folder folder = theImapClient
-				.getFolder("3 - Urg - time sensitive - this week");
+				.getFolder("3 - Urg - time sensitive");
 		folder.open(Folder.READ_ONLY);
 
 		Message[] msgs = folder.getMessages();

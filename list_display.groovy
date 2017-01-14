@@ -212,7 +212,7 @@ public class ListDisplaySynchronous {
 		System.out.println("Connecting");
 		Store theImapClient = connect();
 		Folder folder = theImapClient
-				.getFolder("3 - Urg - time sensitive - this week");
+				.getFolder("3 - Urg - time sensitive");
 		System.out.println("Opening");
 		folder.open(Folder.READ_ONLY);
 
