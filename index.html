@@ -123,6 +123,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 		}
 		rows += "<td>" + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(0, 48) + "</td>";
 		//rows += "<td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
+                rows += "<td>&nbsp;<button type=button onclick='offloadEvent(" +k+")'>Errands.txt</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='archiveEvent(" +k+")'>Archive</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
@@ -166,6 +167,27 @@ function tag(itemNumber, element) {
 	  });
 	//$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
     $("#event-" + itemNumber).css("background-color", "pink");
+}
+
+function offloadEvent(itemNumber) {
+ $.ajax(URL_BASE + "/not_now/offload?itemNumber=" + itemNumber)
+          .done(function() {
+                        console.log( "success" );
+                //$("#event-" + itemNumber).remove();
+                        $("#event-" + itemNumber).css("background-color", "lightgreen");
+                        ++messagesDeleted;
+                        $("#status").html(messagesDeleted);
+          })
+          .fail(function() {
+                console.log( "error" );
+                ++failures;
+            $("#failures").html(failures);
+          })
+          .always(function() {
+                console.log( "complete" );
+          });
+        $("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
+    $("#event-" + itemNumber).css("background-color", "orange");
 }
 
 function archiveEvent(itemNumber) {

@@ -49,10 +49,13 @@ public class CreateCalendarTask {
 			MessagingException, GeneralSecurityException {
 		CalendarRequest<Event> calendarAction;
 		if (args.length < 1) {
-			throw new RuntimeException("No task text specified");
+			//throw new RuntimeException("No task text specified");
+			System.err.print(".");
+			return;
 		}
 		calendarAction = createInsertTask(args[0]);
 		commit(calendarAction);
+		System.err.println("CreateCalendarTask.main() - Created event with title '" + args[0] + "'");
 
 	}
 
@@ -85,9 +88,9 @@ public class CreateCalendarTask {
 				try {
 					updatedEvent = update.execute();
 					// Print the updated date.
-					System.out.println(updatedEvent.getUpdated());
-					System.out.println(updatedEvent.getHtmlLink());
-					System.out.println("Calendar updated");
+					System.err.println(updatedEvent.getUpdated());
+					System.err.println(updatedEvent.getHtmlLink());
+					System.err.println("Calendar updated");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
