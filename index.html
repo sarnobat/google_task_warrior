@@ -260,7 +260,7 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 
 	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
     $("#event-" + itemNumber).css("background-color", "orange");
-    defaultPostponement++;
+    defaultPostponement = defaultPostponement + 7;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
     updateButtons(parseInt(defaultPostponement), $("#taskRows").find('tbody').find('tr'));
 }
@@ -312,7 +312,7 @@ function capitalize(str) {
 
 <script> 
     $(function(){
-      $("#menubar").load("http://netgear.rohidekar.com/index.html"); 
+      $("#menubar").load("http://netgear.rohidekar.com/menu.html"); 
     });
 </script>
 <div id="menubar"></div>
