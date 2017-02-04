@@ -143,7 +143,9 @@ public class NotNow {
 				JSONObject json = new JSONObject();
 				json.put("tasks", ListDisplaySynchronous
 						.getErrandsJsonFromEmail(TASKS_FILE));
-				json.put("tags", Tags.getTasksWithTags(Paths.get(TAGS_FILE), Paths.get(TASKS_FILE)));
+				if (Paths.get(TAGS_FILE).toFile().exists()) {
+					json.put("tags", Tags.getTasksWithTags(Paths.get(TAGS_FILE), Paths.get(TASKS_FILE)));
+				}
 				FileUtils.writeStringToFile(file, json.toString(2));
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(json.toString()).type("application/json")
