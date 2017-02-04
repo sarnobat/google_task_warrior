@@ -301,11 +301,32 @@ public class NotNow {
 
 		private static final String DONE_FILE = "/home/sarnobat/sarnobat.git/mwk/errands_done.mwk";
 		private static final String ARCHIVE_FILE = "/home/sarnobat/sarnobat.git/mwk/errands.mwk";
-		
+	
+                @GET
+                @Path("offload")
+                @Produces("application/json")
+                public Response writeToDiskAndDelete(
+                                @QueryParam("itemNumber") Integer iItemNumber) throws Exception {
+                        System.out.println("writeToDiskAndDelete() - begin");
+                        try {
+                                writeToFile(iItemNumber, "/home/sarnobat/sarnobat.git/www/all.txt");
+                                System.out.println("writeToDiskAndDelete() - written to file");
+                                Delete.delete(iItemNumber.toString());
+                                System.out.println("writeToDiskAndDelete() - deleted");
+                                return Response.ok().header("Access-Control-Allow-Origin", "*")
+                                                .entity(new JSONObject().toString()).type("application/json")
+                                                .build();
+                        } catch (Exception e) {
+                                e.printStackTrace();
+                                throw e;
+                        }
+                }
+
+	
 		@GET
 		@Path("archive")
 		@Produces("application/json")
-		public Response writeToDiskAndDelete(
+		public Response writeToDiskAndDelete2(
 				@QueryParam("itemNumber") Integer iItemNumber) throws Exception {
 			System.out.println("writeToDiskAndDelete() - begin");
 			try {
