@@ -309,7 +309,7 @@ public class NotNow {
                                 @QueryParam("itemNumber") Integer iItemNumber) throws Exception {
                         System.out.println("writeToDiskAndDelete() - begin");
                         try {
-                                writeToFile(iItemNumber, "/home/sarnobat/sarnobat.git/www/all.txt");
+                                writeToFile(iItemNumber, "/home/sarnobat/sarnobat.git/www/errands/all.txt");
                                 System.out.println("writeToDiskAndDelete() - written to file");
                                 Delete.delete(iItemNumber.toString());
                                 System.out.println("writeToDiskAndDelete() - deleted");

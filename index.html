@@ -8,6 +8,8 @@
 
 <script>
 var URL_BASE = "http://netgear.rohidekar.com:4456";
+var URL_BASE_NEW = "http://netgear.rohidekar.com:44456";
+
 var quickPostponeAmounts = [8, 16, 32, 90];
 
 setInterval(function() {
@@ -121,7 +123,8 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 				}
 			});
 		}
-		rows += "<td>" + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle.substring(0, 48) + "</td>";
+		rows += "<td>" + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle //.substring(0, 48)
+			 + "</td>";
 		//rows += "<td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
                 rows += "<td>&nbsp;<button type=button onclick='offloadEvent(" +k+")'>Errands.txt</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='archiveEvent(" +k+")'>Archive</button>&nbsp;</td>";
@@ -170,7 +173,7 @@ function tag(itemNumber, element) {
 }
 
 function offloadEvent(itemNumber) {
- $.ajax(URL_BASE + "/not_now/offload?itemNumber=" + itemNumber)
+ $.ajax(URL_BASE_NEW + "/not_now/offload?itemNumber=" + itemNumber)
           .done(function() {
                         console.log( "success" );
                 //$("#event-" + itemNumber).remove();
