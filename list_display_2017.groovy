@@ -22,7 +22,12 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
-public class Quickstart2 {
+/**
+ * groovy list_display_2017.groovy | tee list_display_2017.txt | column -t -s$'\t'
+ * @author sarnobat@google.com (Your Name Here)
+ *
+ */
+public class ListDisplay2017 {
 
 
   /**
