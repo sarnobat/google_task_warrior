@@ -74,11 +74,10 @@ import com.google.common.collect.Multimap;
 
 public class GetEventsFromEmail {
 
-	private static final String CONFIG_FOLDER = "/home/sarnobat/.gcal_task_warrior";
+	private static final String CONFIG_FOLDER = System.getProperty("user.home") + "/.gcal_task_warrior";
 	private static final String TASKS_FILE = CONFIG_FOLDER + "/tasks.json";
 	private static final String TAGS_FILE = CONFIG_FOLDER + "/tags.json";
-	private static final String CLIENT_SECRETS = System.getProperty("user.home")
-			+ "/github/google_task_warrior/client_secrets.json";
+	private static final String CLIENT_SECRETS = System.getProperty("user.home") + "/github/google_task_warrior/client_secrets.json";
 
 	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException,
 			MessagingException, IOException {
