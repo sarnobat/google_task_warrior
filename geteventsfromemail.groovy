@@ -116,7 +116,7 @@ public class GetEventsFromEmail {
 
 	static JSONObject getErrandsJsonFromEmail(String tasksFilePath) throws NoSuchProviderException,
 			MessagingException, IOException {
-		System.out.println("getErrandsJsonFromEmail() - " + "Messages obtained");
+//		System.out.println("getErrandsJsonFromEmail() - " + "Messages obtained");
 		JSONObject json = createJsonListOfEvents(getMessages());
 		json.put("daysToPostpone", getPostponeCount(tasksFilePath));
 		return json;
@@ -176,7 +176,7 @@ public class GetEventsFromEmail {
 	}
 
 	private static String getUntruncatedTitle(Message aMessage) {
-		System.out.println("GetEventsFromEmail.getUntruncatedTitle()");
+//		System.out.println("GetEventsFromEmail.getUntruncatedTitle()");
 		return getBody(aMessage).toString();
 	}
 
@@ -200,8 +200,8 @@ public class GetEventsFromEmail {
 			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
 			String string = messageMetadata.getString("title");
 			String capitalize = formatTitleForPrinting(string);
-			System.out.println("GetEventsFromEmail.getMessages()");
-			System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + getBody(aMessage));
+//			System.out.println("GetEventsFromEmail.getMessages()");
+//			System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + getBody(aMessage));
 			// System.out.println("GetEventsFromEmail.createJsonListOfEvents() "
 			// + ((MimeMultipart) aMessage.getContent()).getBodyPart(1));
 		}
@@ -223,10 +223,10 @@ public class GetEventsFromEmail {
 				System.exit(-1);
 			}
 			MimeMultipart m = (MimeMultipart) aMessage.getContent();
-			System.out.println("GetEventsFromEmail.getBody() count = " + m.getCount());
-			System.out.println("GetEventsFromEmail.getBody() size = " + bodyPart.getSize());
+//			System.out.println("GetEventsFromEmail.getBody() count = " + m.getCount());
+//			System.out.println("GetEventsFromEmail.getBody() size = " + bodyPart.getSize());
 			List<String> s = IOUtils.readLines(bodyPart.getInputStream());
-			System.out.println("GetEventsFromEmail.getBody() s = " + s);
+//			System.out.println("GetEventsFromEmail.getBody() s = " + s);
 			if (bodyPart.getContent() instanceof String) {
 				String content = (String) bodyPart.getContent();
 				if (aMessage.getFolder().isOpen()) {
