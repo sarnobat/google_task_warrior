@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -21,9 +23,11 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimePartDataSource;
 import javax.ws.rs.Path;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
@@ -48,7 +52,8 @@ public class GetEventsFromEmail {
 	}
 
 	private static final String TASKS_FILE = CONFIG_FOLDER + "/tasks.json";
-	private static final String CLIENT_SECRETS = home() + "/github/google_task_warrior/client_secrets.json";
+	private static final String SECRET = "/github/google_task_warrior/client_secrets.json";
+	private static final String CLIENT_SECRETS = home() + SECRET;
 
 	private static String formatTitleForPrinting(String string) {
 		String[] aTitle = string.split("@");
@@ -137,17 +142,18 @@ public class GetEventsFromEmail {
 	private static JSONObject createJsonListOfEvents(Message[] msgs) throws MessagingException {
 		Map<String, JSONObject> messages = new TreeMap<String, JSONObject>();
 		for (Message aMessage : msgs) {
-			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
-			String string = messageMetadata.getString("title");
+			JSONObject messageMetadataJson = Preconditions
+					.checkNotNull(getMessageMetadata(aMessage));
+			String string = messageMetadataJson.getString("title");
 			String capitalize = formatTitleForPrinting(string);
-			messages.put(capitalize, messageMetadata);
+			messages.put(capitalize, messageMetadataJson);
 		}
 		int i = 0;
 		JSONObject jsonToBeSaved = new JSONObject();
 		for (String aTitle : new TreeSet<String>(messages.keySet())) {
 			++i;
-			JSONObject messageMetadata = messages.get(aTitle);
-			jsonToBeSaved.put(Integer.toString(i), messageMetadata);
+			JSONObject messageMetadataJson = messages.get(aTitle);
+			jsonToBeSaved.put(Integer.toString(i), messageMetadataJson);
 		}
 		return jsonToBeSaved;
 	}
@@ -156,17 +162,22 @@ public class GetEventsFromEmail {
 		JSONObject errandJsonObject;
 		try {
 			errandJsonObject = new JSONObject();
-			String title;
 			// Leave this as-s for writing. Only when displaying should you
 			// abbreviate
-			title = aMessage.getSubject();
+			// TODO: this is truncated, do not use it.
+			String title = aMessage.getSubject();
 
-			errandJsonObject.put("title", title);
+			errandJsonObject.put("title", getUntruncatedTitle(aMessage));
 			return errandJsonObject;
 		} catch (MessagingException e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private static String getUntruncatedTitle(Message aMessage) {
+		System.out.println("GetEventsFromEmail.getUntruncatedTitle()");
+		return getBody(aMessage).toString();
 	}
 
 	private static Message[] getMessages() throws NoSuchProviderException, MessagingException {
@@ -184,23 +195,65 @@ public class GetEventsFromEmail {
 		// System.out.print("getMessages() - Fetching message attributes...");
 		folder.fetch(msgs, fp);
 		// System.out.println("done");
-		
+
 		for (Message aMessage : msgs) {
 			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
 			String string = messageMetadata.getString("title");
 			String capitalize = formatTitleForPrinting(string);
-			MimeMultipart content;
-			try {
-				content = (MimeMultipart) aMessage.getContent();
-				Object bodyPart = content.getBodyPart(0).getContent();
-				System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + bodyPart);
-				System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + content.getBodyPart(1));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			System.out.println("GetEventsFromEmail.getMessages()");
+			System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + getBody(aMessage));
+			// System.out.println("GetEventsFromEmail.createJsonListOfEvents() "
+			// + ((MimeMultipart) aMessage.getContent()).getBodyPart(1));
 		}
 		theImapClient.close();
 		return msgs;
+	}
+
+	private static String getBody(Message aMessage) {
+		String out = "";
+		try {
+			if (!aMessage.getFolder().isOpen()) {
+				aMessage.getFolder().open(Folder.READ_ONLY);
+			}
+			BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(0);
+			if (aMessage.getContent() instanceof MimeMultipart) {
+				MimeMultipart m = (MimeMultipart) aMessage.getContent();
+			} else {
+				System.out.println("GetEventsFromEmail.getBody() content class = " + aMessage.getContent().getClass());
+				System.exit(-1);
+			}
+			MimeMultipart m = (MimeMultipart) aMessage.getContent();
+			System.out.println("GetEventsFromEmail.getBody() count = " + m.getCount());
+			System.out.println("GetEventsFromEmail.getBody() size = " + bodyPart.getSize());
+			List<String> s = IOUtils.readLines(bodyPart.getInputStream());
+			System.out.println("GetEventsFromEmail.getBody() s = " + s);
+			if (bodyPart.getContent() instanceof String) {
+				String content = (String) bodyPart.getContent();
+				if (aMessage.getFolder().isOpen()) {
+					aMessage.getFolder().close(false);
+				}
+				return content;
+			} else {
+				MimePartDataSource plainText = (MimePartDataSource) bodyPart.getContent();
+				out += plainText.getName();
+			}
+			if (aMessage.getFolder().isOpen()) {
+				aMessage.getFolder().close(false);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("GetEventsFromEmail.getBody() - problem with plain text: " + e.getMessage());
+			return "(plain text problem) ";
+		}
+		try {
+			MimePartDataSource richText = (MimePartDataSource) ((MimeMultipart) aMessage
+					.getContent()).getBodyPart(1).getContent();
+			out += richText.getName();
+		} catch (Exception e) {
+			System.out.println("GetEventsFromEmail.getBody() - problem with rich text");
+			return "(rich text problem)";
+		}
+		return out;
 	}
 
 	private static Store connect() throws NoSuchProviderException, MessagingException {
