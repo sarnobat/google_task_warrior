@@ -134,11 +134,6 @@ public class GetEventsFromEmail {
 				// should
 				// make methods side-effect free if they return something.
 				// Write it back out to the tags file
-				try {
-					FileUtils.write(tagsFile.toFile(), syncWithLatestTasksFile.toString());
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
 				return syncWithLatestTasksFile;
 			}
 
@@ -219,11 +214,6 @@ public class GetEventsFromEmail {
 					a.put(taskTitle);
 				}
 				taggedTasks.put(iTagName, a);
-				try {
-					FileUtils.write(Paths.get(tagsFile).toFile(), taggedTasks.toString(2));
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
 			}
 
 			private static Set<String> toSet(JSONArray iArray) {
@@ -273,16 +263,6 @@ public class GetEventsFromEmail {
 			return capitalize;
 		}
 
-		private void writeToFile(Integer iItemNumber, String file) throws IOException {
-			JSONObject eventJson = getEventJson(iItemNumber.toString(), Paths.get(TASKS_FILE)
-					.toFile());
-			String title = eventJson.getString("title");
-			// System.out.println("NotNow.HelloWorldResource.writeToFile() - Title:\t"
-			// + title);
-			FileUtils.writeStringToFile(Paths.get(file).toFile(), formatTitleForPrinting(title)
-					+ "\n", true);
-		}
-
 		private static JSONObject getEventJson(String itemToDelete, String errands) {
 			JSONObject allErrandsJson = new JSONObject(errands);
 			// System.out.println(allErrandsJson);
@@ -291,13 +271,6 @@ public class GetEventsFromEmail {
 			return eventJson;
 		}
 
-		// Still useful
-		private static JSONObject getEventJson(String itemToDelete, File tasksFileLastDisplayed)
-				throws IOException {
-			String errands = FileUtils.readFileToString(tasksFileLastDisplayed);
-			JSONObject eventJson = getEventJson(itemToDelete, errands);
-			return eventJson;
-		}
 
 		/************************************************************************
 		 * Boilerplate
@@ -334,21 +307,6 @@ public class GetEventsFromEmail {
 
 	private static class ListDisplaySynchronous {
 
-		private static JSONObject getCalendars() throws GeneralSecurityException, IOException,
-				UnsupportedEncodingException {
-			Calendar client = HelloWorldResource.getCalendarService();
-			// System.out.println("NotNow.ListDisplaySynchronous.getCalendars() - Getting calendars...");
-			@SuppressWarnings("unchecked")
-			List<CalendarListEntry> allCalendars = (List<CalendarListEntry>) client.calendarList()
-					.list().execute().get("items");
-			JSONObject json = new JSONObject();
-
-			for (CalendarListEntry aCalendar : allCalendars) {
-				json.put(aCalendar.getSummary(),
-						new JSONObject().put("calendar_id", aCalendar.getId()));
-			}
-			return json;
-		}
 
 		/************************************************************************
 		 * Boilerplate
@@ -361,7 +319,6 @@ public class GetEventsFromEmail {
 			JSONObject json = new JSONObject();
 			json.put("tasks", getErrandsJsonFromEmail(tasksFilePath));
 			System.out.println("GetEventsFromEmail.ListDisplaySynchronous.getErrands()" + json.toString(2));
-			FileUtils.writeStringToFile(new File(tasksFilePath), json.toString(2));
 		}
 
 		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
