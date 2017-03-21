@@ -610,7 +610,9 @@ public class NotNow {
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
 //			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
-				if (aMsg.getSubject().equals(title)) {
+System.out.println("1111: " + aMsg.getSubject().substring(0, 15));
+System.out.println("1111: " + title);
+				if (title.startsWith(aMsg.getSubject().substring(0, 15))) {
 					theMsgList.add(checkNotNull(aMsg));
 //					System.out.println("Delete.getMessages() - matched: "
 //							+ aMsg.getSubject());
@@ -766,7 +768,7 @@ public class NotNow {
 //			JSONObject json = createJsonListOfEvents(getMessages());
 System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromEmail() - " + tasksFilePath);
 			String errands = FileUtils.readFileToString(new File(tasksFilePath));
-			JSONObject json = new JSONObject(errands);
+			JSONObject json = new JSONObject(errands).getJSONObject("tasks");
 			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
 			return json;
 		}
