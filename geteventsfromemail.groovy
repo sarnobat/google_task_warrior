@@ -303,40 +303,6 @@ public class GetEventsFromEmail {
 		 * Boilerplate
 		 ************************************************************************/
 
-		// private static Calendar getCalendarService()
-		// throws GeneralSecurityException, IOException {
-		// System.out.println("Authenticating...");
-		//
-		// HttpTransport httpTransport = GoogleNetHttpTransport
-		// .newTrustedTransport();
-		// Calendar client = new Calendar.Builder(
-		// httpTransport,
-		// JacksonFactory.getDefaultInstance(),
-		// new AuthorizationCodeInstalledApp(
-		// new GoogleAuthorizationCodeFlow.Builder(
-		// httpTransport,
-		// JacksonFactory.getDefaultInstance(),
-		// GoogleClientSecrets.load(JacksonFactory
-		// .getDefaultInstance(),
-		// // Only works if you launch the app
-		// // from the same dir as the json
-		// // file for some stupid reason
-		// new FileReader(
-		// "/home/sarnobat/github/not_now/client_secrets.json")),
-		// ImmutableSet.of(CalendarScopes.CALENDAR,
-		// CalendarScopes.CALENDAR_READONLY))
-		// .setDataStoreFactory(
-		// new FileDataStoreFactory(
-		// new java.io.File(
-		// System.getProperty("user.home"),
-		// ".store/calendar_sample")))
-		// .build(), new LocalServerReceiver())
-		// .authorize("user")).setApplicationName(
-		// "gcal-task-warrior").build();
-		// return client;
-		//
-		// }
-
 		private static Calendar getCalendarService() {
 			return getCalendarService(FileUtils.getFile(CLIENT_SECRETS),
 					System.getProperty("user.home") + "/.store/calendar_sample");
