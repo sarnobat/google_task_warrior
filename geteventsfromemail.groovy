@@ -285,7 +285,7 @@ public class GetEventsFromEmail {
 	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException,
 			MessagingException, IOException {
 		if (!Paths.get(CLIENT_SECRETS).toFile().exists()) {
-			throw new RuntimeException("Make sure ~/client_secrets.json exists");
+			throw new RuntimeException("Make sure "+CLIENT_SECRETS+" exists");
 		}
 		getErrandsInSeparateThread();
 	}
