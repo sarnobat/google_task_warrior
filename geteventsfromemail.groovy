@@ -232,7 +232,8 @@ public class GetEventsFromEmail {
 				if (aMessage.getFolder().isOpen()) {
 					aMessage.getFolder().close(false);
 				}
-				return content.substring(0, 120);
+				//return content.replaceAll("[.\\n\\r\\s]+Title..", "");
+				return content.replaceAll("[\\s\\S]*Title:.", "").replaceAll("When[\\s\\S]*", "").replaceAll("\\n", "").replaceAll("\\r", "");
 			} else {
 				MimePartDataSource plainText = (MimePartDataSource) bodyPart.getContent();
 				out += plainText.getName();
