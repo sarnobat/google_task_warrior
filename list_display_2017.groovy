@@ -34,6 +34,8 @@ import org.apache.http.client.utils.URLEncodedUtils;
  * 
  * @author sarnobat@google.com (Your Name Here)
  * 
+ * Outputs eid and FULL event summary directly from GMail
+ * 
  */
 public class ListDisplay2017 {
 
@@ -132,10 +134,9 @@ public class ListDisplay2017 {
 					m.put(p.getName(), p.getValue());
 				}
 				String eventId = m.get("eid");
-//				System.out.printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", start, eventId,
-//						event.getHtmlLink(), event.getEtag(), event.getId(), event.getICalUID(),
-//						event.getSummary());
-				System.out.printf("%s\t%s\t\n", eventId, event.getSummary());
+				System.out.printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", start, eventId,
+						event.getHtmlLink(), event.getEtag(), event.getId(), event.getICalUID(),
+						event.getSummary());
 			}
 		}
 	}
