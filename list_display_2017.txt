@@ -1,12 +1,12 @@
 Credentials saved to /Users/sarnobat/.credentials/calendar-java-quickstart
 Upcoming events
-2017-03-20T18:30:00.000-07:00	pnum1nbetu7b3kq89sotcr3ses	pnum1nbetu7b3kq89sotcr3ses@google.com	Jason Swartz, Thinking Functionally with Databases
-2017-03-21T11:00:00.000-07:00	dl23so223lhstl6abhdgqmte0c	dl23so223lhstl6abhdgqmte0c@google.com	wear red for dance class photo
-2017-03-21T13:20:13.000-07:00	mauda7vkfv6c82ab912fmvf7b4	mauda7vkfv6c82ab912fmvf7b4@google.com	[web] after paying off MBA loan, move scholarshare allocations to equity fund
-2017-03-21T15:30:00.000-07:00	pac2ptn3b42pdpa1jtltpq93c4	pac2ptn3b42pdpa1jtltpq93c4@google.com	Dropbox phone interview
-2017-03-21T21:30:00.000-07:00	flbv71uht95u1masctnc8c7894_20170322T043000Z	flbv71uht95u1masctnc8c7894@google.com	Check My Fed Loan payments are being made (HSBC Bill Pay weekly  $11)
-2017-03-22T18:30:00.000-07:00	vjcgel5m8iitli9cksrk1bl6sc	vjcgel5m8iitli9cksrk1bl6sc@google.com	User Experience and Web Design Programs Wednesday, March 22, 6:30 - 8:30pm
-2017-03-22T21:40:20.000-07:00	0vd0qarq536ic4mf8sit1lbudk	0vd0qarq536ic4mf8sit1lbudk@google.com	[phone] Mom - 5-10 favorite songs (before she dies)
-2017-03-25T08:00:00.000-07:00	5636o503u6lgfqtf0vofi4vths	5636o503u6lgfqtf0vofi4vths@google.com	Autism conference Stanford http://med.stanford.edu/autismcenter/events.html
-2017-03-26T17:44:18.000-07:00	fqms9sbqnqj0emsoppkjgo082s	fqms9sbqnqj0emsoppkjgo082s@google.com	[web] My Fed Loan payments - check still successful
-2017-03-28T23:00:00.000-07:00	obodoqk4b2jds04t5a54ddq2ts	obodoqk4b2jds04t5a54ddq2ts@google.com	Auticon interview
+cG51bTFuYmV0dTdiM2txODlzb3RjcjNzZXMgc3M0MDE1MzNAbQ	Jason Swartz, Thinking Functionally with Databases	
+ZGwyM3NvMjIzbGhzdGw2YWJoZGdxbXRlMGMgc3M0MDE1MzNAbQ	wear red for dance class photo	
+bWF1ZGE3dmtmdjZjODJhYjkxMmZtdmY3YjQgc3M0MDE1MzNAbQ	[web] after paying off MBA loan, move scholarshare allocations to equity fund	
+cGFjMnB0bjNiNDJwZHBhMWp0bHRwcTkzYzQgc3M0MDE1MzNAbQ	Dropbox phone interview	
+ZmxidjcxdWh0OTV1MW1hc2N0bmM4Yzc4OTRfMjAxNzAzMjJUMDQzMDAwWiBzczQwMTUzM0Bt	Check My Fed Loan payments are being made (HSBC Bill Pay weekly  $11)	
+dmpjZ2VsNW04aWl0bGk5Y2tzcmsxYmw2c2Mgc3M0MDE1MzNAbQ	User Experience and Web Design Programs Wednesday, March 22, 6:30 - 8:30pm	
+MHZkMHFhcnE1MzZpYzRtZjhzaXQxbGJ1ZGsgc3M0MDE1MzNAbQ	[phone] Mom - 5-10 favorite songs (before she dies)	
+NTYzNm81MDN1NmxnZnF0ZjB2b2ZpNHZ0aHMgc3M0MDE1MzNAbQ	Autism conference Stanford http://med.stanford.edu/autismcenter/events.html	
+ZnFtczlzYnFucWowZW1zb3Bwa2pnbzA4MnMgc3M0MDE1MzNAbQ	[web] My Fed Loan payments - check still successful	
+b2JvZG9xazRiMmpkczA0dDVhNTRkZHEydHMgc3M0MDE1MzNAbQ	Auticon interview	
