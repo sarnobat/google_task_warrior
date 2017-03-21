@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.mail.BodyPart;
 import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -33,6 +34,7 @@ import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimePartDataSource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -772,110 +774,173 @@ public class NotNow {
 			FileUtils.writeStringToFile(new File(tasksFilePath),
 					json.toString(2));
 		}
+		static JSONObject getErrandsJsonFromEmail(String tasksFilePath) throws NoSuchProviderException,
+		MessagingException, IOException {
+//	System.out.println("getErrandsJsonFromEmail() - " + "Messages obtained");
+	JSONObject json = createJsonListOfEvents(getMessages());
+	json.put("daysToPostpone", getPostponeCount(tasksFilePath));
+	return json;
+}
 
-		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
-				throws NoSuchProviderException, MessagingException, IOException {
-			System.out.println("getErrandsJsonFromEmail() - " + "Messages obtained");
-			JSONObject json = createJsonListOfEvents(getMessages());
-			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
-			return json;
+private static int getPostponeCount(String tasksFilePath) throws IOException {
+	int DAYS_TO_POSTPONE = 30;
+	int daysToPostponeSaved = DAYS_TO_POSTPONE;
+	if (!new File(tasksFilePath).exists()) {
+		daysToPostponeSaved = DAYS_TO_POSTPONE;
+	} else {
+		String errands = FileUtils.readFileToString(new File(tasksFilePath));
+		JSONObject allErrandsJsonOriginal = new JSONObject(errands);
+		if (allErrandsJsonOriginal.has("daysToPostpone")) {
+			daysToPostponeSaved = allErrandsJsonOriginal.getInt("daysToPostpone");
+		} else {
+			daysToPostponeSaved = DAYS_TO_POSTPONE;
 		}
+	}
+	return daysToPostponeSaved;
+}
 
-		private static int getPostponeCount(String tasksFilePath)
-				throws IOException {
-			int DAYS_TO_POSTPONE = 30;
-			int daysToPostponeSaved = DAYS_TO_POSTPONE;
-			if (!new File(tasksFilePath).exists()) {
-				daysToPostponeSaved = DAYS_TO_POSTPONE;
-			} else {
-				String errands = FileUtils.readFileToString(new File(
-						tasksFilePath));
-				JSONObject allErrandsJsonOriginal = new JSONObject(errands);
-				if (allErrandsJsonOriginal.has("daysToPostpone")) {
-					daysToPostponeSaved = allErrandsJsonOriginal
-							.getInt("daysToPostpone");
-				} else {
-					daysToPostponeSaved = DAYS_TO_POSTPONE;
-				}
+private static JSONObject createJsonListOfEvents(Message[] msgs) throws MessagingException {
+	Map<String, JSONObject> messages = new TreeMap<String, JSONObject>();
+	for (Message aMessage : msgs) {
+		JSONObject messageMetadataJson = Preconditions
+				.checkNotNull(getMessageMetadata(aMessage));
+		String string = messageMetadataJson.getString("title");
+		String capitalize = formatTitleForPrinting(string);
+		messages.put(capitalize, messageMetadataJson);
+	}
+	int i = 0;
+	JSONObject jsonToBeSaved = new JSONObject();
+	for (String aTitle : new TreeSet<String>(messages.keySet())) {
+		++i;
+		JSONObject messageMetadataJson = messages.get(aTitle);
+		jsonToBeSaved.put(Integer.toString(i), messageMetadataJson);
+	}
+	return jsonToBeSaved;
+}
+
+
+private static String formatTitleForPrinting(String string) {
+	String[] aTitle = string.split("@");
+	String repeating = "";
+	if (aTitle.length > 1 && aTitle[1].contains("Repeating")) {
+		repeating = "[Repeating] ";
+	}
+	String aTitleMain = aTitle[0].replace("Reminder: ", "").replace("Notification: ", "");
+	String printedTitle = repeating + aTitleMain;
+
+	String capitalize = StringUtils.capitalize(printedTitle);
+	return capitalize;
+}
+
+private static JSONObject getMessageMetadata(Message aMessage) {
+	JSONObject errandJsonObject;
+	try {
+		errandJsonObject = new JSONObject();
+		// Leave this as-s for writing. Only when displaying should you
+		// abbreviate
+		// TODO: this is truncated, do not use it.
+		String title = aMessage.getSubject();
+
+		errandJsonObject.put("title", getUntruncatedTitle(aMessage));
+		return errandJsonObject;
+	} catch (MessagingException e) {
+		e.printStackTrace();
+	}
+	return null;
+}
+
+private static String getUntruncatedTitle(Message aMessage) {
+//	System.out.println("GetEventsFromEmail.getUntruncatedTitle()");
+	return getBody(aMessage).toString();
+}
+
+private static Message[] getMessages() throws NoSuchProviderException, MessagingException {
+	// System.out.println("Connecting");
+	Store theImapClient = connect();
+	Folder folder = theImapClient.getFolder("3 - Urg - time sensitive");
+	// System.out.println("Opening");
+	folder.open(Folder.READ_ONLY);
+
+	// System.out.println("Getting Message list");
+	Message[] msgs = folder.getMessages();
+
+	FetchProfile fp = new FetchProfile();
+	fp.add(FetchProfile.Item.ENVELOPE);
+	// System.out.print("getMessages() - Fetching message attributes...");
+	folder.fetch(msgs, fp);
+	// System.out.println("done");
+
+	for (Message aMessage : msgs) {
+		JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
+		String string = messageMetadata.getString("title");
+		String capitalize = formatTitleForPrinting(string);
+//		System.out.println("GetEventsFromEmail.getMessages()");
+//		System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + getBody(aMessage));
+		// System.out.println("GetEventsFromEmail.createJsonListOfEvents() "
+		// + ((MimeMultipart) aMessage.getContent()).getBodyPart(1));
+	}
+	theImapClient.close();
+	return msgs;
+}
+private static Store connect() throws NoSuchProviderException, MessagingException {
+	Properties props = System.getProperties();
+	String password = System.getenv("GMAIL_PASSWORD");
+	if (password == null) {
+		throw new RuntimeException(
+				"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
+	}
+	props.setProperty("mail.store.protocol", "imap");
+	Store theImapClient = Session.getInstance(props).getStore("imaps");
+	theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com", password);
+	return theImapClient;
+}
+private static String getBody(Message aMessage) {
+	String out = "";
+	try {
+		if (!aMessage.getFolder().isOpen()) {
+			aMessage.getFolder().open(Folder.READ_ONLY);
+		}
+		BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(0);
+		if (aMessage.getContent() instanceof MimeMultipart) {
+			MimeMultipart m = (MimeMultipart) aMessage.getContent();
+		} else {
+			System.out.println("GetEventsFromEmail.getBody() content class = " + aMessage.getContent().getClass());
+			System.exit(-1);
+		}
+//		MimeMultipart m = (MimeMultipart) aMessage.getContent();
+//		System.out.println("GetEventsFromEmail.getBody() count = " + m.getCount());
+//		System.out.println("GetEventsFromEmail.getBody() size = " + bodyPart.getSize());
+//		List<String> s = IOUtils.readLines(bodyPart.getInputStream());
+//		System.out.println("GetEventsFromEmail.getBody() s = " + s);
+		if (bodyPart.getContent() instanceof String) {
+			String content = (String) bodyPart.getContent();
+			if (aMessage.getFolder().isOpen()) {
+				aMessage.getFolder().close(false);
 			}
-			return daysToPostponeSaved;
+			//return content.replaceAll("[.\\n\\r\\s]+Title..", "");
+			return content.replaceAll("[\\s\\S]*Title:.", "").replaceAll("When[\\s\\S]*", "").replaceAll("\\n", "").replaceAll("\\r", "");
+		} else {
+			MimePartDataSource plainText = (MimePartDataSource) bodyPart.getContent();
+			out += plainText.getName();
 		}
-
-		private static JSONObject createJsonListOfEvents(Message[] msgs)
-				throws MessagingException {
-			Map<String, JSONObject> messages = new TreeMap<String, JSONObject>();
-			// int i = 0;
-			for (Message aMessage : msgs) {
-				JSONObject messageMetadata = Preconditions
-						.checkNotNull(getMessageMetadata(aMessage));
-				String string = messageMetadata.getString("title");
-				String capitalize = HelloWorldResource.formatTitleForPrinting(string);
-				messages.put(capitalize,
-						messageMetadata);
-			}
-			int i = 0;
-			JSONObject jsonToBeSaved = new JSONObject();
-			for (String aTitle : new TreeSet<String>(messages.keySet())) {
-				++i;
-				JSONObject messageMetadata = messages.get(aTitle);
-				// System.out.println(i + "\t" + aTitle);
-				jsonToBeSaved.put(Integer.toString(i), messageMetadata);
-			}
-			return jsonToBeSaved;
+		if (aMessage.getFolder().isOpen()) {
+			aMessage.getFolder().close(false);
 		}
-
-		private static JSONObject getMessageMetadata(Message aMessage) {
-			JSONObject errandJsonObject;
-			try {
-				errandJsonObject = new JSONObject();
-				String title;
-				// Leave this as-s for writing. Only when displaying should you
-				// abbreviate
-				title = aMessage.getSubject();
-
-				errandJsonObject.put("title", title);
-				return errandJsonObject;
-			} catch (MessagingException e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-
-		private static Message[] getMessages() throws NoSuchProviderException,
-				MessagingException {
-			// System.out.println("Connecting");
-			Store theImapClient = connect();
-			Folder folder = theImapClient
-					.getFolder("3 - Urg - time sensitive");
-			// System.out.println("Opening");
-			folder.open(Folder.READ_ONLY);
-
-			// System.out.println("Getting Message list");
-			Message[] msgs = folder.getMessages();
-
-			FetchProfile fp = new FetchProfile();
-			fp.add(FetchProfile.Item.ENVELOPE);
-			//System.out.print("getMessages() - Fetching message attributes...");
-			folder.fetch(msgs, fp);
-			//System.out.println("done");
-			theImapClient.close();
-			return msgs;
-		}
-
-		private static Store connect() throws NoSuchProviderException,
-				MessagingException {
-			Properties props = System.getProperties();
-			String password = System.getenv("GMAIL_PASSWORD");
-			if (password == null) {
-				throw new RuntimeException(
-						"Please specify your password by running export GMAIL_PASSWORD=mypassword groovy mail.groovy");
-			}
-			props.setProperty("mail.store.protocol", "imap");
-			Store theImapClient = Session.getInstance(props).getStore("imaps");
-			theImapClient.connect("imap.gmail.com",
-					"sarnobat.hotmail@gmail.com", password);
-			return theImapClient;
-		}
+	} catch (Exception e) {
+		e.printStackTrace();
+		System.out.println("GetEventsFromEmail.getBody() - problem with plain text: " + e.getMessage());
+		return "(plain text problem) ";
+	}
+	try {
+		MimePartDataSource richText = (MimePartDataSource) ((MimeMultipart) aMessage
+				.getContent()).getBodyPart(1).getContent();
+		out += richText.getName();
+	} catch (Exception e) {
+		System.out.println("GetEventsFromEmail.getBody() - problem with rich text");
+		return "(rich text problem)";
+	}
+	return out;
+}
 	}
 
 	private static class Postpone {
