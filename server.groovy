@@ -766,7 +766,7 @@ System.out.println("1111: " + title);
 		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
 				throws NoSuchProviderException, MessagingException, IOException {
 //			JSONObject json = createJsonListOfEvents(getMessages());
-System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromEmail() - " + tasksFilePath);
+//System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromEmail() - " + tasksFilePath);
 			String errands = FileUtils.readFileToString(new File(tasksFilePath));
 			JSONObject json = new JSONObject(errands).getJSONObject("tasks");
 			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
