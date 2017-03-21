@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.mail.BodyPart;
 import javax.mail.FetchProfile;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -19,6 +20,7 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.internet.MimeMultipart;
 import javax.ws.rs.Path;
 
 import org.apache.commons.io.FileUtils;
@@ -48,18 +50,6 @@ public class GetEventsFromEmail {
 	private static final String TASKS_FILE = CONFIG_FOLDER + "/tasks.json";
 	private static final String CLIENT_SECRETS = home() + "/github/google_task_warrior/client_secrets.json";
 
-	private static void getErrandsInSeparateThread() {
-		try {
-			getErrands(TASKS_FILE);
-		} catch (NoSuchProviderException e) {
-			e.printStackTrace();
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private static String formatTitleForPrinting(String string) {
 		String[] aTitle = string.split("@");
 		String repeating = "";
@@ -77,7 +67,7 @@ public class GetEventsFromEmail {
 	 * Boilerplate
 	 ************************************************************************/
 
-	private static Calendar getCalendarService() {
+	private static Calendar getCalendarService(String CLIENT_SECRETS) {
 		return getCalendarService(FileUtils.getFile(CLIENT_SECRETS), home()
 				+ "/.store/calendar_sample");
 	}
@@ -146,7 +136,6 @@ public class GetEventsFromEmail {
 
 	private static JSONObject createJsonListOfEvents(Message[] msgs) throws MessagingException {
 		Map<String, JSONObject> messages = new TreeMap<String, JSONObject>();
-		// int i = 0;
 		for (Message aMessage : msgs) {
 			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
 			String string = messageMetadata.getString("title");
@@ -158,7 +147,6 @@ public class GetEventsFromEmail {
 		for (String aTitle : new TreeSet<String>(messages.keySet())) {
 			++i;
 			JSONObject messageMetadata = messages.get(aTitle);
-			// System.out.println(i + "\t" + aTitle);
 			jsonToBeSaved.put(Integer.toString(i), messageMetadata);
 		}
 		return jsonToBeSaved;
@@ -196,6 +184,21 @@ public class GetEventsFromEmail {
 		// System.out.print("getMessages() - Fetching message attributes...");
 		folder.fetch(msgs, fp);
 		// System.out.println("done");
+		
+		for (Message aMessage : msgs) {
+			JSONObject messageMetadata = Preconditions.checkNotNull(getMessageMetadata(aMessage));
+			String string = messageMetadata.getString("title");
+			String capitalize = formatTitleForPrinting(string);
+			MimeMultipart content;
+			try {
+				content = (MimeMultipart) aMessage.getContent();
+				Object bodyPart = content.getBodyPart(0).getContent();
+				System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + bodyPart);
+				System.out.println("GetEventsFromEmail.createJsonListOfEvents() " + content.getBodyPart(1));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		theImapClient.close();
 		return msgs;
 	}
@@ -211,6 +214,18 @@ public class GetEventsFromEmail {
 		Store theImapClient = Session.getInstance(props).getStore("imaps");
 		theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com", password);
 		return theImapClient;
+	}
+
+	private static void getErrandsInSeparateThread() {
+		try {
+			getErrands(TASKS_FILE);
+		} catch (NoSuchProviderException e) {
+			e.printStackTrace();
+		} catch (MessagingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) throws URISyntaxException, NoSuchProviderException,
