@@ -119,6 +119,7 @@ public class NotNow {
 		new Thread() {
 			public void run() {
 				try {
+System.err.println("getErrandsInSeparateThread()");
 					ListDisplaySynchronous.getErrands(TASKS_FILE);
 				} catch (NoSuchProviderException e) {
 					e.printStackTrace();

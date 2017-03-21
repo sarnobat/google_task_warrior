@@ -1,14 +1,14 @@
 {"tasks": {
-  "3": {"title": "Notification: Backup email @ Thu 2017-02-23 7pm - 7:30pm (ss401533@gmail.com)"},
-  "2": {"title": "Notification: backup chats @ Thu 2017-02-23 7:30pm - 8pm (ss401533@gmail.com)"},
-  "10": {"title": "Notification: [mom] cash value life insurance https://www.amazon.com/Bu... @ Sun 2017-03-19 9pm - 9:30pm (ss401533@gmail.com)"},
-  "1": {"title": "Notification: 1 (800) 742-5877 - UPS - 018 359 88 @ Mon 2017-03-06 2pm - 2:30pm (ss401533@gmail.com)"},
-  "7": {"title": "Notification: Jason Swartz, Thinking Functionally with Databases @ Mon 2017-03-20 6:30pm - 9:30pm (ss401533@gmail.com)"},
-  "6": {"title": "Notification: get medical records @ Wed 2017-03-08 12:30pm - 1pm (ss401533@gmail.com)"},
-  "5": {"title": "Notification: get dental records @ Wed 2017-03-08 12pm - 12:30pm (ss401533@gmail.com)"},
-  "4": {"title": "Notification: Find Stanford Guilt course materials @ Sat 2017-02-25 1:30pm - 2pm (ss401533@gmail.com)"},
-  "9": {"title": "Notification: [hsbc] Should have gotten $1 deposit into checking from S... @ Fri 2017-03-10 4:30pm - 5pm (ss401533@gmail.com)"},
-  "daysToPostpone": 30,
-  "8": {"title": "Notification: Save Wells Fargo statements @ Wed 2017-03-01 10am - 11am (Repeating - regular)"},
-  "11": {"title": "Notification: [ubuntu] automation: mark an email read after age exceeds... @ Wed 2017-03-08 9:39pm (ss401533@gmail.com)"}
+  "11": {"title": "[ubuntu] automation: mark an email read after age exceeds date (use  not_now logic with cron job)"},
+  "1": {"title": "1 (800) 742-5877 - UPS - 018 359 88"},
+  "2": {"title": "backup chats"},
+  "3": {"title": "Backup email"},
+  "4": {"title": "Find Stanford Guilt course materials"},
+  "5": {"title": "get dental records"},
+  "6": {"title": "get medical records"},
+  "7": {"title": "Jason Swartz, Thinking Functionally with DatabasesScala BayMonday, March 20 at 6:30 PMTitle Jason Swartz, Thinking Functionally with Databases  Abstract  As  developers using a functional programming language, we embrace immutable  collec...https://www.meetup.com/Scala-Bay/events/238419430/"},
+  "8": {"title": "Save Wells Fargo statements"},
+  "9": {"title": "[hsbc] Should have gotten $1 deposit into checking from Scholarshare"},
+  "10": {"title": "[mom] cash value life insurance  https://www.amazon.com/Building-Your-Warehouse-Wealth-Nelson-ebook/dp/B00C60TYE0/ref=sr_1_2?s=books&ie=UTF8&qid=1489530848&sr=1-2&keywords=fractional+reserve"},
+  "daysToPostpone": 30
 }}
