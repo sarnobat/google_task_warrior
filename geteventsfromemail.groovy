@@ -52,7 +52,7 @@ public class GetEventsFromEmail {
 	}
 
 	private static final String TASKS_FILE = CONFIG_FOLDER + "/tasks.json";
-	private static final String SECRET = "/github/google_task_warrior/client_secrets.json";
+	private static final String SECRET = "/github/not_now/client_secrets.json";
 	private static final String CLIENT_SECRETS = home() + SECRET;
 
 	private static String formatTitleForPrinting(String string) {
@@ -129,6 +129,7 @@ public class GetEventsFromEmail {
 			daysToPostponeSaved = DAYS_TO_POSTPONE;
 		} else {
 			String errands = FileUtils.readFileToString(new File(tasksFilePath));
+//System.err.println("getPostponeCount() - " + errands);
 			JSONObject allErrandsJsonOriginal = new JSONObject(errands);
 			if (allErrandsJsonOriginal.has("daysToPostpone")) {
 				daysToPostponeSaved = allErrandsJsonOriginal.getInt("daysToPostpone");
