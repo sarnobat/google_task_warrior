@@ -86,20 +86,6 @@ public class NotNow {
 		if (!Paths.get(CLIENT_SECRETS).toFile().exists()) {
 			throw new RuntimeException("Make sure ~/client_secrets.json exists");
 		}
-		//String message = System.getProperty("user.home") + "/.store/calendar_sample";
-		//File file = Paths.get(message).toFile();
-		// if (!file.exists()) {
-		// throw new
-		// RuntimeException("Make sure ~/.store/calendar_sample exists");
-		// }
-		// if (FileUtils.sizeOf(file) == 0) {
-		// throw new RuntimeException("Corrupted: " + message);
-		// }
-
-		// int nextFreeDateMidnight = GetCalendarEvents.getDaysToNextFreeDate();
-		// System.out.println("Days to next free date: " +
-		// nextFreeDateMidnight);
-		// System.exit(0);
 
 		getErrandsInSeparateThread();
 		ListDisplaySynchronous.writeCalendarsToFileInSeparateThread(
@@ -119,7 +105,6 @@ public class NotNow {
 		new Thread() {
 			public void run() {
 				try {
-System.err.println("getErrandsInSeparateThread()");
 					ListDisplaySynchronous.getErrands(TASKS_FILE);
 				} catch (NoSuchProviderException e) {
 					e.printStackTrace();
@@ -775,13 +760,16 @@ System.err.println("getErrandsInSeparateThread()");
 			FileUtils.writeStringToFile(new File(tasksFilePath),
 					json.toString(2));
 		}
-		static JSONObject getErrandsJsonFromEmail(String tasksFilePath) throws NoSuchProviderException,
-		MessagingException, IOException {
-//	System.out.println("getErrandsJsonFromEmail() - " + "Messages obtained");
-	JSONObject json = createJsonListOfEvents(getMessages());
-	json.put("daysToPostpone", getPostponeCount(tasksFilePath));
-	return json;
-}
+
+		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
+				throws NoSuchProviderException, MessagingException, IOException {
+//			JSONObject json = createJsonListOfEvents(getMessages());
+
+			String errands = FileUtils.readFileToString(new File(tasksFilePath));
+			JSONObject json = new JSONObject(errands);
+			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
+			return json;
+		}
 
 private static int getPostponeCount(String tasksFilePath) throws IOException {
 	int DAYS_TO_POSTPONE = 30;
