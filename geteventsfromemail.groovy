@@ -330,53 +330,9 @@ public class GetEventsFromEmail {
 					.setDataStoreFactory(new FileDataStoreFactory(homeDir)).build(),
 					new LocalServerReceiver());
 		}
-
-		@GET
-		@Path("postponeToNextFree")
-		@Produces("application/json")
-		public Response postponeToNextFree(@QueryParam("itemNumber") Integer iItemNumber)
-				throws IOException, NoSuchProviderException, MessagingException,
-				GeneralSecurityException {
-			System.out.println("postponeToNextFree() - begin");
-			try {
-				GetCalendarEvents.postponeEventToNextFreeDate(iItemNumber.toString());
-				// System.out.println("postponeToNextFree() - end");
-				System.out.println("------------------------------------");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			JSONObject json = new JSONObject();
-			return Response.ok().header("Access-Control-Allow-Origin", "*").entity(json.toString())
-					.type("application/json").build();
-		}
 	}
 
 	private static class ListDisplaySynchronous {
-		static void writeCalendarsToFileInSeparateThread(final String configFolder,
-				final String calendarCacheFile) {
-			new Thread() {
-				public void run() {
-					writeCalendars(configFolder, calendarCacheFile);
-				}
-			}.start();
-		}
-
-		private static void writeCalendars(String configFolder, String calendarCacheFile) {
-
-			JSONObject json;
-			try {
-				json = getCalendars();
-
-				final File file = new File(calendarCacheFile);
-				FileUtils.writeStringToFile(file, json.toString(2), "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (GeneralSecurityException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
 
 		private static JSONObject getCalendars() throws GeneralSecurityException, IOException,
 				UnsupportedEncodingException {
@@ -404,6 +360,7 @@ public class GetEventsFromEmail {
 				MessagingException, IOException {
 			JSONObject json = new JSONObject();
 			json.put("tasks", getErrandsJsonFromEmail(tasksFilePath));
+			System.out.println("GetEventsFromEmail.ListDisplaySynchronous.getErrands()" + json.toString(2));
 			FileUtils.writeStringToFile(new File(tasksFilePath), json.toString(2));
 		}
 
