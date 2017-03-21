@@ -222,17 +222,17 @@ public class GetEventsFromEmail {
 				System.out.println("GetEventsFromEmail.getBody() content class = " + aMessage.getContent().getClass());
 				System.exit(-1);
 			}
-			MimeMultipart m = (MimeMultipart) aMessage.getContent();
+//			MimeMultipart m = (MimeMultipart) aMessage.getContent();
 //			System.out.println("GetEventsFromEmail.getBody() count = " + m.getCount());
 //			System.out.println("GetEventsFromEmail.getBody() size = " + bodyPart.getSize());
-			List<String> s = IOUtils.readLines(bodyPart.getInputStream());
+//			List<String> s = IOUtils.readLines(bodyPart.getInputStream());
 //			System.out.println("GetEventsFromEmail.getBody() s = " + s);
 			if (bodyPart.getContent() instanceof String) {
 				String content = (String) bodyPart.getContent();
 				if (aMessage.getFolder().isOpen()) {
 					aMessage.getFolder().close(false);
 				}
-				return content;
+				return content.substring(0, 120);
 			} else {
 				MimePartDataSource plainText = (MimePartDataSource) bodyPart.getContent();
 				out += plainText.getName();
