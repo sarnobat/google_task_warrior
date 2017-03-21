@@ -612,7 +612,7 @@ public class NotNow {
 			for (Message aMsg : msgs) {
 System.out.println("1111: " + aMsg.getSubject().substring(0, 15));
 System.out.println("1111: " + title);
-				if (title.startsWith(aMsg.getSubject().substring(0, 15))) {
+				if (title.startsWith(aMsg.getSubject().replace("Notification: ", "").substring(0, 15))) {
 					theMsgList.add(checkNotNull(aMsg));
 //					System.out.println("Delete.getMessages() - matched: "
 //							+ aMsg.getSubject());
@@ -1549,11 +1549,7 @@ private static String getBody(Message aMessage) {
 			long nextFreeDate = findNextFreeDate();
 			java.util.Calendar nextFree = java.util.Calendar.getInstance();
 			nextFree.setTimeInMillis(nextFreeDate);
-//			System.out.println("NotNow.GetCalendarEvents.getDaysToNextFreeDate() - Next free date "
-//					+ nextFree.getTime().toString());
 			long daysToNextFreeDate = (nextFreeDate - todayMidnight) / 86400000 + 1;
-//			System.out.println("NotNow.GetCalendarEvents.getDaysToNextFreeDate() - Calendar ID: "
-//					+ getCalendarId("ss401533@gmail.com"));
 			return (int) daysToNextFreeDate;
 		}
 

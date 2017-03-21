@@ -110,7 +110,7 @@ public class GetEventsFromEmail {
 			MessagingException, IOException {
 		JSONObject json = new JSONObject();
 		json.put("tasks", getErrandsJsonFromEmail(tasksFilePath));
-		System.out.println("GetEventsFromEmail.ListDisplaySynchronous.getErrands()"
+		System.err.println("GetEventsFromEmail.ListDisplaySynchronous.getErrands()"
 				+ json.toString(2));
 	}
 
