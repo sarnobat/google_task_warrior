@@ -1,14 +1,14 @@
 {"tasks": {
-  "11": {"title": "[ubuntu] automation: mark an email read after age exceeds date (use  not_now logic with cron job)"},
-  "1": {"title": "1 (800) 742-5877 - UPS - 018 359 88"},
-  "2": {"title": "backup chats"},
   "3": {"title": "Backup email"},
-  "4": {"title": "Find Stanford Guilt course materials"},
-  "5": {"title": "get dental records"},
-  "6": {"title": "get medical records"},
-  "7": {"title": "Jason Swartz, Thinking Functionally with DatabasesScala BayMonday, March 20 at 6:30 PMTitle Jason Swartz, Thinking Functionally with Databases  Abstract  As  developers using a functional programming language, we embrace immutable  collec...https://www.meetup.com/Scala-Bay/events/238419430/"},
-  "8": {"title": "Save Wells Fargo statements"},
-  "9": {"title": "[hsbc] Should have gotten $1 deposit into checking from Scholarshare"},
+  "2": {"title": "backup chats"},
   "10": {"title": "[mom] cash value life insurance  https://www.amazon.com/Building-Your-Warehouse-Wealth-Nelson-ebook/dp/B00C60TYE0/ref=sr_1_2?s=books&ie=UTF8&qid=1489530848&sr=1-2&keywords=fractional+reserve"},
-  "daysToPostpone": 30
+  "1": {"title": "1 (800) 742-5877 - UPS - 018 359 88"},
+  "7": {"title": "Jason Swartz, Thinking Functionally with DatabasesScala BayMonday, March 20 at 6:30 PMTitle Jason Swartz, Thinking Functionally with Databases  Abstract  As  developers using a functional programming language, we embrace immutable  collec...https://www.meetup.com/Scala-Bay/events/238419430/"},
+  "6": {"title": "get medical records"},
+  "5": {"title": "get dental records"},
+  "4": {"title": "Find Stanford Guilt course materials"},
+  "9": {"title": "[hsbc] Should have gotten $1 deposit into checking from Scholarshare"},
+  "daysToPostpone": 30,
+  "8": {"title": "Save Wells Fargo statements"},
+  "11": {"title": "[ubuntu] automation: mark an email read after age exceeds date (use  not_now logic with cron job)"}
 }}

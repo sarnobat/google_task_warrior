@@ -610,7 +610,9 @@ public class NotNow {
 			ArrayList<Message> theMsgList = new ArrayList<Message>();
 //			System.out.println("Delete.getMessages() - looking for " + title);
 			for (Message aMsg : msgs) {
-				if (aMsg.getSubject().equals(title)) {
+System.out.println("1111: " + aMsg.getSubject().substring(0, 15));
+System.out.println("1111: " + title);
+				if (title.startsWith(aMsg.getSubject().replace("Notification: ", "").substring(0, 15))) {
 					theMsgList.add(checkNotNull(aMsg));
 //					System.out.println("Delete.getMessages() - matched: "
 //							+ aMsg.getSubject());
@@ -764,9 +766,9 @@ public class NotNow {
 		static JSONObject getErrandsJsonFromEmail(String tasksFilePath)
 				throws NoSuchProviderException, MessagingException, IOException {
 //			JSONObject json = createJsonListOfEvents(getMessages());
-System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromEmail() - " + tasksFilePath);
+//System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromEmail() - " + tasksFilePath);
 			String errands = FileUtils.readFileToString(new File(tasksFilePath));
-			JSONObject json = new JSONObject(errands);
+			JSONObject json = new JSONObject(errands).getJSONObject("tasks");
 			json.put("daysToPostpone", getPostponeCount(tasksFilePath));
 			return json;
 		}
@@ -1547,11 +1549,7 @@ private static String getBody(Message aMessage) {
 			long nextFreeDate = findNextFreeDate();
 			java.util.Calendar nextFree = java.util.Calendar.getInstance();
 			nextFree.setTimeInMillis(nextFreeDate);
-//			System.out.println("NotNow.GetCalendarEvents.getDaysToNextFreeDate() - Next free date "
-//					+ nextFree.getTime().toString());
 			long daysToNextFreeDate = (nextFreeDate - todayMidnight) / 86400000 + 1;
-//			System.out.println("NotNow.GetCalendarEvents.getDaysToNextFreeDate() - Calendar ID: "
-//					+ getCalendarId("ss401533@gmail.com"));
 			return (int) daysToNextFreeDate;
 		}
 
