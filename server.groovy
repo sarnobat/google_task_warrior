@@ -612,6 +612,7 @@ public class NotNow {
 				for (String aTitle : new TreeSet<String>(messages.keySet())) {
 					++i;
 					JSONObject messageMetadataJson = messages.get(aTitle);
+					// TODO - do not use message index, use calendar event ID
 					jsonToBeSaved.put(Integer.toString(i), messageMetadataJson);
 				}
 				return jsonToBeSaved;
@@ -637,7 +638,41 @@ public class NotNow {
 				// Leave this as-s for writing. Only when displaying should you
 				// abbreviate
 				errandJsonObject.put("title", getUntruncatedTitle(aMessage));
+				errandJsonObject.put("messageId", getMessageID(aMessage));
 				return errandJsonObject;
+			}
+			
+
+			private static String getMessageID(Message aMessage) {
+				if (aMessage == null) {
+					System.out.println("aMessage is null");
+				}
+				try {
+					if (!aMessage.getFolder().isOpen()) {
+						aMessage.getFolder().open(Folder.READ_ONLY);
+					}
+					Enumeration<?> allHeaders;
+					try {
+						allHeaders = aMessage.getAllHeaders();
+					} catch (MessagingException e1) {
+						e1.printStackTrace();
+						throw new RuntimeException(e1);
+					}
+					String messageID = "<not found>";
+					while (allHeaders.hasMoreElements()) {
+						Header e = (Header) allHeaders.nextElement();
+						if (e.getName().equals("Message-ID")) {
+							messageID = e.getValue();
+						}
+					}
+					if (aMessage.getFolder().isOpen()) {
+						aMessage.getFolder().close(false);
+					}
+					return messageID;
+				} catch (MessagingException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
 			}
 
 			private static String getUntruncatedTitle(Message aMessage) {
@@ -687,14 +722,17 @@ public class NotNow {
 					if (!aMessage.getFolder().isOpen()) {
 						aMessage.getFolder().open(Folder.READ_ONLY);
 					}
-					BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(0);
 					if (aMessage.getContent() instanceof MimeMultipart) {
 						MimeMultipart m = (MimeMultipart) aMessage.getContent();
+						BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(1);
+						System.out
+								.println("NotNow.ListDisplaySynchronous.CreateJsonFromEmail.getBody()" + bodyPart.getContent());
 					} else {
 						System.out.println("GetEventsFromEmail.getBody() content class = "
 								+ aMessage.getContent().getClass());
 						System.exit(-1);
 					}
+					BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(0);
 					if (bodyPart.getContent() instanceof String) {
 						String content = (String) bodyPart.getContent();
 						if (aMessage.getFolder().isOpen()) {
