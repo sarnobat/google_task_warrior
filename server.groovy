@@ -614,6 +614,7 @@ public class NotNow {
 					JSONObject messageMetadataJson = messages.get(aTitle);
 					// TODO - do not use message index, use calendar event ID
 					jsonToBeSaved.put(Integer.toString(i), messageMetadataJson);
+					jsonToBeSaved.put(messageMetadataJson.getString("messageId"), messageMetadataJson);
 				}
 				return jsonToBeSaved;
 			}
@@ -725,8 +726,8 @@ public class NotNow {
 					if (aMessage.getContent() instanceof MimeMultipart) {
 						MimeMultipart m = (MimeMultipart) aMessage.getContent();
 						BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(1);
-						System.out
-								.println("NotNow.ListDisplaySynchronous.CreateJsonFromEmail.getBody()" + bodyPart.getContent());
+//						System.out
+//								.println("NotNow.ListDisplaySynchronous.CreateJsonFromEmail.getBody()" + bodyPart.getContent());
 					} else {
 						System.out.println("GetEventsFromEmail.getBody() content class = "
 								+ aMessage.getContent().getClass());

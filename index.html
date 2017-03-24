@@ -85,8 +85,14 @@ function populateCallback(result, incrementAll, defaultPostponement){
 var rows;
 function getTaskRows(tasks, incrementAll, defaultPostponement) {
 	rows = "";
+	var i = 1;
+	var index2 = 1;
 	$.each(tasks, function(k,v){
 		if (k == 'daysToPostpone') {
+			return;
+		}
+		if (! k.startsWith('<')) {
+			console.debug("Workaround - ignore tasks that are keyed by a simple number");
 			return;
 		}
 		var title = (v.title.split(/@/)[0]);
@@ -123,7 +129,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 				}
 			});
 		}
-		rows += "<td>" + k + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle //.substring(0, 48)
+		rows += "<td>" + index2 + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle //.substring(0, 48)
 			 + "</td>";
 		//rows += "<td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
                 rows += "<td>&nbsp;<button type=button onclick='offloadEvent(" +k+")'>Errands.txt</button>&nbsp;</td>";
@@ -148,6 +154,8 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 		rows += "<td>&nbsp;<button type=button onclick='tag(" + k + ", this)'>important</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='tag(" + k + ", this)'>urgent</button>&nbsp;&nbsp;</td>";
 		rows +='</tr>';
+		++i;
+		++index2;
 	});	
 	return rows;	
 }
