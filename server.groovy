@@ -772,10 +772,6 @@ public class NotNow {
 			return json;
 		}
 
-		/************************************************************************
-		 * Boilerplate
-		 ************************************************************************/
-
 		static JSONObject getErrandsJsonFromFile(String tasksFilePath)
 				throws NoSuchProviderException, MessagingException, IOException {
 
