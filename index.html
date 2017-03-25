@@ -165,10 +165,10 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 function tag(itemNumber, element) {
 	//alert(element.textContent);
 	
-	 $.ajax(URL_BASE + "/not_now/tag?itemNumber=" + itemNumber + "&tag=" + element.textContent)
+	 $.ajax(URL_BASE + "/not_now/tag?itemNumber=" + encodeURIComponent(itemNumber) + "&tag=" + element.textContent)
 	  .done(function() {
 			console.log( "success" );
-			$("#event-" + itemNumber).css("background-color", "purple");
+			$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "purple");
 	  })
 	  .fail(function() {
 		console.log( "error" );
@@ -178,8 +178,8 @@ function tag(itemNumber, element) {
 	  .always(function() {
 		console.log( "complete" );
 	  });
-	//$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "pink");
+	//$('[id="event-' + encodeURIComponent(itemNumber) + '"]').fadeOut(FADE_TIME, function() {});
+    $('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "pink");
 }
 
 function offloadEvent(itemNumber) {
@@ -188,7 +188,7 @@ function offloadEvent(itemNumber) {
 	$.ajax(URL_BASE_NEW + "/not_now/offload?itemNumber=" + encodeURIComponent(itemNumber))
 		.done(function() {
 			console.log( "success" );
-			//$("#event-" + itemNumber).remove();
+			//$('[id="event-' + encodeURIComponent(itemNumber) + '"]').remove();
 			$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "lightgreen");
 			++messagesDeleted;
 			$("#status").html(messagesDeleted);
@@ -207,11 +207,11 @@ function offloadEvent(itemNumber) {
 }
 
 function archiveEvent(itemNumber) {
- $.ajax(URL_BASE + "/not_now/archive?itemNumber=" + itemNumber)
+ $.ajax(URL_BASE + "/not_now/archive?itemNumber=" + encodeURIComponent(itemNumber))
 	  .done(function() {
 			console.log( "success" );
-    		//$("#event-" + itemNumber).remove();
-			$("#event-" + itemNumber).css("background-color", "lightgreen");
+    		//$('[id="event-' + encodeURIComponent(itemNumber) + '"]').remove();
+			$("#event-" + encodeURIComponent(itemNumber)).css("background-color", "lightgreen");
 			++messagesDeleted;
 			$("#status").html(messagesDeleted);
 	  })
@@ -223,16 +223,16 @@ function archiveEvent(itemNumber) {
 	  .always(function() {
 		console.log( "complete" );
 	  });
-	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "orange");
+	$("#event-" + encodeURIComponent(itemNumber)).fadeOut(FADE_TIME, function() {});
+    $("#event-" + encodeURIComponent(itemNumber)).css("background-color", "orange");
 }
 
 function deleteEvent(itemNumber) {
-    $.ajax(URL_BASE + "/not_now/delete?itemNumber=" + itemNumber)
+    $.ajax(URL_BASE + "/not_now/delete?itemNumber=" + encodeURIComponent(itemNumber))
 	  .done(function() {
 			console.log( "success" );
-    		//$("#event-" + itemNumber).remove();
-			$("#event-" + itemNumber).css("background-color", "lightgreen");
+    		//$('[id="event-' + encodeURIComponent(itemNumber) + '"]').remove();
+			$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "lightgreen");
 			++messagesDeleted;
 			$("#status").html(messagesDeleted);
 	  })
@@ -244,18 +244,18 @@ function deleteEvent(itemNumber) {
 	  .always(function() {
 		console.log( "complete" );
 	  });
-	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "orange");
+	$('[id="event-' + encodeURIComponent(itemNumber) + '"]').fadeOut(FADE_TIME, function() {});
+    $('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "orange");
     
 }
 
 function postponeToNextFree(itemNumber, base, defaultPostponement, incrementAll) {
 
-$.ajax(URL_BASE + "/not_now/postponeToNextFree?itemNumber=" + itemNumber)
+$.ajax(URL_BASE + "/not_now/postponeToNextFree?itemNumber=" + encodeURIComponent(itemNumber))
       .done(function() {
 			console.log( "success" );
-			//$("#event-" + itemNumber).remove();
-			$("#event-" + itemNumber).css("background-color", "lightgreen");
+			//$('[id="event-' + encodeURIComponent(itemNumber) + '"]').remove();
+			$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "lightgreen");
 			++messagesDeleted;
 			$("#status").html(messagesDeleted);
 		})
@@ -266,14 +266,14 @@ $.ajax(URL_BASE + "/not_now/postponeToNextFree?itemNumber=" + itemNumber)
 			console.log( "complete" );
 		});
 
-	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "orange");
+	$('[id="event-' + encodeURIComponent(itemNumber) + '"]').fadeOut(FADE_TIME, function() {});
+    $('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "orange");
 }
 
 function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 	//rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + itemNumber + "," + base + "," + defaultPostponement + "," + incrementAll + ")'> 1 day</button>&nbsp;&nbsp;</td>";
 	var total = base + parseInt(defaultPostponement);
-    $.ajax(URL_BASE + "/not_now/postpone?itemNumber=" + itemNumber + "&daysToPostpone=" + total)	  
+    $.ajax(URL_BASE + "/not_now/postpone?itemNumber=" + encodeURIComponent(itemNumber) + "&daysToPostpone=" + total)	  
       .done(function() {
 		console.log( "success" );
 	
@@ -282,7 +282,7 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 		//	 as-is because the callback will remove the old tasks. But it would be even better to extract
 		//	 the iteration logic into a reducer function
 		//		refreshTable(tasks, incrementAll, defaultPostponement);
-		$("#event-" + itemNumber).css("background-color", "lightgreen");
+		$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "lightgreen");
 		
 		delete tasks[itemNumber];
 
@@ -296,8 +296,8 @@ function postponeDefault(itemNumber, base, defaultPostponement, incrementAll) {
 		console.log( "complete" );
 	  });
 
-	$("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "orange");
+	$('[id="event-' + encodeURIComponent(itemNumber) + '"]').fadeOut(FADE_TIME, function() {});
+    $('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "orange");
     defaultPostponement = defaultPostponement + 7;
     updateUrl(defaultPostponement, $.url().param('incrementAll'));
     updateButtons(parseInt(defaultPostponement), $("#taskRows").find('tbody').find('tr'));
