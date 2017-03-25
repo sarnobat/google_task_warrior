@@ -92,7 +92,7 @@ public class NotNow {
 			throw new RuntimeException("Make sure ~/client_secrets.json exists");
 		}
 
-		getErrandsInSeparateThread();
+		//getErrandsInSeparateThread();
 		ListDisplaySynchronous.writeCalendarsToFileInSeparateThread(
 				"/home/sarnobat/.gcal_task_warrior", "/home/sarnobat/.gcal_task_warrior"
 						+ "/calendars.json");
@@ -136,6 +136,7 @@ public class NotNow {
 		@Path("items")
 		@Produces("application/json")
 		public Response listItems(@QueryParam("rootId") Integer iRootId) throws Exception {
+			System.out.println("NotNow.HelloWorldResource.listItems() - Begin");
 			try {
 				JSONObject json = new JSONObject();
 				json.put("tasks", ListDisplaySynchronous.getErrandsJsonFromFile(TASKS_FILE));
@@ -310,7 +311,7 @@ public class NotNow {
 				writeToFile("/home/sarnobat/sarnobat.git/www/errands/all.txt", title);
 				System.out.println("writeToDiskAndDelete() - written to file: " + title);
 				Delete.deleteByMessageId(iItemNumber.toString());
-				System.out.println("writeToDiskAndDelete() - deleted message ID " + iItemNumber.toString());
+				//System.out.println("writeToDiskAndDelete() - deleted message ID " + iItemNumber.toString());
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(new JSONObject().toString()).type("application/json").build();
 			} catch (Exception e) {
@@ -623,6 +624,7 @@ public class NotNow {
 					aMessage.setFlag(Flags.Flag.DELETED, true);
 					System.out.println("NotNow.Delete.deleteEmail() - Deleted email:\t"
 							+ aMessage.getSubject());
+					System.out.println("NotNow.Delete.deleteEmail() - Deleted email with ID: " + aMessageID);
 					break;
 				}
 			}
@@ -718,6 +720,8 @@ public class NotNow {
 			// make this private
 			private static Message[] getMessages() throws NoSuchProviderException,
 					MessagingException {
+				System.out
+						.println("NotNow.ListDisplaySynchronous.CreateJsonFromEmail.getMessages() - Opening IMAP connection...");
 				Store theImapClient = connect();
 				Folder folder = theImapClient.getFolder("3 - Urg - time sensitive");
 				folder.open(Folder.READ_ONLY);
@@ -787,6 +791,7 @@ public class NotNow {
 					}
 					BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(0);
 					if (bodyPart.getContent() instanceof String) {
+						System.out.print(".");
 						String content = (String) bodyPart.getContent();
 						if (aMessage.getFolder().isOpen()) {
 							aMessage.getFolder().close(false);
@@ -794,7 +799,16 @@ public class NotNow {
 						return content.replaceAll("[\\s\\S]*Title:.", "")
 								.replaceAll("When[\\s\\S]*", "").replaceAll("\\n", "")
 								.replaceAll("\\r", "");
-					} else {
+					} else if (o instanceof String) {
+						String content = (String) bodyPart.getContent();
+						if (aMessage.getFolder().isOpen()) {
+							aMessage.getFolder().close(false);
+						}
+						return content.replaceAll("[\\s\\S]*Title:.", "")
+								.replaceAll("When[\\s\\S]*", "").replaceAll("\\n", "")
+								.replaceAll("\\r", "");
+					} 
+					else {
 						MimePartDataSource plainText = (MimePartDataSource) bodyPart.getContent();
 						out += plainText.getName();
 					}
@@ -868,8 +882,8 @@ public class NotNow {
 
 			JSONObject json1 = CreateJsonFromEmail.createJsonListOfEvents(CreateJsonFromEmail
 					.getMessages());
-			System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromFile() "
-					+ json1.toString(2));
+//			System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromFile() "
+//					+ json1.toString(2));
 			json1.put("daysToPostpone", getPostponeCount(tasksFilePath));
 			return json1;
 		}
