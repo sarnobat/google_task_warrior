@@ -33,6 +33,7 @@ import javax.mail.MessagingException;
 import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.mail.internet.MimePartDataSource;
 import javax.ws.rs.GET;
@@ -298,14 +299,18 @@ public class NotNow {
 		@GET
 		@Path("offload")
 		@Produces("application/json")
-		public Response writeToDiskAndDelete(@QueryParam("itemNumber") Integer iItemNumber)
+		// Errands.txt
+		public Response writeToDiskAndDelete(@QueryParam("itemNumber") String iItemNumber)
 				throws Exception {
 			System.out.println("writeToDiskAndDelete() - begin");
 			try {
-				writeToFile(iItemNumber, "/home/sarnobat/sarnobat.git/www/errands/all.txt");
-				System.out.println("writeToDiskAndDelete() - written to file");
-				Delete.delete(iItemNumber.toString());
-				System.out.println("writeToDiskAndDelete() - deleted");
+				JSONObject eventJson = getEventJson(iItemNumber.toString(), Paths.get(TASKS_FILE)
+						.toFile());
+				String title = eventJson.getString("title");
+				writeToFile("/home/sarnobat/sarnobat.git/www/errands/all.txt", title);
+				System.out.println("writeToDiskAndDelete() - written to file: " + title);
+				Delete.deleteByMessageId(iItemNumber.toString());
+				System.out.println("writeToDiskAndDelete() - deleted message ID " + iItemNumber.toString());
 				return Response.ok().header("Access-Control-Allow-Origin", "*")
 						.entity(new JSONObject().toString()).type("application/json").build();
 			} catch (Exception e) {
@@ -317,6 +322,7 @@ public class NotNow {
 		@GET
 		@Path("archive")
 		@Produces("application/json")
+		@Deprecated
 		public Response writeToDiskAndDelete2(@QueryParam("itemNumber") Integer iItemNumber)
 				throws Exception {
 			System.out.println("writeToDiskAndDelete() - begin");
@@ -346,12 +352,15 @@ public class NotNow {
 			return capitalize;
 		}
 
+		@Deprecated // Doesn't use dependency injection
 		private void writeToFile(Integer iItemNumber, String file) throws IOException {
 			JSONObject eventJson = getEventJson(iItemNumber.toString(), Paths.get(TASKS_FILE)
 					.toFile());
 			String title = eventJson.getString("title");
-			// System.out.println("NotNow.HelloWorldResource.writeToFile() - Title:\t"
-			// + title);
+			writeToFile(file, title);
+		}
+
+		private void writeToFile(String file, String title) throws IOException {
 			FileUtils.writeStringToFile(Paths.get(file).toFile(), formatTitleForPrinting(title)
 					+ "\n", true);
 		}
@@ -471,6 +480,7 @@ public class NotNow {
 
 		private static final File mTasksFileLatest = new File(DIR_PATH + "/tasks.json");
 
+		@Deprecated
 		public static void delete(String itemToDelete) throws IOException, NoSuchProviderException,
 				MessagingException {
 			JSONObject eventJson = getEventJson(itemToDelete, mTasksFileLatest);
@@ -482,8 +492,15 @@ public class NotNow {
 					throw new RuntimeException("msg is null");
 				}
 				String messageIdToDelete = getMessageID(msg);
-				commit(itemToDelete, messageIdToDelete, theImapClient);
+				commit2(itemToDelete, messageIdToDelete, theImapClient);
 			}
+			theImapClient.close();
+		}
+		
+		public static void deleteByMessageId(String messageIdToDelete) throws IOException, NoSuchProviderException,
+				MessagingException {
+			Store theImapClient = connect();
+			commit(messageIdToDelete, theImapClient);
 			theImapClient.close();
 		}
 
@@ -564,7 +581,7 @@ public class NotNow {
 			return theImapClient;
 		}
 
-		private static void commit(String itemToDelete, final String messageIdToDelete,
+		private static void commit2(String itemToDelete, final String messageIdToDelete,
 				final Store theImapClient) throws NoSuchProviderException, MessagingException,
 				IOException {
 			// All persistent changes are done right at the end, so that any
@@ -576,6 +593,23 @@ public class NotNow {
 				e.printStackTrace();
 			} catch (MessagingException e) {
 				e.printStackTrace();
+			}
+		}
+
+		private static void commit(String messageIdToDelete,
+				Store theImapClient) throws NoSuchProviderException, MessagingException,
+				IOException {
+			// All persistent changes are done right at the end, so that any
+			// exceptions can get thrown first.
+			try {
+				deleteEmail(messageIdToDelete, theImapClient);
+				System.out.println("------------------------------------");
+			} catch (NoSuchProviderException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			} catch (MessagingException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 
@@ -716,6 +750,23 @@ public class NotNow {
 				theImapClient.connect("imap.gmail.com", "sarnobat.hotmail@gmail.com", password);
 				return theImapClient;
 			}
+			
+			private static Object getEmailContent(Message email) throws IOException, MessagingException {
+				Object content;
+				try {
+					content = email.getContent();
+				} catch (MessagingException e) {
+					// did this due to a bug
+					// check: http://goo.gl/yTScnE and http://goo.gl/P4iPy7
+					if (email instanceof MimeMessage
+							&& "Unable to load BODYSTRUCTURE".equalsIgnoreCase(e.getMessage())) {
+						content = new MimeMessage((MimeMessage) email).getContent();
+					} else {
+						throw e;
+					}
+				}
+				return content;
+			}
 
 			private static String getBody(Message aMessage) {
 				String out = "";
@@ -723,7 +774,8 @@ public class NotNow {
 					if (!aMessage.getFolder().isOpen()) {
 						aMessage.getFolder().open(Folder.READ_ONLY);
 					}
-					if (aMessage.getContent() instanceof MimeMultipart) {
+					Object o = getEmailContent(aMessage);
+					if (o instanceof MimeMultipart) {
 						MimeMultipart m = (MimeMultipart) aMessage.getContent();
 						BodyPart bodyPart = ((MimeMultipart) aMessage.getContent()).getBodyPart(1);
 //						System.out

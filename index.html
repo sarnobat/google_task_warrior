@@ -91,7 +91,8 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 		if (k == 'daysToPostpone') {
 			return;
 		}
-		if (! k.startsWith('<')) {
+		console.debug(k);
+		if (! k.startsWith('<') ) {
 			console.debug("Workaround - ignore tasks that are keyed by a simple number");
 			return;
 		}
@@ -101,7 +102,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 		if (v.title.match(/.*Repeating.*/)) {
 			title2 = "[Repeating] " + title2;
 		}
-		rows +='<tr id=event-'+k+'>';
+		rows +='<tr id=event-'+encodeURIComponent(k)+'>';
 		var capitalizedTitle = capitalize(title2);
 		var color = 'black';
 		if (capitalizedTitle.match(/.*Repeating.*/)) {
@@ -132,9 +133,9 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 		rows += "<td>" + index2 + "</td><td>&nbsp;</td><td style='color : "+color+"'>" + capitalizedTitle //.substring(0, 48)
 			 + "</td>";
 		//rows += "<td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
-                rows += "<td>&nbsp;<button type=button onclick='offloadEvent(" +k+")'>Errands.txt</button>&nbsp;</td>";
+                rows += "<td>&nbsp;<button type=button onclick='offloadEvent(\"" +k+"\")'>Errands.txt</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='archiveEvent(" +k+")'>Archive</button>&nbsp;</td>";
-		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(" +k+")'>Delete</button>&nbsp;</td>";
+		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(\"" +k+"\")'>Delete</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>1 day</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 2 + "," + 0 + "," + incrementAll + ")'>2 day</button>&nbsp;&nbsp;</td>";
@@ -181,24 +182,27 @@ function tag(itemNumber, element) {
 }
 
 function offloadEvent(itemNumber) {
- $.ajax(URL_BASE_NEW + "/not_now/offload?itemNumber=" + itemNumber)
-          .done(function() {
-                        console.log( "success" );
-                //$("#event-" + itemNumber).remove();
-                        $("#event-" + itemNumber).css("background-color", "lightgreen");
-                        ++messagesDeleted;
-                        $("#status").html(messagesDeleted);
-          })
-          .fail(function() {
-                console.log( "error" );
-                ++failures;
-            $("#failures").html(failures);
-          })
-          .always(function() {
-                console.log( "complete" );
-          });
-        $("#event-" + itemNumber).fadeOut(FADE_TIME, function() {});
-    $("#event-" + itemNumber).css("background-color", "orange");
+	console.debug('offloadEvent() - ' + itemNumber);
+	
+	$.ajax(URL_BASE_NEW + "/not_now/offload?itemNumber=" + encodeURIComponent(itemNumber))
+		.done(function() {
+			console.log( "success" );
+			//$("#event-" + itemNumber).remove();
+			$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "lightgreen");
+			++messagesDeleted;
+			$("#status").html(messagesDeleted);
+		})
+		.fail(function() {
+			console.log( "error" );
+			++failures;
+		$("#failures").html(failures);
+		})
+		.always(function() {
+			console.log( "complete" );
+		});
+
+	$('[id="event-' + encodeURIComponent(itemNumber) + '"]').fadeOut(FADE_TIME, function() {});
+	$('[id="event-' + encodeURIComponent(itemNumber) + '"]').css("background-color", "orange");
 }
 
 function archiveEvent(itemNumber) {
