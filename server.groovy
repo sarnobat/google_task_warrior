@@ -230,7 +230,7 @@ public class NotNow {
 				}
 			};
 
-			public static void addTag(Integer iItemNumber, String iTagName, String tasksFile,
+			public static void addTag(String iItemNumber, String iTagName, String tasksFile,
 					String tagsFile) {
 				String taskTitle = getTaskTitle(iItemNumber, tasksFile);
 				JSONObject taggedTasks = readFileToJson(Paths.get(tagsFile));
@@ -255,7 +255,7 @@ public class NotNow {
 				return ret.build();
 			}
 
-			private static String getTaskTitle(Integer iItemNumber, String tasksFile) {
+			private static String getTaskTitle(String iItemNumber, String tasksFile) {
 				JSONObject tasks = readFileToJson(Paths.get(tasksFile)).getJSONObject("tasks");
 				return tasks.getJSONObject(iItemNumber.toString()).getString("title");
 			}
@@ -264,7 +264,7 @@ public class NotNow {
 		@GET
 		@Path("tag")
 		@Produces("application/json")
-		public Response tag(@QueryParam("itemNumber") Integer iItemNumber,
+		public Response tag(@QueryParam("itemNumber") String iItemNumber,
 				@QueryParam("tag") String iTagName) throws Exception {
 
 			try {
@@ -280,7 +280,7 @@ public class NotNow {
 		@GET
 		@Path("delete")
 		@Produces("application/json")
-		public Response delete(@QueryParam("itemNumber") Integer iItemNumber) throws Exception {
+		public Response delete(@QueryParam("itemNumber") String iItemNumber) throws Exception {
 
 			try {
 				writeToFile(iItemNumber, DONE_FILE);
@@ -442,7 +442,7 @@ public class NotNow {
 		@GET
 		@Path("postpone")
 		@Produces("application/json")
-		public Response postpone(@QueryParam("itemNumber") Integer iItemNumber,
+		public Response postpone(@QueryParam("itemNumber") String iItemNumber,
 				@QueryParam("daysToPostpone") Integer iDaysToPostpone) throws IOException,
 				NoSuchProviderException, MessagingException, GeneralSecurityException {
 			try {
@@ -458,7 +458,7 @@ public class NotNow {
 		@GET
 		@Path("postponeToNextFree")
 		@Produces("application/json")
-		public Response postponeToNextFree(@QueryParam("itemNumber") Integer iItemNumber)
+		public Response postponeToNextFree(@QueryParam("itemNumber") String iItemNumber)
 				throws IOException, NoSuchProviderException, MessagingException,
 				GeneralSecurityException {
 			System.out.println("postponeToNextFree() - begin");

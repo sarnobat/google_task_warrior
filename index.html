@@ -134,9 +134,9 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			 + "</td>";
 		//rows += "<td><textarea style='width : 40px; height: 10px'>" + capitalizedTitle + "</textarea></td>";
                 rows += "<td>&nbsp;<button type=button onclick='offloadEvent(\"" +k+"\")'>Errands.txt</button>&nbsp;</td>";
-		rows += "<td>&nbsp;<button type=button onclick='archiveEvent(" +k+")'>Archive</button>&nbsp;</td>";
+//		rows += "<td>&nbsp;<button type=button onclick='archiveEvent(" +k+")'>Archive</button>&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='deleteEvent(\"" +k+"\")'>Delete</button>&nbsp;</td>";
-		rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
+/*		rows += "<td>&nbsp;<button type=button onclick='postponeToNextFree(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>free</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 1 + "," + 0 + "," + incrementAll + ")'>1 day</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 2 + "," + 0 + "," + incrementAll + ")'>2 day</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='postponeDefault(" + k + "," + 3 + "," + 0 + "," + incrementAll + ")'>3 days</button>&nbsp;&nbsp;</td>";
@@ -152,6 +152,7 @@ function getTaskRows(tasks, incrementAll, defaultPostponement) {
 			 }
 			rows +="<td>&nbsp;&nbsp;<button type=button onclick='postponeDefault("+k+","+quickPostponeAmounts[i]+"," +defaultPostponement+ ","+ incrementAll + ")'>" +quickPostponeAmount + " days</button >"+"&nbsp;&nbsp;</td>";
 		}
+*/
 		rows += "<td>&nbsp;<button type=button onclick='tag(" + k + ", this)'>important</button>&nbsp;&nbsp;</td>";
 		rows += "<td>&nbsp;<button type=button onclick='tag(" + k + ", this)'>urgent</button>&nbsp;&nbsp;</td>";
 		rows +='</tr>';
