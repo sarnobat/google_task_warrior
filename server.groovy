@@ -882,8 +882,8 @@ public class NotNow {
 
 			JSONObject json1 = CreateJsonFromEmail.createJsonListOfEvents(CreateJsonFromEmail
 					.getMessages());
-//			System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromFile() "
-//					+ json1.toString(2));
+			System.out.println("NotNow.ListDisplaySynchronous.getErrandsJsonFromFile() "
+					+ json1.toString(2));
 			json1.put("daysToPostpone", getPostponeCount(tasksFilePath));
 			return json1;
 		}
